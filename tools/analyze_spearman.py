@@ -1,5 +1,5 @@
 from PIL import Image
-img = Image.open(r'D:\game\public\assets\spearman-reference.png.png').convert('RGBA')
+img = Image.open('art/units/spearman/reference/spearman-reference-sheet.png').convert('RGBA')
 print('size', img.size)
 w, h = img.size
 alpha = img.getchannel('A')

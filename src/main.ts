@@ -128,18 +128,22 @@ const specs={
  cavalry:{name:'Lính kỵ binh',hp:210,damage:24,range:27,speed:58,cooldown:.9,cost:250,energy:70,r:13,color:'#f2d5a0'}
 };
 // Shared atlas: blue/red idle and walk clips occupy dedicated rows; later actions can add rows without changing simulation data.
-const infantrySpriteSheet=new Image();infantrySpriteSheet.src='/assets/infantry-spritesheet.png';
+const infantrySpriteSheet=new Image();infantrySpriteSheet.src='/assets/units/infantry/infantry-sheet.png';
 const infantryClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
-const scoutSpriteSheet=new Image();scoutSpriteSheet.src='/assets/scout-spritesheet.png';
+const scoutSpriteSheet=new Image();scoutSpriteSheet.src='/assets/units/scout/scout-sheet.png';
 const scoutClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
 // Per-cell alpha bounds from the atlas keep blue and red scouts grounded at the same world Y.
 const scoutFootAnchors=[[304,307,303,308],[294,297,297,298],[276,282,276,283],[267,270,269,270]].map(row=>row.map(bottom=>bottom/313.5));
-const cavalrySpriteSheet=new Image();cavalrySpriteSheet.src='/assets/cavalry-spritesheet.png';
+const cavalrySpriteSheet=new Image();cavalrySpriteSheet.src='/assets/units/cavalry/cavalry-sheet.png';
 const cavalryClips={blue:{idle:{row:0,frames:3,fps:1},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:3,fps:1},walk:{row:3,frames:4,fps:7}}};
-const archerSpriteSheet=new Image();archerSpriteSheet.src='/assets/archer-spritesheet.png';
+const archerSpriteSheet=new Image();archerSpriteSheet.src='/assets/units/archer/archer-sheet.png';
 const archerClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
-const spearmanSpriteSheet=new Image();spearmanSpriteSheet.src='/assets/spearman-spritesheet-v2.svg';
-const spearmanClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
+// 16 rows: team*8 + direction*2 + (idle 0 | walk 1); built by tools/build_spearman_sheet.py.
+const spearmanSpriteSheet=new Image();spearmanSpriteSheet.src='/assets/units/spearman/spearman-sheet.png';
+const SPEARMAN_DIRECTIONS=['down','left','up','right'],SPEARMAN_ROWS=16;
+const spearmanClips={idle:{frames:4,fps:1.25},walk:{frames:4,fps:7}};
+// Dominant axis wins so diagonal movement still picks one of the four painted directions.
+function facingFrom(dx,dy){return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
 const farmSprite=new Image();farmSprite.src='/assets/farmstead-v2.png';
 const fortressSprite=new Image();fortressSprite.src='/assets/fortress-sprite.png';
 function localTeam(){return mode==='pvp'&&netRole==='guest'?1:0;}
@@ -587,7 +591,7 @@ function update(dt){
  }
  // unit movement and combat
  for(const u of [...state.units]){
-  if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;
+  if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
   constrainToBaseDeploymentZone(u);
   let target=nearestEnemy(u);if(!unitTargetValid(target,u))target=null;
   if(mode==='ai'&&u.team===1&&!target){
@@ -627,6 +631,10 @@ function update(dt){
     constrainToBaseDeploymentZone(u);
    }
   }
+  // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
+  const movedX=u.x-startX,movedY=u.y-startY;
+  if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY);
+  else if(target&&dist(u,target)<=s.range+(target.type?specs[target.type].r:target.w?35:10))u.facing=facingFrom(target.x-u.x,target.y-u.y);
  }
  // bullets track moving target
  for(const b of [...state.bullets]){
@@ -726,12 +734,14 @@ function drawUnit(u){return drawUprightAt(u.x,u.y,()=>{
   return;
  }
  if(u.type==='spearman'&&spearmanSpriteSheet.complete&&spearmanSpriteSheet.naturalWidth){
-  const clip=spearmanClips[blue?'blue':'red'][u.moving?'walk':'idle'];
-  const cellW=spearmanSpriteSheet.naturalWidth/4,cellH=spearmanSpriteSheet.naturalHeight/4;
+  const clip=spearmanClips[u.moving?'walk':'idle'];
+  const direction=Math.max(0,SPEARMAN_DIRECTIONS.indexOf(u.facing||'down'));
+  const row=(blue?0:8)+direction*2+(u.moving?1:0);
+  const cellW=spearmanSpriteSheet.naturalWidth/4,cellH=spearmanSpriteSheet.naturalHeight/SPEARMAN_ROWS;
   const frame=Math.floor(u.walk*clip.fps)%clip.frames;
   const height=unitTargetHeight('spearman')*.96,width=height*cellW/cellH;
   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+2,width*.30,height*.10,0,0,Math.PI*2);ctx.fill();
-  ctx.drawImage(spearmanSpriteSheet,frame*cellW,clip.row*cellH,cellW,cellH,u.x-width/2,u.y-height*.90,width,height);
+  ctx.drawImage(spearmanSpriteSheet,frame*cellW,row*cellH,cellW,cellH,u.x-width/2,u.y-height*.90,width,height);
   return;
  }
  if(u.type==='infantry'&&infantrySpriteSheet.complete&&infantrySpriteSheet.naturalWidth){
