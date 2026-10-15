@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mini War: Capture the Base</title>
+<style>
+:root{--bg:#101827;--panel:#182438;--line:#2d4058;--text:#edf5ff;--muted:#9db0c8;--blue:#48a9ff;--red:#ff626b;--gold:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1a2b43,#0b1220 70%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh}
+.wrap{max-width:1100px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:clamp(22px,4vw,32px);margin:0;letter-spacing:.02em}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.hud{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#182438;border:1px solid var(--line);border-radius:12px;padding:9px 13px;min-width:92px}.stat small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.stat b{font-size:19px}
+.gamebox{border:1px solid #344862;border-radius:16px;overflow:hidden;background:#05070d;box-shadow:0 20px 55px #0005;position:relative}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;cursor:crosshair}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#07101bcc;backdrop-filter:blur(4px);text-align:center;padding:20px}.overlay.show{display:flex}.result{background:#182438;border:1px solid #47617e;border-radius:18px;padding:26px;max-width:390px;box-shadow:0 20px 60px #0008}.result h2{font-size:32px;margin:0 0 8px}.result p{color:var(--muted);margin:0 0 18px}
+.controls{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin-top:12px}.btn{border:1px solid #3a506c;border-radius:11px;background:linear-gradient(#243750,#1b293d);color:var(--text);padding:12px 8px;font:inherit;font-weight:700;cursor:pointer;transition:.15s;min-height:65px}.btn:hover{filter:brightness(1.2);transform:translateY(-1px)}.btn:active{transform:translateY(0)}.btn:disabled{opacity:.4;cursor:not-allowed;filter:none;transform:none}.btn span{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:3px}.btn.primary{border-color:#398ed0;background:linear-gradient(#2377b7,#195787)}.btn.warn{border-color:#a64a55;background:linear-gradient(#813842,#582630)}
+.lower{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-top:12px}.card{background:#152136;border:1px solid var(--line);border-radius:13px;padding:14px}.card h3{font-size:14px;margin:0 0 10px}.card p{font-size:13px;color:var(--muted);line-height:1.5;margin:5px 0}.feed{height:100px;overflow:auto;font-size:12px;color:#bdcce0;line-height:1.7}.feed div{border-bottom:1px solid #26364b;padding:2px 0}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:10px 2px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.tip{font-size:12px;color:var(--muted);text-align:center;margin:12px 0 4px}
+@media(max-width:720px){.wrap{padding:10px}.controls{grid-template-columns:repeat(3,minmax(0,1fr))}.lower{grid-template-columns:1fr}.btn{min-height:58px;padding:9px 5px}.stat{min-width:78px;padding:7px 10px}.stat b{font-size:16px}}
+
+/* Polished command-center interface */
+:root{--bg:#07111f;--panel:#101e31;--line:#2a405b;--text:#eff7ff;--muted:#a2b5ca;--blue:#55b8ff;--red:#ff6974;--gold:#ffd36a}
+body{background:radial-gradient(ellipse at 50% -12%,#254768 0%,#101e31 42%,#070d17 100%);background-attachment:fixed}
+.wrap{max-width:1440px;padding:clamp(10px,2vw,24px)}
+.top{padding:16px 18px;border:1px solid #2d4662;border-radius:18px;background:linear-gradient(125deg,#14283eeb,#0d1829eb);box-shadow:0 12px 35px #0004;align-items:center}
+h1{font-weight:900;letter-spacing:.045em;text-shadow:0 3px 18px #4aaaff25}
+.sub{font-size:12px;letter-spacing:.035em}
+.hud{justify-content:flex-end;flex:1}
+.stat{position:relative;overflow:hidden;background:linear-gradient(155deg,#1a2d44,#101c2d);border:1px solid #344b66;border-radius:12px;min-width:94px;padding:10px 13px;box-shadow:inset 0 1px #ffffff09,0 5px 14px #0002}
+.stat:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:#6483a3}
+.stat:first-child:before{background:var(--gold)}.stat:nth-child(2):before{background:#74e3d0}.stat:nth-child(3):before{background:#9eb7ff}.stat:nth-child(4):before{background:var(--blue)}.stat:nth-child(5):before{background:#a9c6ff}
+.stat small{font-size:10px;letter-spacing:.07em}.stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums}
+.gamebox{border:2px solid #8dbf77;border-radius:17px;box-shadow:0 22px 60px #0007,0 0 0 4px #ffffff04, inset 0 0 0 2px #ffffff18;background:#6ea95b}
+canvas{touch-action:pan-y}
+.legend{padding:9px 12px;border:1px solid #243a52;border-radius:0 0 12px 12px;background:#0c1726;font-size:11px;margin:0 0 14px;gap:18px}
+.controls{padding:13px;border:1px solid #2a4059;border-radius:16px;background:linear-gradient(145deg,#122238,#0b1524);box-shadow:0 12px 28px #0003;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.controls:before{content:"BẢNG ĐIỀU KHIỂN CHỈ HUY";grid-column:1/-1;color:#8fa9c4;font-size:10px;font-weight:900;letter-spacing:.16em;padding:0 2px 2px}
+.btn{position:relative;text-align:left;padding:12px 13px;min-height:70px;border-radius:12px;border-color:#354e69;background:linear-gradient(155deg,#243b55,#17283c);box-shadow:inset 0 1px #ffffff0b,0 4px 10px #0002;line-height:1.25}
+.btn:hover{border-color:#7194b8;filter:brightness(1.12);box-shadow:0 7px 16px #0003;transform:translateY(-2px)}
+.btn.primary{border-color:#347db2;background:linear-gradient(145deg,#246fa6,#17486e)}
+.btn.warn{border-color:#9c4852;background:linear-gradient(145deg,#77333d,#49212a)}
+.btn span{font-size:11px;line-height:1.4;color:#c0d0e1}
+.lower{gap:14px;margin-top:14px}.card{background:linear-gradient(145deg,#13243a,#0d1929);border-color:#2b415a;border-radius:15px;padding:16px;box-shadow:0 8px 22px #0002}.card h3{font-size:13px;letter-spacing:.045em;padding-bottom:10px;border-bottom:1px solid #293e55}.card p{font-size:12px;line-height:1.65;color:#b4c4d6}.feed{height:125px}.feed div{padding:5px 2px;border-bottom-color:#26394d}.tip{padding:10px 14px;border:1px solid #22374d;border-radius:12px;background:#0d1928;color:#9eb2c8;line-height:1.6}
+.btn:focus-visible{outline:2px solid #9bd4ff;outline-offset:3px}
+@media(min-width:1000px){.controls{grid-template-columns:repeat(4,minmax(0,1fr))}.lower{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}}
+@media(max-width:720px){.top{padding:12px}.hud{justify-content:stretch;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.stat{min-width:0}.controls{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:8px}.btn{min-height:66px;font-size:13px;padding:10px}.btn span{font-size:10px}.legend{gap:8px}.lower{grid-template-columns:1fr}.card{padding:12px}}
+
+
+.mode-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 10%,#1c4161f5,#07101df7 65%);backdrop-filter:blur(8px)}
+.mode-screen.hidden{display:none}.mode-panel{width:min(620px,100%);padding:clamp(20px,4vw,34px);border:1px solid #3c5d7e;border-radius:22px;background:linear-gradient(145deg,#172c43,#0c1727);box-shadow:0 28px 90px #0009}.mode-panel h2{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.mode-panel .intro{color:#afc2d8;line-height:1.6;margin:0 0 22px}.mode-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mode-choice{border:1px solid #3d668b;background:linear-gradient(150deg,#234564,#142a40);border-radius:15px;padding:20px 16px;color:#eff7ff;text-align:left;cursor:pointer;font:inherit;min-height:140px}.mode-choice strong{display:block;font-size:18px;margin-bottom:9px}.mode-choice span{font-size:13px;color:#c1d3e4;line-height:1.5;display:block}.mode-choice.friend{border-color:#518b7f;background:linear-gradient(150deg,#20594f,#14352f)}.mode-choice:hover{filter:brightness(1.13);transform:translateY(-1px)}.lobby{display:none}.lobby.show{display:block}.mode-back{background:transparent;border:0;color:#b4c7dc;padding:8px 0;cursor:pointer;font:inherit}.mode-field{display:block;width:100%;margin:7px 0 14px;border:1px solid #3b5674;border-radius:10px;padding:12px 13px;background:#091421;color:#f0f7ff;font:inherit}.mode-actions{display:flex;gap:10px;flex-wrap:wrap}.mode-actions .btn{min-height:48px;flex:1;text-align:center}.room-code{font-size:30px;font-weight:900;letter-spacing:.22em;text-align:center;color:#9ce0ff;padding:12px;border:1px dashed #4c769c;background:#0a1928;border-radius:12px;margin:12px 0}.mode-status{margin-top:14px;padding:11px 12px;border-radius:10px;background:#0a1828;color:#adcae3;font-size:13px;line-height:1.5}.mode-note{font-size:12px;color:#91a8c0;line-height:1.55;margin-top:16px}@media(max-width:540px){.mode-options{grid-template-columns:1fr}.mode-choice{min-height:0}.mode-panel{border-radius:16px}.mode-actions{flex-direction:column}}
+
+</style>
+</head>
+<body>
+
+<div id="modeScreen" class="mode-screen">
+  <section class="mode-panel" aria-live="polite">
+    <div id="modeHome">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.18em;color:#72c3ff;margin-bottom:10px">MINI WAR · CHỌN CHẾ ĐỘ</div>
+      <h2>⚔️ Bạn muốn chơi kiểu nào?</h2>
+      <p class="intro">Chọn đấu với AI như hiện tại hoặc tạo phòng riêng để solo 1 đấu 1 với bạn bè.</p>
+      <div class="mode-options">
+        <button class="mode-choice" id="modeAI"><strong>🤖 Chơi với AI</strong><span>Chế độ hiện tại, chiến đấu với máy. Không cần kết nối Internet.</span></button>
+        <button class="mode-choice friend" id="modeFriends"><strong>👥 Solo với bạn bè</strong><span>Tạo phòng riêng, gửi mã hoặc link mời để chơi 1 đấu 1 qua Internet.</span></button>
+      </div>
+      <p class="mode-note">Chế độ chơi với bạn bè cần mở game từ một địa chỉ web (ví dụ GitHub Pages), không chỉ mở file trên máy. Cần Internet để kết nối.</p>
+    </div>
+    <div id="friendPanel" class="lobby">
+      <button class="mode-back" id="modeBack">← Quay lại chọn chế độ</button>
+      <h2>👥 Solo với bạn bè</h2>
+      <p class="intro">Tạo phòng để làm chủ phòng, hoặc nhập mã do bạn bè gửi.</p>
+      <div id="friendActions">
+        <div class="mode-actions"><button class="btn primary" id="createRoom">＋ Tạo phòng mới</button></div>
+        <label for="roomInput" style="display:block;margin-top:18px;font-size:13px;color:#b7cbe0">Mã phòng của bạn bè</label>
+        <input class="mode-field" id="roomInput" maxlength="8" inputmode="text" autocomplete="off" placeholder="Ví dụ: A7K2Q9">
+        <div class="mode-actions"><button class="btn" id="joinRoom">Tham gia phòng</button></div>
+      </div>
+      <div id="roomWaiting" class="lobby">
+        <p style="margin:16px 0 6px;color:#bed0e1;text-align:center">Gửi mã này cho bạn của bạn</p>
+        <div id="roomCode" class="room-code">------</div>
+        <div class="mode-actions"><button class="btn primary" id="copyRoomLink">⧉ Sao chép link mời</button><button class="btn" id="copyRoomCode">Sao chép mã</button></div>
+      </div>
+      <div class="mode-status" id="netStatus">Chưa kết nối.</div>
+      <p class="mode-note">Chủ phòng nên giữ tab này mở trong suốt trận. Kết nối P2P phụ thuộc vào mạng hai người; một số mạng có thể chặn kết nối trực tiếp.</p>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <div class="top">
+    <div><h1>⚔️ MINI WAR <span style="color:#6fbaff">: CAPTURE THE BASE</span></h1><div class="sub" id="modeStatus">Bản demo chiến thuật · Chưa bắt đầu</div></div>
+    <div class="hud">
+      <div class="stat"><small>🪙 Vàng</small><b id="gold">150</b></div>
+      <div class="stat"><small>⚡ Năng lượng</small><b id="energy">100</b></div>
+      <div class="stat"><small>⏱ Thời gian</small><b id="time">00:00</b></div>
+      <div class="stat"><small>🪖 Quân xanh</small><b id="unitCount">0</b><small id="unitBreakdown">Lính 0 · Cung 0 · Trinh sát 0 · Kỵ binh 0</small></div>
+      <div class="stat"><small>🛡️ Xe tăng</small><b id="tankCount">0</b></div>
+    </div>
+  </div>
+  <div class="gamebox">
+    <canvas id="game" width="960" height="540" aria-label="Chiến trường Mini War"></canvas>
+    <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div>
+  </div>
+  <div class="legend">
+    <span><i class="dot" style="background:#4aaaff"></i>Quân xanh của bạn</span>
+    <span><i class="dot" style="background:#ff626b"></i>Quân đỏ của máy</span>
+    <span>⛏ 3 mỏ vàng ngẫu nhiên mỗi trận: chiếm mỏ để tăng thu nhập</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="scout">🔭 Trinh sát<span>40 vàng · đi trước 2 phút</span></button>
+    <button class="btn primary" id="infantry">🪖 Tạo lính<span>50 vàng</span></button>
+    <button class="btn primary" id="archer">🏹 Tạo cung thủ<span>75 vàng · 15 năng lượng</span></button>
+    <button class="btn primary" id="tank">🛡️ Tạo xe tăng<span>125 vàng · 35 năng lượng</span></button>
+    <button class="btn primary" id="cavalry">🐎 Tạo lính kỵ binh<span>250 vàng · 70 năng lượng</span></button>
+    <button class="btn" id="farm">🌾 Xây nông trại<span>80 vàng · +2 vàng/giây · không giới hạn</span></button>
+    <button class="btn" id="turret">🗼 Xây tháp<span>100 vàng · tối đa 2</span></button>
+    <button class="btn warn" id="attack">⚔️ Tấn công<span>Ra lệnh tiến quân</span></button>
+    <button class="btn" id="pause">Ⅱ Tạm dừng<span>Dừng / tiếp tục</span></button>
+  </div>
+  <div class="lower">
+    <div class="card"><h3>📜 Nhật ký chiến trường</h3><div class="feed" id="feed"><div>Chào chỉ huy! Hãy tạo quân rồi nhấn Tấn công.</div><div>Chiếm các mỏ vàng rải khắp bản đồ để tăng tốc độ kiếm tài nguyên.</div></div></div>
+    <div class="card"><h3>🎯 Mục tiêu & hướng dẫn</h3><p>• Phá hủy căn cứ đỏ để chiến thắng; bảo vệ căn cứ xanh.</p><p>• Nông trại giá 80 vàng tạo +2 vàng/giây (hoàn vốn sau 40 giây), không giới hạn số nông trại; tháp canh tối đa 2 mỗi bên; nông trại không thể chồng lên công trình/vật thể khác và chỉ đặt hoặc di chuyển vào khu vực đã khám phá sương mù; kéo nông trại bằng chuột trái để di chuyển. Quân đỏ có thể tấn công và phá hủy nông trại; tiêu diệt chúng trước khi chiếm mỏ. Trinh sát là quân duy nhất được ra ngoài trong 2 phút đầu.</p><p>• Quân sẽ tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> chỉ ra lệnh cho nhóm đang chọn.</p><p>• AI mức vừa: tự tích lũy, tạo quân và định kỳ tổ chức tấn công.</p></div>
+  </div>
+  <div class="tip">Bản đồ chiến trường rộng gấp đôi phiên bản trước · Lăn con lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ. Mẹo: đừng chỉ tạo một loại quân — phối hợp lính, cung thủ, xe tăng và kỵ binh để vượt qua phòng thủ.</div>
+</div>
+<script>
+(() => {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const VIEW_W=canvas.width,VIEW_H=canvas.height,W=VIEW_W*10,H=VIEW_H*6;
+ let camX=0,camY=0,zoom=0.3;
+const $=id=>document.getElementById(id);
+let state, last=0, accumulator=0, paused=false, ended=false, selected=null, gameTime=0, aiTimer=0, incomeTimer=0, nextId=1, logTimer=0, draggingFarm=null;
+let mode='ai', gameStarted=false, peer=null, conn=null, netRole=null, roomCode='', snapshotClock=0, localSelectedIds=new Set(), connectionIntent='';
+const specs={
+ scout:{name:'Trinh sát',hp:60,damage:5,range:18,speed:72,cooldown:1.1,cost:40,energy:0,r:8,color:'#8ce6a0'},
+ infantry:{name:'Lính',hp:100,damage:13,range:22,speed:45,cooldown:.8,cost:50,energy:0,r:10,color:'#58b5ff'},
+ archer:{name:'Cung thủ',hp:65,damage:10,range:125,speed:34,cooldown:1.05,cost:75,energy:15,r:9,color:'#78d6ff'},
+ tank:{name:'Xe tăng',hp:270,damage:29,range:30,speed:25,cooldown:1.2,cost:125,energy:35,r:14,color:'#b3e2ff'},
+ cavalry:{name:'Lính kỵ binh',hp:210,damage:24,range:27,speed:58,cooldown:.9,cost:250,energy:70,r:13,color:'#f2d5a0'}
+};
+function localTeam(){return mode==='pvp'&&netRole==='guest'?1:0;}
+function isMultiplayer(){return mode==='pvp';}
+function teamGold(team){return team===0?state.gold:state.enemyGold;}
+function setTeamGold(team,value){if(team===0)state.gold=value;else state.enemyGold=value;}
+function teamEnergy(team){return team===0?state.energy:state.enemyEnergy;}
+function setTeamEnergy(team,value){if(team===0)state.energy=value;else state.enemyEnergy=value;}
+function roomPeerId(code){return 'miniwarr'+code.toLowerCase().replace(/[^a-z0-9]/g,'');}
+function setNetStatus(msg){const el=$('netStatus');if(el)el.textContent=msg;}
+function showFriendPanel(){ $('modeHome').style.display='none';$('friendPanel').classList.add('show'); }
+function showModeHome(){ $('friendPanel').classList.remove('show');$('modeHome').style.display='block'; }
+function hideModeScreen(){ $('modeScreen').classList.add('hidden'); }
+function showModeScreen(){ $('modeScreen').classList.remove('hidden'); }
+function setGameModeLabel(){
+ $('modeStatus').textContent=mode==='pvp'?(netRole==='host'?'Chế độ: Solo với bạn bè · Bạn là quân XANH · Chủ phòng': 'Chế độ: Solo với bạn bè · Bạn là quân ĐỎ'):'Chế độ: Chơi với AI · Offline';
+ const labels=document.querySelectorAll('.legend span');if(labels.length>=2){labels[0].innerHTML='<i class="dot" style="background:#4aaaff"></i>'+(localTeam()===0?'Quân xanh của bạn':'Quân xanh đối thủ');labels[1].innerHTML='<i class="dot" style="background:#ff626b"></i>'+(localTeam()===1?'Quân đỏ của bạn':(mode==='pvp'?'Quân đỏ đối thủ':'Quân đỏ của máy'));}
+}
+function destroyPeer(){try{if(conn){conn.close();}}catch{}try{if(peer){peer.destroy();}}catch{}conn=null;peer=null;netRole=null;roomCode='';}
+function ensurePeerJs(){
+ if(window.Peer)return Promise.resolve();
+ if(window._peerJsPromise)return window._peerJsPromise;
+ window._peerJsPromise=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';script.async=true;
+  script.onload=()=>window.Peer?resolve():reject(new Error('Không tải được thư viện kết nối.'));
+  script.onerror=()=>reject(new Error('Không tải được PeerJS. Hãy kiểm tra Internet rồi thử lại.'));
+  document.head.appendChild(script);
+ });return window._peerJsPromise;
+}
+function startAIMode(){
+ destroyPeer();mode='ai';netRole=null;gameStarted=true;localSelectedIds.clear();fresh();hideModeScreen();setGameModeLabel();
+}
+function startHostGame(){
+ mode='pvp';netRole='host';gameStarted=true;localSelectedIds.clear();$('feed').innerHTML='';fresh();hideModeScreen();setGameModeLabel();addLog('Phòng 1 đấu 1 đã mở. Bạn là quân xanh.');sendSnapshot();
+}
+function startGuestFromSnapshot(packet){
+ mode='pvp';netRole='guest';gameStarted=true;hideModeScreen();setGameModeLabel();applySnapshot(packet);addLog('Đã vào phòng. Bạn là quân đỏ.');
+}
+function createRoom(){
+ if(peer||conn)destroyPeer();connectionIntent='host';setNetStatus('Đang khởi tạo phòng...');$('createRoom').disabled=true;$('joinRoom').disabled=true;
+ ensurePeerJs().then(()=>{
+  let attempts=0;
+  const tryCreate=()=>{
+   attempts++;roomCode=Math.random().toString(36).slice(2,8).toUpperCase().padEnd(6,'X').slice(0,6);
+   peer=new Peer(roomPeerId(roomCode));
+   peer.on('open',id=>{
+    $('roomCode').textContent=roomCode;$('roomWaiting').classList.add('show');$('friendActions').style.display='none';
+    const url=new URL(window.location.href);url.searchParams.set('room',roomCode);window._miniWarInviteUrl=url.href;
+    setNetStatus('Đang chờ bạn bè tham gia... Hãy gửi mã hoặc link mời.');
+   });
+   peer.on('connection',incoming=>{
+    if(conn&&conn.open){incoming.close();return;}
+    conn=incoming;netRole='host';
+    setupConnection(incoming,'host');
+   });
+   peer.on('error',err=>{
+    const msg=String(err?.type||err?.message||err);
+    if(msg.includes('unavailable-id')&&attempts<5){try{peer?.destroy();}catch{}peer=null;setTimeout(tryCreate,150);return;}
+    setNetStatus('Lỗi tạo phòng: '+msg+'. Thử tạo phòng mới.');$('createRoom').disabled=false;$('joinRoom').disabled=false;
+   });
+  };tryCreate();
+ }).catch(err=>{setNetStatus(err.message);$('createRoom').disabled=false;$('joinRoom').disabled=false;});
+}
+function joinRoom(){
+ const code=String($('roomInput').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+ if(code.length<4){setNetStatus('Nhập mã phòng hợp lệ (ít nhất 4 ký tự).');return;}
+ if(peer||conn)destroyPeer();connectionIntent='guest';roomCode=code;setNetStatus('Đang kết nối tới phòng '+code+'...');$('createRoom').disabled=true;$('joinRoom').disabled=true;
+ ensurePeerJs().then(()=>{
+  peer=new Peer();
+  peer.on('open',()=>{
+   conn=peer.connect(roomPeerId(code),{reliable:true});
+   setupConnection(conn,'guest');
+  });
+  peer.on('error',err=>{setNetStatus('Lỗi kết nối: '+(err?.type||err?.message||err)+'. Kiểm tra mã phòng và thử lại.');$('createRoom').disabled=false;$('joinRoom').disabled=false;});
+ }).catch(err=>{setNetStatus(err.message);$('createRoom').disabled=false;$('joinRoom').disabled=false;});
+}
+function setupConnection(connection,role){
+ connection.on('open',()=>{
+  if(role==='host'){
+   if(!gameStarted||mode!=='pvp') startHostGame();
+   else {paused=false;updateHUD();sendSnapshot();}
+   setNetStatus('Đã có đối thủ kết nối. Trận đấu bắt đầu!');
+  }else{
+   setNetStatus('Đã kết nối, đang nhận dữ liệu trận đấu...');
+   connection.send({type:'hello',room:roomCode});
+  }
+ });
+ connection.on('data',data=>{
+  if(!data||typeof data!=='object')return;
+  if(role==='host'&&data.type==='action'){
+   // All guest commands are validated and applied by the host simulation.
+   applyAction(1,data.action,data.payload||{});sendSnapshot();
+  }else if(role==='guest'&&data.type==='snapshot'){
+   if(draggingTurret||draggingFarm){window._miniWarQueuedSnapshot=data;return;}
+   if(!gameStarted||mode!=='pvp')startGuestFromSnapshot(data);else applySnapshot(data);
+   setNetStatus('Đã kết nối với chủ phòng · '+(paused?'Trận đang tạm dừng':'Đang chơi trực tuyến'));
+  }else if(role==='host'&&data.type==='hello'){
+   sendSnapshot();setNetStatus('Đã có đối thủ kết nối. Trận đấu bắt đầu!');
+  }
+ });
+ connection.on('close',()=>{
+  if(conn===connection)conn=null;
+  if(role==='host'){paused=true;updateHUD();setNetStatus('Đối thủ đã ngắt kết nối. Trận đang tạm dừng. Bạn có thể gửi lại mã phòng để kết nối lại.');addLog('Đối thủ đã rời phòng.');}
+  else{gameStarted=false;showModeScreen();showFriendPanel();setNetStatus('Đã mất kết nối với chủ phòng. Hãy thử tham gia lại.');}
+ });
+ connection.on('error',err=>setNetStatus('Lỗi kết nối: '+(err?.message||err)));
+}
+function serializeSnapshot(){
+ // Keep explored fog maps local to each browser; serialize only live simulation state.
+ const {fogSeen,enemyFogSeen,...clean}=state;
+ clean.units=state.units.map(u=>({...u,selected:false,target:null}));
+ clean.bullets=state.bullets.map(b=>({...b,target:null}));
+ return {type:'snapshot',gameTime,paused,ended,state:clean,resultTitle:$('resultTitle').textContent,resultText:$('resultText').textContent};
+}
+function sendSnapshot(){if(mode!=='pvp'||netRole!=='host'||!conn||conn.open!==true)return;try{conn.send(serializeSnapshot());}catch(e){setNetStatus('Không gửi được trạng thái trận đấu.');}}
+function applySnapshot(packet){
+ if(!packet?.state)return;
+ const oldFog=state?.fogSeen instanceof Uint8Array?state.fogSeen:new Uint8Array(360*204);
+ const oldEnemyFog=state?.enemyFogSeen instanceof Uint8Array?state.enemyFogSeen:new Uint8Array(360*204);
+ const picked=new Set(localSelectedIds);
+ state=packet.state;state.fogSeen=oldFog;state.enemyFogSeen=oldEnemyFog;
+ gameTime=Number(packet.gameTime)||0;paused=!!packet.paused;ended=!!packet.ended;
+ const hostWon=String(packet.resultTitle||'').includes('CHIẾN THẮNG!');
+ const localWon=localTeam()===0?hostWon:!hostWon;
+ $('resultTitle').textContent=ended?(localWon?'🏆 CHIẾN THẮNG!':'💥 THẤT THỦ!'):(packet.resultTitle||'Trận đấu kết thúc');
+ $('resultText').textContent=ended?(localWon?'Bạn đã phá hủy căn cứ đối phương. Chỉ huy xuất sắc!':'Căn cứ của bạn đã bị phá hủy. Hãy thử chiến thuật khác!'):(packet.resultText||'');
+ $('pause').innerHTML=paused?'▶ Tiếp tục<span>Tiếp tục trận đấu</span>':'Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';
+ for(const u of state.units){u.selected=picked.has(u.id)&&u.team===localTeam();}
+ selected=state.units.find(u=>u.selected)||null;
+ revealTeamVision(0);revealTeamVision(1);updateHUD();
+ if(ended)$('overlay').classList.add('show');else $('overlay').classList.remove('show');
+}
+function revealTeamVision(team){
+ if(!state)return;const arr=team===0?state.fogSeen:state.enemyFogSeen;if(!arr)return;
+ const cols=360,rows=204,cw=W/cols,ch=H/rows;
+ const sources=[...state.units.filter(u=>u.team===team&&u.hp>0).map(u=>({x:u.x,y:u.y,r:u.type==='tank'?150:(u.type==='archer'?130:(u.type==='scout'?145:105))})),...state.bases.filter(b=>b.team===team).map(b=>({x:b.x,y:b.y,r:175}))];
+ for(const source of sources){const x1=Math.max(0,Math.floor((source.x-source.r)/cw)),x2=Math.min(cols-1,Math.ceil((source.x+source.r)/cw)),y1=Math.max(0,Math.floor((source.y-source.r)/ch)),y2=Math.min(rows-1,Math.ceil((source.y+source.r)/ch));for(let gy=y1;gy<=y2;gy++)for(let gx=x1;gx<=x2;gx++){if(Math.hypot((gx+.5)*cw-source.x,(gy+.5)*ch-source.y)<=source.r)arr[gy*cols+gx]=1;}}
+}
+function requestAction(action,payload={}){
+ if(mode==='pvp'&&netRole==='guest'){
+  if(conn&&conn.open)conn.send({type:'action',action,payload});else setNetStatus('Chưa kết nối với chủ phòng.');
+  return;
+ }
+ applyAction(localTeam(),action,payload);
+}
+function applyAction(team,action,payload={}){
+ if(action==='buy')buy(payload.unit,team);
+ else if(action==='farm')buildFarm(team);
+ else if(action==='turret')buildTurret(team);
+ else if(action==='attack')commandAttack(team,payload.ids);
+ else if(action==='move'){
+  if(ended||paused)return;
+  const ids=new Set(payload.ids||[]);
+  const x=Math.max(25,Math.min(W-25,Number(payload.x)||0));
+  const y=Math.max(45,Math.min(H-30,Number(payload.y)||0));
+  // Give every selected unit a unique formation slot around the clicked destination,
+  // instead of sending the whole group to exactly the same point.
+  const chosen=state.units.filter(u=>u.team===team&&ids.has(u.id)&&!(gameTime<120&&u.type!=='scout'));
+  const skipped=state.units.filter(u=>u.team===team&&ids.has(u.id)&&gameTime<120&&u.type!=='scout');
+  for(const u of skipped){u.dest=null;u.order='hold';}
+  if(chosen.length){
+   const spacing=34;
+   const cols=Math.ceil(Math.sqrt(chosen.length));
+   const rows=Math.ceil(chosen.length/cols);
+   const halfW=(cols-1)*spacing/2,halfH=(rows-1)*spacing/2;
+   // Shift the whole formation inward near map edges so slots do not pile up on a clamp boundary.
+   const cx=Math.max(25+halfW,Math.min(W-25-halfW,x));
+   const cy=Math.max(45+halfH,Math.min(H-30-halfH,y));
+   chosen.forEach((u,i)=>{
+    const col=i%cols,row=Math.floor(i/cols);
+    const slotX=cx+(col-(cols-1)/2)*spacing;
+    const slotY=cy+(row-(rows-1)/2)*spacing;
+    u.dest={x:slotX,y:slotY};u.order='move';
+   });
+  }
+ }
+ else if(action==='pause'){if(!ended){paused=!!payload.paused;updateHUD();}}
+ else if(action==='moveTurret'){
+  const items=state.turrets.filter(t=>t.team===team);const t=items[payload.index];if(!t||ended||paused)return;
+  const x=Math.max(25,Math.min(W-25,Number(payload.x)||0)),y=Math.max(35,Math.min(H-35,Number(payload.y)||0)),home=state.bases.find(b=>b.team===team);
+  if(home&&Math.hypot(home.x-x,home.y-y)>200)return;
+  if(state.bases.some(b=>Math.hypot(b.x-x,b.y-y)<65)||state.units.some(u=>Math.hypot(u.x-x,u.y-y)>(0)&&Math.hypot(u.x-x,u.y-y)<(specs[u.type]?.r||9)+16)||state.farms.some(f=>Math.hypot(f.x-x,f.y-y)<35)||state.turrets.some(o=>o!==t&&Math.hypot(o.x-x,o.y-y)<34))return;t.x=x;t.y=y;
+ }
+ else if(action==='moveFarm'){
+  const items=state.farms.filter(f=>f.team===team);const f=items[payload.index];if(!f||ended||paused)return;
+  const nx=Math.max(33,Math.min(W-33,Number(payload.x)||0)),ny=Math.max(36,Math.min(H-36,Number(payload.y)||0));
+  if(!farmPlacementValid(team,nx,ny,f)){if(team===localTeam())addLog('Không thể chuyển nông trại vào sương mù hoặc đè lên vật thể khác.');return;}
+  f.x=nx;f.y=ny;
+ }
+ updateHUD();
+}
+function teamCanSee(team,x,y){
+ if(!state)return false;
+ for(const u of state.units){if(u.team!==team||u.hp<=0)continue;const r=u.type==='tank'?150:(u.type==='archer'?130:(u.type==='scout'?145:105));if(Math.hypot(x-u.x,y-u.y)<=r)return true;}
+ const base=state.bases.find(b=>b.team===team);if(base&&Math.hypot(x-base.x,y-base.y)<=175)return true;
+ return state.turrets.some(t=>t.team===team&&t.hp>0&&Math.hypot(x-t.x,y-t.y)<=105);
+}
+
+function stateBaseTooClose(x,y,blueBase,redBase){
+ return [blueBase,redBase].some(b=>Math.hypot(x-b.x,y-b.y)<340);
+}
+function fresh(){
+ const marginY=260;
+ const blueBase={team:0,x:220+Math.random()*W*0.16,y:marginY+Math.random()*(H-2*marginY),hp:1000,max:1000,w:74,h:92};
+ const redBase={team:1,x:W-220-Math.random()*W*0.16,y:marginY+Math.random()*(H-2*marginY),hp:1000,max:1000,w:74,h:92};
+ // Three mine types: ordinary, rich (central objective), and special energy reward.
+ const mines=[];
+ function randomMineSpot(central=false){
+  let x,y,tries=0;
+  do{
+   x=central?W*.5+(Math.random()-.5)*W*.12:180+Math.random()*(W-360);
+   y=central?H*.5+(Math.random()-.5)*H*.18:180+Math.random()*(H-360);
+   tries++;
+  }while(tries<160 && (stateBaseTooClose(x,y,blueBase,redBase)||mines.some(m=>Math.hypot(x-m.x,y-m.y)<380)));
+  return {x,y};
+ }
+ mines.push({...randomMineSpot(),kind:'ordinary',income:3,owner:-1,emptyTime:0,controlTime:0,rewarded:false});
+ mines.push({...randomMineSpot(true),kind:'rich',income:5,owner:-1,emptyTime:0,controlTime:0,rewarded:false});
+ mines.push({...randomMineSpot(),kind:'special',income:3,owner:-1,emptyTime:0,controlTime:0,rewarded:false});
+ state={gold:150,energy:100,enemyGold:150,enemyEnergy:100,units:[],bullets:[],effects:[],turrets:[],farms:[],guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(360*204),enemyFogSeen:new Uint8Array(360*204),enemyMemory:{base:null,targets:[]},aiExploreTarget:null};
+ for(let i=0;i<2;i++){const b=state.bases[i];state.turrets.push({team:i,x:b.x+(i===0?82:-82),y:b.y,hp:230,max:230,cool:0});}
+ gameTime=0;aiTimer=5;incomeTimer=0;nextId=1;selected=null;paused=false;ended=false;camX=0;camY=0;zoom=0.3;
+ $('overlay').classList.remove('show');$('pause').innerHTML='Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';
+ addLog('Trận đấu bắt đầu. Vị trí căn cứ được chọn ngẫu nhiên trong mỗi trận!');
+ updateHUD();
+}
+function addLog(msg){const el=document.createElement('div');el.textContent=msg;$('feed').prepend(el);while($('feed').children.length>12)$('feed').lastChild.remove();}
+function spawn(team,type,x,y){
+ const spec=specs[type], left=team===0;
+ const base=state.bases.find(b=>b.team===team)||{x:left?75:W-75,y:H/2,w:74,h:92};
+ const radius=spec.r||9;
+ // Spawn in a compact formation directly beside the team's actual base.
+ // Search nearby slots in expanding rings; never use a distant fallback.
+ const forward=left?1:-1;
+ const edgeX=base.x+forward*((base.w||74)/2+radius+8);
+ const rowOffset=type==='tank'?-27:(type==='archer'?27:0);
+ const spacing=radius*2+5;
+ const occupied=(ax,ay)=>(
+   state.units.some(u=>Math.hypot(u.x-ax,u.y-ay)<radius+(specs[u.type]?.r||9)+3) ||
+   state.farms.some(f=>Math.hypot(f.x-ax,f.y-ay)<radius+20) ||
+   state.turrets.some(t=>Math.hypot(t.x-ax,t.y-ay)<radius+15) ||
+   state.bases.some(b=>Math.hypot(b.x-ax,b.y-ay)<radius+Math.max(b.w||74,b.h||92)*.42)
+ );
+ let px=edgeX, py=base.y+rowOffset, found=false;
+ // First try a neat 5-column formation beside the base.
+ const sameTypeCount=state.units.filter(u=>u.team===team&&u.type===type).length;
+ const col=sameTypeCount%5, row=Math.floor(sameTypeCount/5);
+ const desiredX=edgeX+forward*row*spacing;
+ const desiredY=base.y+rowOffset+(col-2)*spacing;
+ const prepLocked=(mode==='pvp'||team===0)&&type!=='scout'&&gameTime<120;
+ const inPrepArea=(ax,ay)=>!prepLocked ||
+   (Math.abs(ay-base.y)<=(base.h||92)*.58 && Math.abs(ax-base.x)<=(base.w||74)*.9+radius);
+ if(!occupied(desiredX,desiredY)&&inPrepArea(desiredX,desiredY)){
+   px=desiredX;py=desiredY;found=true;
+ }
+ // If that slot is occupied, search a tight area around the base only.
+ for(let ring=0;ring<10&&!found;ring++){
+   for(let k=0;k<24;k++){
+     const a=k*Math.PI/12;
+     const dist=radius+18+ring*spacing;
+     const ax=edgeX+Math.cos(a)*dist*forward;
+     const ay=base.y+rowOffset+Math.sin(a)*dist;
+     if(Math.hypot(ax-base.x,ay-base.y)>145)continue;
+     if(!inPrepArea(ax,ay)||occupied(ax,ay))continue;
+     px=ax;py=ay;found=true;break;
+   }
+ }
+ // Absolute fallback remains next to the base and avoids overlap by checking a compact grid.
+ if(!found){
+   outer: for(let ring=0;ring<12;ring++){
+     for(let col=0;col<13;col++){
+       const ax=edgeX+forward*ring*spacing;
+       const ay=base.y+(col-6)*spacing;
+       if(Math.hypot(ax-base.x,ay-base.y)>165)continue;
+       if(!inPrepArea(ax,ay)||occupied(ax,ay))continue;
+       px=ax;py=ay;found=true;break outer;
+     }
+   }
+ }
+ state.units.push({id:nextId++,team,type,x:px,y:py,hp:spec.hp,max:spec.hp,attackTimer:Math.random()*.35,order:'hold',target:null,dest:null,selected:false,walk:Math.random()*6});
+}
+function buy(type,team=localTeam()){
+ if(ended||paused||!specs[type])return;const s=specs[type];
+ if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length>=2){addLog('Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.');return;}
+ if(teamGold(team)<s.cost||teamEnergy(team)<s.energy){if(team===localTeam())addLog('Không đủ tài nguyên để tạo '+s.name+'.');return;}
+ setTeamGold(team,teamGold(team)-s.cost);setTeamEnergy(team,teamEnergy(team)-s.energy);spawn(team,type);if(team===localTeam())addLog('Đã tạo '+s.name+' gần căn cứ.');updateHUD();
+}
+function isTeamAreaExplored(team,x,y){
+ const fog=team===0?state.fogSeen:state.enemyFogSeen;
+ if(!fog||!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||x>=W||y>=H)return false;
+ const cols=360,rows=204,cellW=W/cols,cellH=H/rows;
+ const gx=Math.floor(x/cellW),gy=Math.floor(y/cellH);
+ return gx>=0&&gx<cols&&gy>=0&&gy<rows&&fog[gy*cols+gx]===1;
+}
+// A farm occupies a rectangle (62 x 68 world units). Every sampled part of
+// its footprint must have been explored, and its footprint cannot overlap
+// another structure or unit. The optional farm is ignored while repositioning.
+function farmPlacementValid(team,x,y,ignoreFarm=null){
+ const halfW=31,halfH=34;
+ if(x<halfW+2||x>W-halfW-2||y<halfH+2||y>H-halfH-2)return false;
+ const sampleXs=[];for(let sx=-halfW;sx<=halfW;sx+=8)sampleXs.push(sx);sampleXs.push(halfW);
+ const sampleYs=[];for(let sy=-halfH;sy<=halfH;sy+=8)sampleYs.push(sy);sampleYs.push(halfH);
+ for(const sy of sampleYs){
+  for(const sx of sampleXs){
+   if(!isTeamAreaExplored(team,x+sx,y+sy))return false;
+  }
+ }
+ // Farm-to-farm overlap uses their actual rectangular footprints.
+ for(const f of state.farms){
+  if(f===ignoreFarm||f.hp<=0)continue;
+  if(Math.abs(x-f.x)<halfW+31 && Math.abs(y-f.y)<halfH+34)return false;
+ }
+ // Keep farms clear of both main bases.
+ for(const b of state.bases){
+  if(Math.abs(x-b.x)<halfW+(b.w||74)/2 && Math.abs(y-b.y)<halfH+(b.h||92)/2)return false;
+ }
+ // Turrets are treated as circular structures.
+ for(const t of state.turrets){
+  const qx=Math.max(x-halfW,Math.min(t.x,x+halfW));
+  const qy=Math.max(y-halfH,Math.min(t.y,y+halfH));
+  if(Math.hypot(t.x-qx,t.y-qy)<19)return false;
+ }
+ // Do not place a building on top of a unit either.
+ for(const u of state.units){
+  if(u.hp<=0)continue;
+  const qx=Math.max(x-halfW,Math.min(u.x,x+halfW));
+  const qy=Math.max(y-halfH,Math.min(u.y,y+halfH));
+  if(Math.hypot(u.x-qx,u.y-qy)<(specs[u.type]?.r||9)+2)return false;
+ }
+ return true;
+}
+function findOpenBaseSpot(team, radius=18, kind='building'){
+ const home=state.bases.find(b=>b.team===team); const left=team===0, bx=home?home.x:(left?75:W-75), by=home?home.y:H/2;
+ const occupied=(x,y)=>{
+  if(state.bases.some(b=>Math.hypot(b.x-x,b.y-y)<radius+Math.max(b.w,b.h)*0.42))return true;
+  if(state.units.some(u=>Math.hypot(u.x-x,u.y-y)<radius+(specs[u.type]?.r||9)+5))return true;
+  if(state.farms.some(f=>kind==='farm'?(Math.abs(f.x-x)<62&&Math.abs(f.y-y)<68):Math.hypot(f.x-x,f.y-y)<radius+24))return true;
+  if(state.turrets.some(t=>Math.hypot(t.x-x,t.y-y)<radius+16))return true;
+  return false;
+ };
+ // Search outward from the home base in a compact staging area; never place on top of another object.
+ for(let ring=0;ring<18;ring++){
+  for(let k=0;k<32;k++){
+   const a=k*Math.PI/16, dist=52+ring*13;
+   const x=bx+Math.cos(a)*dist*(left?1:-1), y=by+Math.sin(a)*dist;
+   if((left&&x>bx+185)||(!left&&x<bx-185)||y<by-145||y>by+145)continue;
+   if(!occupied(x,y)&&(kind!=='farm'||farmPlacementValid(team,x,y)))return {x,y};
+  }
+ }
+ // Wider fallback if the base staging area is crowded.
+ for(let gy=-12;gy<=12;gy++)for(let gx=0;gx<=24;gx++){
+  const x=left?bx+45+gx*12:bx-45-gx*12,y=by+gy*12;
+  if(x<20||x>W-20||y<20||y>H-20)continue;
+  if(!occupied(x,y)&&(kind!=='farm'||farmPlacementValid(team,x,y)))return {x,y};
+ }
+ return {x:bx+(left?120:-120),y:by+160};
+}
+function buildFarm(team=localTeam()){
+ if(ended||paused)return;
+ if(teamGold(team)<80){if(team===localTeam())addLog('Không đủ vàng để xây nông trại (80 vàng).');return;}
+ const spot=findOpenBaseSpot(team,25,'farm');
+ if(!spot||!farmPlacementValid(team,spot.x,spot.y)){
+  if(team===localTeam())addLog('Không có chỗ xây hợp lệ: hãy đưa quân mở sương mù và dọn chỗ trống trước.');
+  return;
+ }
+ setTeamGold(team,teamGold(team)-80);
+ const {x,y}=spot;
+ state.farms.push({x,y,hp:180,max:180,team});
+ if(team===localTeam())addLog('Đã xây nông trại: tạo thêm 2 vàng mỗi giây.');updateHUD();
+}
+function buildTurret(team=localTeam()){
+ if(ended||paused)return;if(teamGold(team)<100){if(team===localTeam())addLog('Cần 100 vàng để xây tháp.');return;}
+ if(state.turrets.filter(t=>t.team===team&&t.hp>0).length>=2){if(team===localTeam())addLog('Mỗi phe chỉ được có tối đa 2 tháp canh.');return;}
+ const spot=findOpenBaseSpot(team,17,'turret');
+ const home=state.bases.find(b=>b.team===team);
+ if(home&&Math.hypot(spot.x-home.x,spot.y-home.y)>200){if(team===localTeam())addLog('Tháp canh phải được đặt trong phạm vi 200 đơn vị từ nhà chính.');return;}
+ setTeamGold(team,teamGold(team)-100);
+ state.turrets.push({team,x:spot.x,y:spot.y,hp:230,max:230,cool:.2});if(team===localTeam())addLog('Tháp phòng thủ đã được xây.');updateHUD();
+}
+function commandAttack(team=localTeam(),ids=null){if(ended||paused)return;const wanted=ids?new Set(ids):new Set(state.units.filter(u=>u.team===team&&u.selected).map(u=>u.id));const selectedUnits=state.units.filter(u=>u.team===team&&wanted.has(u.id));const chosen=gameTime<120?selectedUnits.filter(u=>u.type==='scout'):selectedUnits;for(const u of chosen){u.order='attack';u.dest=null;u.target=null;}if(team===localTeam()){if(gameTime<120)addLog(chosen.length?`${chosen.length} trinh sát nhận lệnh tiến ra ngoài căn cứ.`:'Trong 2 phút đầu, chỉ trinh sát được di chuyển/tấn công; hãy chọn trinh sát.');else addLog(chosen.length?`${chosen.length} đơn vị được chọn nhận lệnh tấn công!`:'Chưa chọn quân. Hãy chọn lính trước.');}}
+function updateHUD(){
+ const team=localTeam();$('gold').textContent=Math.floor(teamGold(team));$('energy').textContent=Math.floor(teamEnergy(team));
+ const sec=Math.floor(gameTime);$('time').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+ const ours=state.units.filter(u=>u.team===team);
+ const infantry=ours.filter(u=>u.type==='infantry').length,archers=ours.filter(u=>u.type==='archer').length,scouts=ours.filter(u=>u.type==='scout').length,tanks=ours.filter(u=>u.type==='tank').length,cavalry=ours.filter(u=>u.type==='cavalry').length;
+ $('unitCount').textContent=ours.length;$('unitBreakdown').textContent=`Lính ${infantry} · Cung ${archers} · Trinh sát ${scouts} · Kỵ binh ${cavalry}`;$('tankCount').textContent=tanks;
+ const stats=document.querySelectorAll('.hud .stat');if(stats[3])stats[3].querySelector('small').textContent=team===0?'🪖 Quân xanh':'🪖 Quân đỏ';if(stats[4])stats[4].querySelector('small').textContent=team===0?'🛡️ Xe tăng xanh':'🛡️ Xe tăng đỏ';
+ for(const id of ['scout','infantry','archer','tank','cavalry','farm','turret','attack'])$(id).disabled=paused||ended;
+ $('pause').disabled=ended;
+ $('pause').innerHTML=paused?'▶ Tiếp tục<span>Tiếp tục trận đấu</span>':'Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';
+}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function aiCanSee(x,y){return teamCanSee(1,x,y);}
+function nearestEnemy(u){
+ let best=null,bd=Infinity;
+ for(const v of state.units){
+  if(v.team===u.team)continue;
+  // AI may only acquire a new target if its own vision currently reveals it.
+  if((mode==='pvp'&&!teamCanSee(u.team,v.x,v.y))||(mode==='ai'&&u.team===1&&!aiCanSee(v.x,v.y)))continue;
+  let d=dist(u,v);if(d<bd){bd=d;best=v;}
+ }
+ const base=state.bases[1-u.team];
+ if((mode==='ai'&&u.team===0)||teamCanSee(u.team,base.x,base.y)){let db=Math.hypot(base.x-u.x,base.y-u.y);if(!best||db<bd-20){best=base;bd=db;}}
+ for(const t of state.turrets){if(t.team===u.team||t.hp<=0)continue;if((mode==='pvp'&&!teamCanSee(u.team,t.x,t.y))||(mode==='ai'&&u.team===1&&!aiCanSee(t.x,t.y)))continue;let d=dist(u,t);if(d<bd-15){best=t;bd=d;}}
+ if(u.team===1){for(const f of state.farms){if(f.team===u.team||f.hp<=0||!aiCanSee(f.x,f.y))continue;let d=dist(u,f);if(d<bd-15){best=f;bd=d;}}}
+ return best;
+}
+function unitTargetValid(t,u){return t&&t.hp>0&&((t.team!==undefined&&t.team!==u.team)||t.team===undefined);}
+function hurt(target,damage,team){
+ target.hp-=damage;state.effects.push({x:target.x,y:target.y,life:.18,max:.18,color:team===0?'#73c8ff':'#ff747a'});
+ if(target.hp<=0){
+  if(target===state.bases[0])finish(false);
+  else if(target===state.bases[1])finish(true);
+  else if(target.type){state.units=state.units.filter(u=>u!==target);if(selected===target)selected=null;}
+  else if(state.turrets.includes(target)){state.turrets=state.turrets.filter(t=>t!==target);}
+ }
+}
+function finish(win){if(ended)return;ended=true;$('resultTitle').textContent=win?'🏆 CHIẾN THẮNG!':'💥 THẤT THỦ!';$('resultText').textContent=win?'Bạn đã phá hủy căn cứ địch. Chỉ huy xuất sắc!':'Căn cứ của bạn đã bị phá hủy. Hãy thử chiến thuật khác!';$('overlay').classList.add('show');addLog(win?'Chiến thắng!':'Thất bại!');updateHUD();}
+function update(dt){
+ if(!gameStarted|| (mode==='pvp'&&netRole==='guest') || paused||ended)return;gameTime+=dt;incomeTimer+=dt;aiTimer+=dt;
+ // income, with a bonus for controlling the mine
+ while(incomeTimer>=1){incomeTimer-=1;state.gold+=8;state.energy+=5;state.enemyGold+=8;state.enemyEnergy+=5;
+  state.gold += state.farms.filter(f=>f.team===0&&f.hp>0).length*2;state.enemyGold += state.farms.filter(f=>f.team===1&&f.hp>0).length*2;
+  for(const mine of state.mines){
+   const blue=state.units.filter(u=>u.team===0&&u.hp>0&&Math.hypot(u.x-mine.x,u.y-mine.y)<58).length;
+   const red=state.units.filter(u=>u.team===1&&u.hp>0&&Math.hypot(u.x-mine.x,u.y-mine.y)<58).length;
+   const controller=blue>red?0:red>blue?1:-1;
+   if(controller===-1){mine.emptyTime=(mine.emptyTime||0)+1;mine.controlTime=0;if(mine.emptyTime>=5)mine.owner=-1;}
+   else {mine.emptyTime=0;if(mine.owner!==controller){mine.owner=controller;mine.controlTime=0;mine.rewarded=false;}mine.controlTime=(mine.controlTime||0)+1;
+    if(mine.owner===0)state.gold+=mine.income;else state.enemyGold+=mine.income;
+    if(mine.kind==='special'&&mine.controlTime>=30&&!mine.rewarded){if(mine.owner===0)state.energy+=25;else state.enemyEnergy+=25;mine.rewarded=true;if(mine.owner===localTeam())addLog('Mỏ đặc biệt thưởng +25 năng lượng!');}
+   }
+  }
+ }
+ // AI trains scouts to explore and contest mines before committing to attacks.
+ if(mode==='ai'&&aiTimer>=5){
+  aiTimer=0;
+  const aiScouts=state.units.filter(u=>u.team===1&&u.type==='scout'&&u.hp>0).length;
+  if(aiScouts<2&&state.enemyGold>=40){state.enemyGold-=40;spawn(1,'scout');const scout=state.units[state.units.length-1];scout.order='explore';}
+  else if(state.enemyGold>=250&&state.enemyEnergy>=70&&Math.random()<.14){state.enemyGold-=250;state.enemyEnergy-=70;spawn(1,'cavalry');}
+  else if(state.enemyGold>=125&&state.enemyEnergy>=35&&Math.random()<.42){state.enemyGold-=125;state.enemyEnergy-=35;spawn(1,'tank');}
+  else if(state.enemyGold>=75&&state.enemyEnergy>=15&&Math.random()<.6){state.enemyGold-=75;state.enemyEnergy-=15;spawn(1,'archer');}
+  else if(state.enemyGold>=50){state.enemyGold-=50;spawn(1,'infantry');}
+  if(state.enemyGold>=100&&state.turrets.filter(t=>t.team===1&&t.hp>0).length<2&&Math.random()<.25){state.enemyGold-=100;const base=state.bases[1],n=state.turrets.filter(t=>t.team===1&&t.hp>0).length;state.turrets.push({team:1,x:base.x-90-n*22,y:base.y+(n?55:-55),hp:230,max:230,cool:.5});}
+ }
+ // unit movement and combat
+ for(const u of [...state.units]){
+  if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt*5;u.attackTimer-=dt;
+  if((mode==='pvp'||u.team===0)&&gameTime<120&&u.type!=='scout'){
+    // Keep non-scouts inside the real base perimeter; world map is 3x taller/wider.
+    const home=state.bases.find(b=>b.team===u.team);
+    if(home){
+      const halfW=(home.w||74)*0.62, halfH=(home.h||92)*0.62;
+      u.x=Math.max(home.x-halfW,Math.min(home.x+halfW,u.x));
+      u.y=Math.max(home.y-halfH,Math.min(home.y+halfH,u.y));
+    }
+    u.order='hold';u.dest=null;continue;
+   }
+  let target=nearestEnemy(u);if(!unitTargetValid(target,u))target=null;
+  if(mode==='ai'&&u.team===1&&!target){
+   if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
+    const cols=360,rows=204,cw=W/cols,ch=H/rows;
+    // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell.
+    const mineTargets=state.mines.filter(m=>m.owner!==1).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
+    let candidate=mineTargets.length?{x:mineTargets[0].x,y:mineTargets[0].y}:null;
+    if(!candidate||Math.hypot(candidate.x-u.x,candidate.y-u.y)<70){candidate=null;for(let k=0;k<48;k++){const gx=Math.floor(Math.random()*cols),gy=Math.floor(Math.random()*rows),idx=gy*cols+gx;if(!state.enemyFogSeen[idx]){candidate={x:(gx+.5)*cw,y:(gy+.5)*ch};break;}}}
+    if(!candidate)candidate={x:Math.random()*W,y:45+Math.random()*(H-75)};
+    u.dest=candidate;u.order='explore';
+   }
+   const ed=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);if(ed>5){const step=Math.min(ed,s.speed*dt);u.x+=(u.dest.x-u.x)/ed*step;u.y+=(u.dest.y-u.y)/ed*step;}
+  }
+  if(target){
+   const d=dist(u,target),tr=target.type?specs[target.type]:null;
+   const range=s.range+(tr?tr.r:target.w?35:10);
+   if(d<=range){
+    if(u.attackTimer<=0){u.attackTimer=s.cooldown;
+      if(u.type==='archer'){state.bullets.push({x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2});}
+      else hurt(target,s.damage,u.team);
+    }
+   }else if((u.order==='attack'||(mode==='ai'&&u.team===1))&&(gameTime>=120||u.type==='scout')){
+    const dx=(target.x-u.x)/Math.max(1,d),dy=(target.y-u.y)/Math.max(1,d);
+    u.x+=dx*s.speed*dt;u.y+=dy*s.speed*dt;
+    u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
+   }
+  }
+  // Player units with a move order travel to the clicked point, not a fixed lane.
+  if((mode==='pvp'||u.team===0)&&u.order==='move'&&u.dest){
+   if(gameTime<120&&u.type!=='scout'){u.dest=null;u.order='hold';addLog('Trong 2 phút đầu, chỉ lính trinh sát được rời căn cứ.');continue;}
+   const dd=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);
+   if(dd<5){u.order='hold';u.dest=null;}
+   else{
+    const step=Math.min(dd,s.speed*dt);
+    u.x+=(u.dest.x-u.x)/dd*step;u.y+=(u.dest.y-u.y)/dd*step;
+    u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
+   }
+  }
+ }
+ // bullets track moving target
+ for(const b of [...state.bullets]){
+  if(!b.target||b.target.hp<=0){state.bullets=state.bullets.filter(q=>q!==b);continue;}
+  const d=dist(b,b.target),step=b.speed*dt;
+  if(d<=step+7){hurt(b.target,b.damage,b.team);state.bullets=state.bullets.filter(q=>q!==b);}
+  else{b.x+=(b.target.x-b.x)/d*step;b.y+=(b.target.y-b.y)/d*step;b.life-=dt;if(b.life<=0)state.bullets=state.bullets.filter(q=>q!==b);}
+ }
+ // turret shots
+ for(const t of state.turrets){t.cool-=dt;if(t.hp<=0)continue;
+  let target=null,bd=190;
+  for(const u of state.units){if(u.team===t.team)continue;if((mode==='pvp'&&!teamCanSee(t.team,u.x,u.y))||(mode==='ai'&&t.team===1&&!aiCanSee(u.x,u.y)))continue;const d=dist(t,u);if(d<bd){bd=d;target=u;}}
+  if(target&&t.cool<=0){t.cool=1.0;state.bullets.push({x:t.x,y:t.y-8,target,damage:17,team:t.team,speed:320,life:1.2});}
+ }
+ // Neutral monsters guarding the gold mines attack nearby player units.
+ for(const g of state.guards){
+  if(g.hp<=0)continue;g.timer-=dt;
+  let target=state.units.filter(u=>u.team===0&&u.hp>0&&Math.hypot(u.x-g.x,u.y-g.y)<g.aggro).sort((a,b)=>Math.hypot(a.x-g.x,a.y-g.y)-Math.hypot(b.x-g.x,b.y-g.y))[0];
+  if(target){
+   const d=Math.hypot(target.x-g.x,target.y-g.y);
+   if(d>g.range){g.x+=(target.x-g.x)/d*g.speed*dt;g.y+=(target.y-g.y)/d*g.speed*dt;}
+   else if(g.timer<=0){target.hp-=g.damage;g.timer=g.cooldown;state.effects.push({x:target.x,y:target.y,life:.18,max:.18,color:'#ff9f43'});}
+  }else{
+   const d=Math.hypot(g.homeX-g.x,g.homeY-g.y);
+   if(d>3){g.x+=(g.homeX-g.x)/d*g.speed*dt;g.y+=(g.homeY-g.y)/d*g.speed*dt;}
+  }
+ }
+ state.guards=state.guards.filter(g=>g.hp>0);
+ // Fog of war: explored terrain stays visible, while enemy units only render in currently revealed areas.
+ const cols=360,rows=204,cellW=W/cols,cellH=H/rows;
+ for(const u of state.units){if(u.team!==0)continue;const radius=u.type==='tank'?150:(u.type==='archer'?130:105);
+  const minX=Math.max(0,Math.floor((u.x-radius)/cellW)),maxX=Math.min(cols-1,Math.ceil((u.x+radius)/cellW));
+  const minY=Math.max(0,Math.floor((u.y-radius)/cellH)),maxY=Math.min(rows-1,Math.ceil((u.y+radius)/cellH));
+  for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){const px=(gx+.5)*cellW,py=(gy+.5)*cellH;if(Math.hypot(px-u.x,py-u.y)<=radius)state.fogSeen[gy*cols+gx]=1;}
+ }
+ // AI has its own independent vision map and stale memory of sightings.
+ const aiSources=[...state.units.filter(u=>u.team===1&&u.hp>0).map(u=>({x:u.x,y:u.y,r:u.type==='scout'?145:(u.type==='tank'?120:105)})),{x:state.bases[1].x,y:state.bases[1].y,r:160}];
+ for(const source of aiSources){
+  const minX=Math.max(0,Math.floor((source.x-source.r)/cellW)),maxX=Math.min(cols-1,Math.ceil((source.x+source.r)/cellW));
+  const minY=Math.max(0,Math.floor((source.y-source.r)/cellH)),maxY=Math.min(rows-1,Math.ceil((source.y+source.r)/cellH));
+  for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){const px=(gx+.5)*cellW,py=(gy+.5)*cellH;if(Math.hypot(px-source.x,py-source.y)<=source.r)state.enemyFogSeen[gy*cols+gx]=1;}
+ }
+ const blueBase=state.bases[0];if(aiCanSee(blueBase.x,blueBase.y))state.enemyMemory.base={x:blueBase.x,y:blueBase.y,age:0};
+ for(const u of state.units){if(u.team===0&&aiCanSee(u.x,u.y)){const old=state.enemyMemory.targets.find(m=>m.id===u.id);if(old){old.x=u.x;old.y=u.y;old.age=0;}else state.enemyMemory.targets.push({id:u.id,x:u.x,y:u.y,age:0});}}
+ for(const m of state.enemyMemory.targets)m.age+=dt;state.enemyMemory.targets=state.enemyMemory.targets.filter(m=>m.age<90);
+ if(state.enemyMemory.base)state.enemyMemory.base.age+=dt;
+ // Friendly base provides local vision; turrets defend but do not reveal fog.
+ for(const source of [{x:state.bases[0].x,y:state.bases[0].y,r:175}]){
+  const minX=Math.max(0,Math.floor((source.x-source.r)/cellW)),maxX=Math.min(cols-1,Math.ceil((source.x+source.r)/cellW));
+  const minY=Math.max(0,Math.floor((source.y-source.r)/cellH)),maxY=Math.min(rows-1,Math.ceil((source.y+source.r)/cellH));
+  for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){const px=(gx+.5)*cellW,py=(gy+.5)*cellH;if(Math.hypot(px-source.x,py-source.y)<=source.r)state.fogSeen[gy*cols+gx]=1;}
+ }
+ for(const e of state.effects)e.life-=dt;state.effects=state.effects.filter(e=>e.life>0);
+ updateHUD();
+}
+function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
+function bar(x,y,w,h,hp,max,team){
+ ctx.fillStyle='#111827';ctx.fillRect(x,y,w,h);ctx.fillStyle=team===0?'#4baeff':'#ff626b';ctx.fillRect(x+1,y+1,(w-2)*Math.max(0,hp/max),h-2);ctx.strokeStyle='#e9f2ff66';ctx.strokeRect(x,y,w,h);
+}
+function teamPalette(team){
+ return team===0?{main:'#258fe0',light:'#8bd5ff',deep:'#145b9a',shadow:'#103e68',trim:'#d8f2ff',glow:'#58b8ff'}:{main:'#eb5260',light:'#ffabb0',deep:'#a92e41',shadow:'#6d2030',trim:'#ffe4e5',glow:'#ff6974'};
+}
+function pill(x,y,w,h,r,fill,stroke,line=2){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=line;ctx.stroke();}}
+function drawBase(b){
+ const blue=b.team===0,p=teamPalette(b.team),x=b.x,y=b.y,w=b.w,h=b.h;
+ // Bright toy-like command base with layered ground platform.
+ ctx.save();
+ ctx.fillStyle='#244b2d38';ctx.beginPath();ctx.ellipse(x+5,y+15,w*.78,h*.66,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#b9d48b';ctx.beginPath();ctx.ellipse(x,y+7,w*.78,h*.64,0,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#e5f3b0';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y+5,w*.78,h*.64,0,0,Math.PI*2);ctx.stroke();
+ // side service buildings
+ pill(x-w*.48,y-h*.18,w*.28,h*.42,7,p.deep,p.trim,2);
+ pill(x+w*.20,y-h*.18,w*.28,h*.42,7,p.deep,p.trim,2);
+ pill(x-w*.42,y-h*.15,w*.16,h*.09,3,p.light,null);
+ pill(x+w*.26,y-h*.15,w*.16,h*.09,3,p.light,null);
+ // main HQ building: shadow, wall, bright roof and beveled highlight
+ pill(x-w*.40+3,y-h*.36+7,w*.80,h*.74,12,p.shadow,'#122b3d',3);
+ pill(x-w*.40,y-h*.39,w*.80,h*.72,12,p.main,p.trim,3);
+ pill(x-w*.31,y-h*.32,w*.62,h*.20,7,p.light,p.deep,2);
+ ctx.fillStyle='#ffffff70';ctx.beginPath();ctx.roundRect(x-w*.29,y-h*.30,w*.58,h*.045,3);ctx.fill();
+ // rooftop panels
+ pill(x-w*.25,y-h*.04,w*.50,h*.22,6,p.deep,p.shadow,2);
+ for(let i=0;i<3;i++){pill(x-w*.19+i*w*.18,y-h*.015,w*.12,h*.10,3,i===1?'#fff0c4':p.light,'#effaff',1);}
+ // reinforced entrance
+ pill(x-11,y+h*.16,22,h*.18,5,'#18364c','#d8efff',2);
+ ctx.fillStyle='#e4f6ff';ctx.fillRect(x-2,y+h*.19,4,h*.13);
+ // antenna and team flag
+ ctx.strokeStyle='#f5fbff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y-h*.38);ctx.lineTo(x,y-h*.67);ctx.stroke();
+ ctx.fillStyle=blue?'#57bdff':'#ff6876';ctx.beginPath();ctx.moveTo(x+1,y-h*.66);ctx.lineTo(x+26,y-h*.57);ctx.lineTo(x+1,y-h*.49);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#ffffffaa';ctx.lineWidth=1.5;ctx.stroke();
+ // HP bar and clear team label
+ bar(x-44,y+h/2+12,88,9,b.hp,b.max,b.team);
+ ctx.textAlign='center';ctx.font='900 13px system-ui';ctx.lineWidth=3;ctx.strokeStyle='#173047';ctx.strokeText(blue?'CĂN CỨ XANH':'CĂN CỨ ĐỎ',x,y+h/2+36);ctx.fillStyle='#fff';ctx.fillText(blue?'CĂN CỨ XANH':'CĂN CỨ ĐỎ',x,y+h/2+36);
+ ctx.restore();
+}
+function drawUnit(u){
+ const s=specs[u.type],blue=u.team===0,p=teamPalette(u.team),r=s.r*2;
+ const angle=blue?0:Math.PI;
+ // unit shadow and subtle team-color ground marker
+ ctx.save();ctx.translate(u.x,u.y);
+ ctx.fillStyle='#1b332d38';ctx.beginPath();ctx.ellipse(3,r*.55,r*1.15,r*.60,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=p.glow+'25';ctx.beginPath();ctx.ellipse(0,0,r*1.08,r*.83,0,0,Math.PI*2);ctx.fill();
+ if(u.type==='tank'){
+  ctx.rotate(angle);
+  // chunky tank tracks, segmented treads and armored hull
+  pill(-r*1.05,-r*.72,r*2.10,r*1.44,7,'#273c4b','#101e2a',2.5);
+  pill(-r*.88,-r*.57,r*1.76,r*1.14,5,'#596e79','#b5cad0',1.5);
+  for(let i=0;i<5;i++){
+   ctx.fillStyle=i%2?'#182a36':'#344b58';
+   pill(-r*.95+i*r*.39,-r*.66,r*.22,r*.22,2,ctx.fillStyle,'#708591',1);
+   pill(-r*.95+i*r*.39,r*.45,r*.22,r*.22,2,ctx.fillStyle,'#708591',1);
+  }
+  pill(-r*.60,-r*.43,r*1.2,r*.86,7,p.main,p.trim,2.5);
+  pill(-r*.33,-r*.23,r*.66,r*.46,7,p.light,p.deep,1.5);
+  // turret and forward cannon
+  pill(-r*.20,-r*.14,r*.58,r*.28,5,p.deep,p.trim,1.5);
+  pill(r*.10,-r*.09,r*.78,r*.18,4,'#d8e7ee','#283e4c',1.5);
+  ctx.fillStyle='#fff8';ctx.beginPath();ctx.arc(-r*.15,-r*.27,r*.09,0,Math.PI*2);ctx.fill();
+ }else if(u.type==='cavalry'){
+  ctx.rotate(angle);
+  // Cartoon warhorse: hooves, legs, body, mane and head facing forward.
+  ctx.strokeStyle='#503a2d';ctx.lineWidth=Math.max(2,r*.11);ctx.lineCap='round';
+  for(const [lx,ly,dx,dy] of [[-r*.52,r*.25,-r*.12,r*.72],[-r*.20,r*.27,-r*.28,r*.70],[r*.35,r*.23,r*.25,r*.70],[r*.63,r*.10,r*.72,r*.55]]){
+   ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(dx,dy);ctx.stroke();
+   ctx.fillStyle='#392f2b';ctx.beginPath();ctx.ellipse(dx,dy+1,r*.16,r*.09,0,0,Math.PI*2);ctx.fill();
+  }
+  // body and rump
+  ctx.fillStyle=blue?'#9b6842':'#8c493d';ctx.strokeStyle='#4a3028';ctx.lineWidth=2.2;
+  ctx.beginPath();ctx.ellipse(-r*.05,r*.08,r*.76,r*.43,-.06,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle=blue?'#bf8a5b':'#b96a55';ctx.beginPath();ctx.ellipse(-r*.52,r*.02,r*.28,r*.34,0,0,Math.PI*2);ctx.fill();
+  // neck, head and ears
+  ctx.fillStyle=blue?'#a9744a':'#994f42';ctx.strokeStyle='#4a3028';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(r*.34,-r*.14);ctx.lineTo(r*.54,-r*.66);ctx.lineTo(r*.82,-r*.70);ctx.lineTo(r*.92,-r*.43);ctx.lineTo(r*.62,-r*.23);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(r*.65,-r*.66);ctx.lineTo(r*.62,-r*.88);ctx.lineTo(r*.78,-r*.70);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#33251f';ctx.beginPath();ctx.arc(r*.78,-r*.56,r*.055,0,Math.PI*2);ctx.fill();
+  // mane and tail
+  ctx.strokeStyle='#382b29';ctx.lineWidth=r*.13;ctx.beginPath();ctx.moveTo(r*.42,-r*.54);ctx.quadraticCurveTo(r*.12,-r*.72,r*.17,-r*.28);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-r*.70,-r*.02);ctx.quadraticCurveTo(-r*1.12,-r*.10,-r*.94,r*.28);ctx.stroke();
+  // saddle and rider torso
+  pill(-r*.29,-r*.37,r*.68,r*.44,5,p.deep,p.trim,1.5);
+  pill(-r*.22,-r*.88,r*.52,r*.56,5,p.main,p.trim,2);
+  ctx.fillStyle='#d9b18b';ctx.beginPath();ctx.arc(r*.02,-r*.99,r*.22,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#65452f';ctx.lineWidth=1.5;ctx.stroke();
+  // helmet and forward lance
+  ctx.fillStyle=p.deep;ctx.beginPath();ctx.arc(r*.02,-r*1.02,r*.235,Math.PI,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#e8e2cf';ctx.lineWidth=2.7;ctx.beginPath();ctx.moveTo(r*.28,-r*.51);ctx.lineTo(r*1.20,-r*.77);ctx.stroke();
+  ctx.fillStyle='#f4eee0';ctx.beginPath();ctx.moveTo(r*1.28,-r*.80);ctx.lineTo(r*1.09,-r*.70);ctx.lineTo(r*1.12,-r*.84);ctx.closePath();ctx.fill();
+ }else{
+  ctx.rotate(angle);
+  // rounded backpack / equipment silhouette
+  if(u.type==='scout'){
+   pill(-r*.90,-r*.55,r*.55,r*1.08,4,'#d7e7ce','#527e59',1.4);
+   pill(-r*.76,-r*.40,r*.28,r*.40,3,'#86cc80',null);
+  }
+  // limbs visible as small boot/arm paddles
+  pill(-r*.74,-r*.62,r*.39,r*.44,4,p.deep,'#102c45',1.5);
+  pill(r*.34,-r*.62,r*.39,r*.44,4,p.deep,'#102c45',1.5);
+  pill(-r*.74,r*.22,r*.39,r*.44,4,p.deep,'#102c45',1.5);
+  pill(r*.34,r*.22,r*.39,r*.44,4,p.deep,'#102c45',1.5);
+  // armored torso
+  pill(-r*.65,-r*.72,r*1.30,r*1.45,7,p.main,p.trim,2.2);
+  pill(-r*.39,-r*.48,r*.78,r*.84,5,p.light,p.deep,1.2);
+  // shoulder pads
+  ctx.fillStyle=p.trim;ctx.beginPath();ctx.arc(-r*.58,-r*.40,r*.22,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(r*.58,-r*.40,r*.22,0,Math.PI*2);ctx.fill();
+  // helmet + visor, strongly readable at game zoom
+  ctx.fillStyle=p.deep;ctx.beginPath();ctx.arc(0,-r*.67,r*.48,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=p.light;ctx.beginPath();ctx.arc(0,-r*.72,r*.38,0,Math.PI*2);ctx.fill();
+  pill(r*.06,-r*.81,r*.40,r*.18,3,'#18384d','#d9f4ff',1);
+  if(u.type==='archer'){
+   // bow arc and arrow bundle
+   ctx.strokeStyle='#8b5b32';ctx.lineWidth=3;ctx.beginPath();ctx.arc(r*.70,-r*.04,r*.50,-1.25,1.25);ctx.stroke();
+   ctx.strokeStyle='#f4e0a2';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(r*.56,-r*.47);ctx.lineTo(r*.91,r*.40);ctx.moveTo(r*.42,-r*.25);ctx.lineTo(r*.78,r*.24);ctx.stroke();
+  }else if(u.type==='infantry'){
+   pill(r*.50,-r*.10,r*.55,r*.70,3,'#a6c7d5','#edf9ff',1);
+   ctx.strokeStyle='#eff9ff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(r*.76,-r*.52);ctx.lineTo(r*1.02,r*.42);ctx.stroke();
+  }else{
+   // scout binoculars and small radio pack
+   ctx.fillStyle='#f8e69f';ctx.beginPath();ctx.arc(r*.22,-r*.72,r*.10,0,Math.PI*2);ctx.arc(r*.43,-r*.72,r*.10,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='#dff8e5';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-r*.27,-r*.95);ctx.lineTo(-r*.14,-r*1.26);ctx.stroke();
+  }
+ }
+ ctx.restore();
+ if(selected===u||u.selected){ctx.strokeStyle='#fff4a8';ctx.lineWidth=3;ctx.beginPath();ctx.arc(u.x,u.y,r+7,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#fff4a8';ctx.beginPath();ctx.arc(u.x,u.y+r+9,3,0,Math.PI*2);ctx.fill();}
+ bar(u.x-r-5,u.y-r-15,(r+5)*2,6,u.hp,u.max,u.team);
+}
+let dragSelect=null;
+
+function drawTree(x,y,scale=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+ ctx.fillStyle='#24452b38';ctx.beginPath();ctx.ellipse(5,9,16,8,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#79563b';ctx.fillRect(-3,-5,6,15);
+ const blobs=[[-7,-7,12,'#39844b'],[5,-12,13,'#51a85a'],[-2,-20,10,'#6abf63'],[10,-6,9,'#2f7541']];
+ for(const [bx,by,r,c] of blobs){ctx.fillStyle=c;ctx.beginPath();ctx.arc(bx+1,by+2,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#bce58a';ctx.lineWidth=1.2;ctx.stroke();}
+ ctx.fillStyle='#c4eb87';ctx.beginPath();ctx.arc(-5,-20,4,0,Math.PI*2);ctx.fill();
+ ctx.restore();
+}
+function drawRock(x,y,scale=1){
+ ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+ ctx.fillStyle='#0004';ctx.beginPath();ctx.ellipse(3,7,17,8,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#7f9294';ctx.beginPath();ctx.moveTo(-17,3);ctx.lineTo(-12,-9);ctx.lineTo(-2,-16);ctx.lineTo(10,-11);ctx.lineTo(17,2);ctx.lineTo(10,8);ctx.lineTo(-11,8);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#aab8a8';ctx.beginPath();ctx.moveTo(-12,-7);ctx.lineTo(-2,-16);ctx.lineTo(10,-11);ctx.lineTo(2,-5);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#e1f0d7';ctx.lineWidth=1.8;ctx.stroke();
+ ctx.restore();
+}
+function drawGrassPatch(x,y,rx,ry,color){
+ ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();
+}
+function drawTurret(t){
+ const p=teamPalette(t.team),x=t.x,y=t.y;
+ ctx.save();ctx.fillStyle='#21412f44';ctx.beginPath();ctx.ellipse(x+2,y+8,23,17,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#c6dba2';ctx.beginPath();ctx.arc(x,y+2,21,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e7f6c8';ctx.lineWidth=2;ctx.stroke();
+ ctx.fillStyle='#7f9192';ctx.beginPath();ctx.arc(x,y,17,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e8f8ef';ctx.lineWidth=2;ctx.stroke();
+ ctx.fillStyle=p.main;ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle=p.trim;ctx.stroke();
+ ctx.save();ctx.translate(x,y);ctx.rotate(t.team===0?0:Math.PI);pill(0,-4,23,8,3,'#dcecf2','#354d5d',1.4);ctx.restore();
+ ctx.fillStyle='#fff4be';ctx.beginPath();ctx.arc(x-3,y-4,3,0,Math.PI*2);ctx.fill();bar(x-19,y+24,38,5,t.hp,t.max,t.team);ctx.restore();
+}
+function drawFarm(f){
+ const x=f.x,y=f.y;ctx.save();
+ if(draggingFarm===f){ctx.strokeStyle='#ffe08a';ctx.lineWidth=3;ctx.setLineDash([5,4]);ctx.strokeRect(x-31,y-34,62,68);ctx.setLineDash([]);}
+ ctx.fillStyle='#244b2d35';ctx.beginPath();ctx.ellipse(x+2,y+14,29,15,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#b7d78a';ctx.beginPath();ctx.ellipse(x,y+8,31,17,0,0,Math.PI*2);ctx.fill();
+ // barn body + gabled roof
+ pill(x-20,y-14,40,34,6,'#b76c43','#713d28',2);
+ ctx.fillStyle='#e7aa72';ctx.beginPath();ctx.moveTo(x-25,y-12);ctx.lineTo(x,y-32);ctx.lineTo(x+25,y-12);ctx.closePath();ctx.fill();ctx.strokeStyle='#fff0c4';ctx.lineWidth=2;ctx.stroke();
+ ctx.fillStyle='#773e2d';ctx.beginPath();ctx.moveTo(x-6,y+1);ctx.lineTo(x+6,y+1);ctx.lineTo(x+6,y+20);ctx.lineTo(x-6,y+20);ctx.closePath();ctx.fill();
+ // crops and silo
+ for(let i=0;i<3;i++){ctx.strokeStyle='#3f934f';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-30+i*7,y+9);ctx.lineTo(x-33+i*7,y+19);ctx.stroke();}
+ ctx.fillStyle='#f5d99b';ctx.beginPath();ctx.arc(x+13,y-3,4,0,Math.PI*2);ctx.fill();
+ ctx.font='900 10px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#34533c';ctx.strokeText('NÔNG TRẠI',x,y+32);ctx.fillStyle='#fff';ctx.fillText('NÔNG TRẠI',x,y+32);ctx.restore();
+}
+function draw(){
+ const viewScale=zoom;
+ const offsetX=W*viewScale<VIEW_W?(VIEW_W-W*viewScale)/2:-camX*viewScale;
+ const offsetY=H*viewScale<VIEW_H?(VIEW_H-H*viewScale)/2:-camY*viewScale;
+ ctx.setTransform(1,0,0,1,0,0);
+ ctx.clearRect(0,0,VIEW_W,VIEW_H);
+ ctx.fillStyle='#05070d';ctx.fillRect(0,0,VIEW_W,VIEW_H);
+ ctx.save();
+ ctx.translate(offsetX,offsetY);
+ ctx.scale(viewScale,viewScale);
+ // Rich stylized grass base: layered greens, soft terrain patches and subtle highlights.
+ const ground=ctx.createLinearGradient(0,0,W,H);ground.addColorStop(0,'#8cc978');ground.addColorStop(.48,'#79b967');ground.addColorStop(1,'#68a957');ctx.fillStyle=ground;ctx.fillRect(0,0,W,H);
+ // soft meadow zones and polished terrain highlights
+ for(let i=0;i<36;i++){const x=(i*283+90)%W,y=(i*197+80)%H;ctx.fillStyle=i%2?'#d9ed9c20':'#356d4920';ctx.beginPath();ctx.ellipse(x,y,115+(i%4)*18,48+(i%3)*13,-.22,0,Math.PI*2);ctx.fill();}
+ for(let i=0;i<520;i++){const x=(i*149+17)%W,y=(i*211+29)%H;ctx.strokeStyle=i%3?'#eff9b51c':'#2c71401e';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(i%2?3:-3),y-2-(i%4));ctx.stroke();}
+ for(let i=0;i<190;i++){
+  const x=(i*197+31)%W,y=(i*131+57)%H;
+  drawGrassPatch(x,y,24+(i%5)*8,12+(i%4)*5,i%3===0?'#c0e98b35':i%3===1?'#376d3d22':'#f2f7b31a');
+ }
+ // Gentle rolling hills with shaded rims.
+ for(let i=0;i<28;i++){
+  const x=(i*311+180)%W,y=(i*227+110)%H;
+  const rx=75+(i%4)*24,ry=35+(i%3)*17;
+  ctx.fillStyle='#315e3020';ctx.beginPath();ctx.ellipse(x+8,y+8,rx,ry, -.18,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e0f4a31c';ctx.beginPath();ctx.ellipse(x,y,rx,ry,-.18,0,Math.PI*2);ctx.fill();
+ }
+ // Three distinct formation rows on each side: tanks, melee, then archers at the rear.
+ ctx.save();
+ const bays=[
+  {y:H/2-96,h:42,label:'XE TĂNG'},
+  {y:H/2-40,h:42,label:'LÍNH CẬN CHIẾN'},
+  {y:H/2+16,h:48,label:'CUNG THỦ · HÀNG SAU'}
+ ];
+ for(const b of bays){
+  ctx.globalAlpha=.20;ctx.fillStyle='#8dbbff';ctx.fillRect(108,b.y,124,b.h);
+  ctx.strokeStyle='#c4dcff';ctx.lineWidth=1.4;ctx.setLineDash([5,4]);ctx.strokeRect(108,b.y,124,b.h);
+  ctx.setLineDash([]);ctx.globalAlpha=1;
+  ctx.globalAlpha=.13;ctx.fillStyle='#ff7777';ctx.fillRect(W-232,b.y,124,b.h);
+  ctx.strokeStyle='#ffb0b0';ctx.setLineDash([5,4]);ctx.strokeRect(W-232,b.y,124,b.h);
+ }
+ ctx.restore();
+
+
+ // No central road: terrain stays continuous so the opponent's position is not revealed by a route.
+ // Clusters of cartoon trees, shrubs and boulders provide landmarks and natural cover.
+ for(let i=0;i<220;i++){
+  const x=(i*173+47)%W,y=(i*127+33)%H;
+  if(x<95||x>W-95)continue;
+  if(i%5===0)drawRock(x,y,.45+(i%3)*.12);
+  else if(i%4===0)drawTree(x,y,.55+(i%4)*.1);
+  else {
+   ctx.fillStyle=i%2?'#2d653f':'#3c7545';ctx.beginPath();ctx.ellipse(x,y,5+(i%4),3+(i%3),-.25,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#8db85a88';ctx.beginPath();ctx.arc(x-2,y-2,2,0,Math.PI*2);ctx.fill();
+  }
+ }
+ // A few forest groves frame the play area without blocking the main route.
+ for(let grove=0;grove<16;grove++){
+  const gx=(grove*421+260)%W,gy=(grove%2===0?H*.22:H*.78);
+  for(let k=0;k<7;k++)drawTree(gx+(k%3)*25-22,gy+Math.floor(k/3)*23-12,.72+(k%2)*.12);
+ }
+ // Once a mine is discovered, keep its location visible on explored terrain.
+ // Unexplored mines remain hidden by fog; current vision is not required after discovery.
+ for(const m of state.mines){
+  if(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y))continue;
+  // Colorful collectible mine with stacked stones, gold crystals and a team-control ring.
+  const mineTeam=m.owner===0?teamPalette(0):m.owner===1?teamPalette(1):null;
+  ctx.fillStyle='#29472d40';ctx.beginPath();ctx.ellipse(m.x+3,m.y+15,35,17,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=mineTeam?mineTeam.glow+'55':'#d5e3bf';ctx.beginPath();ctx.ellipse(m.x,m.y+3,35,23,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#85978a';ctx.beginPath();ctx.moveTo(m.x-30,m.y+7);ctx.lineTo(m.x-24,m.y-12);ctx.lineTo(m.x-11,m.y-24);ctx.lineTo(m.x+7,m.y-25);ctx.lineTo(m.x+25,m.y-10);ctx.lineTo(m.x+31,m.y+7);ctx.lineTo(m.x+17,m.y+16);ctx.lineTo(m.x-19,m.y+16);ctx.closePath();ctx.fill();ctx.strokeStyle='#e0e9c9';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#bac9b0';ctx.beginPath();ctx.moveTo(m.x-20,m.y-11);ctx.lineTo(m.x-10,m.y-21);ctx.lineTo(m.x+4,m.y-21);ctx.lineTo(m.x-3,m.y-8);ctx.closePath();ctx.fill();
+  const crystal=m.kind==='rich'?'#ffe16d':m.kind==='special'?'#c8a1ff':'#ffca5e';
+  for(let i=0;i<5;i++){const cx=m.x-12+i*6,cy=m.y-6+(i%2)*6;ctx.fillStyle='#9a6d22';ctx.beginPath();ctx.moveTo(cx-3,cy+4);ctx.lineTo(cx-2,cy-3);ctx.lineTo(cx,cy-7);ctx.lineTo(cx+3,cy-2);ctx.lineTo(cx+3,cy+4);ctx.closePath();ctx.fill();ctx.fillStyle=crystal;ctx.beginPath();ctx.moveTo(cx-2,cy+3);ctx.lineTo(cx-1,cy-3);ctx.lineTo(cx,cy-6);ctx.lineTo(cx+2,cy-2);ctx.lineTo(cx+2,cy+3);ctx.closePath();ctx.fill();}
+  if(m.kind==='special'){ctx.strokeStyle='#d6bdff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(m.x,m.y-1,39,0,Math.PI*2);ctx.stroke();}
+  const labelColor=m.owner===0?'#1764a4':m.owner===1?'#a52d3a':'#42564a';ctx.font='900 11px system-ui';ctx.textAlign='center';const mineLabel=m.kind==='rich'?'MỎ GIÀU +5':m.kind==='special'?'MỎ ĐẶC BIỆT +3':'MỎ THƯỜNG +3';ctx.lineWidth=3;ctx.strokeStyle='#f1f8da';ctx.strokeText((m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+mineLabel,m.x,m.y+34);ctx.fillStyle=labelColor;ctx.fillText((m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+mineLabel,m.x,m.y+34);
+ }
+ // Bases and turret attack ranges. Turrets have a 190-world-unit firing radius.
+ // Show friendly range as a soft blue circle so the player can position towers tactically.
+ for(const t of state.turrets){
+  if(t.team!==localTeam()||t.hp<=0)continue;
+  ctx.save();
+  ctx.beginPath();ctx.arc(t.x,t.y,190,0,Math.PI*2);
+  ctx.fillStyle='rgba(76,166,255,0.10)';ctx.fill();
+  ctx.strokeStyle='rgba(106,190,255,0.78)';ctx.lineWidth=2;ctx.setLineDash([9,6]);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
+ }
+ state.bases.filter(b=>b.team===localTeam()||currentlyVisible(b.x,b.y)).forEach(drawBase);
+ for(const t of state.turrets){if(t.team!==localTeam()&&!currentlyVisible(t.x,t.y))continue;drawTurret(t);}
+ // Farms and mine guardians
+ for(const f of state.farms)drawFarm(f);
+ for(const g of state.guards){if(g.hp<=0||!currentlyVisible(g.x,g.y))continue;ctx.fillStyle='#24412f45';ctx.beginPath();ctx.ellipse(g.x+2,g.y+8,14,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d4ba9';ctx.beginPath();ctx.arc(g.x,g.y,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#eed8ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#f9ecff';ctx.beginPath();ctx.arc(g.x-3,g.y-2,2.2,0,Math.PI*2);ctx.arc(g.x+3,g.y-2,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#26152f';ctx.fillRect(g.x-11,g.y-16,22,4);ctx.fillStyle='#ef5350';ctx.fillRect(g.x-10,g.y-15,20*Math.max(0,g.hp/g.max),2); }
+  // units and projectiles
+ state.units.forEach(u=>{if(u.team===localTeam()||currentlyVisible(u.x,u.y))drawUnit(u);});
+ for(const b of state.bullets){ctx.strokeStyle=b.team===0?'#a8e2ff':'#ffadb0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-5,b.y+3);ctx.stroke();}
+ for(const e of state.effects){ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;}
+ // selection rectangle
+ if(dragSelect){const x=Math.min(dragSelect.x,dragSelect.cx),y=Math.min(dragSelect.y,dragSelect.cy),w=Math.abs(dragSelect.cx-dragSelect.x),h=Math.abs(dragSelect.cy-dragSelect.y);ctx.fillStyle='#69b9ff22';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#8bd0ff';ctx.setLineDash([6,4]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);}
+ // Fog of war overlay: unrevealed cells are dark; previously explored cells remain dim.
+ const cols=360,rows=204,cellW=W/cols,cellH=H/rows;
+ const localFog=localTeam()===0?state.fogSeen:state.enemyFogSeen;
+ // Render only fog cells inside the viewport; this keeps the larger map responsive.
+ const worldLeft=Math.max(0,(-offsetX)/viewScale),worldTop=Math.max(0,(-offsetY)/viewScale);
+ const worldRight=Math.min(W,(VIEW_W-offsetX)/viewScale),worldBottom=Math.min(H,(VIEW_H-offsetY)/viewScale);
+ const minGX=Math.max(0,Math.floor(worldLeft/cellW)-1),maxGX=Math.min(cols-1,Math.ceil(worldRight/cellW)+1);
+ const minGY=Math.max(0,Math.floor(worldTop/cellH)-1),maxGY=Math.min(rows-1,Math.ceil(worldBottom/cellH)+1);
+ for(let gy=minGY;gy<=maxGY;gy++)for(let gx=minGX;gx<=maxGX;gx++){
+  if(!localFog[gy*cols+gx]){ctx.fillStyle='rgba(5,10,20,.91)';ctx.fillRect(gx*cellW,gy*cellH,cellW+0.5,cellH+0.5);}
+ }
+ // Hide enemy forces and enemy structures when their location is not currently visible.
+ function currentlyVisible(x,y){return teamCanSee(localTeam(),x,y);}
+ // bottom battlefield hints
+ ctx.textAlign='left';ctx.font='12px system-ui';ctx.fillStyle='#efffea99';ctx.fillText('CHIẾN TRƯỜNG 01',16,22);
+ ctx.textAlign='right';ctx.fillStyle='#efffea99';ctx.fillText(gameTime<120?'GIAI ĐOẠN TRINH SÁT · '+Math.ceil(120-gameTime)+' GIÂY':'TẤN CÔNG ĐÃ MỞ KHÓA',W-16,22);
+ ctx.restore();
+}
+function loop(ts){if(!last)last=ts;let dt=Math.min((ts-last)/1000,.05);last=ts;update(dt);if(mode==='pvp'&&netRole==='host'&&gameStarted){snapshotClock+=dt;if(snapshotClock>=.18){snapshotClock=0;sendSnapshot();}}draw();requestAnimationFrame(loop);}
+$('modeAI').onclick=startAIMode;
+$('modeFriends').onclick=()=>{showFriendPanel();setNetStatus('Chọn tạo phòng mới hoặc nhập mã phòng.');};
+$('modeBack').onclick=()=>{if(peer||conn)destroyPeer();$('roomWaiting').classList.remove('show');$('friendActions').style.display='block';$('createRoom').disabled=false;$('joinRoom').disabled=false;showModeHome();};
+$('createRoom').onclick=createRoom;$('joinRoom').onclick=joinRoom;
+$('copyRoomCode').onclick=()=>{const code=$('roomCode').textContent; if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(()=>setNetStatus('Đã sao chép mã phòng: '+code)).catch(()=>setNetStatus('Mã phòng: '+code));else setNetStatus('Mã phòng: '+code);};
+$('copyRoomLink').onclick=()=>{const url=window._miniWarInviteUrl||window.location.href;if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url).then(()=>setNetStatus('Đã sao chép link mời.')).catch(()=>setNetStatus('Link mời: '+url));else setNetStatus('Link mời: '+url);};
+const roomFromUrl=new URLSearchParams(window.location.search).get('room');if(roomFromUrl){showFriendPanel();$('roomInput').value=roomFromUrl.toUpperCase();setNetStatus('Link mời được phát hiện. Bấm “Tham gia phòng” để kết nối.');}
+
+$('scout').onclick=()=>requestAction('buy',{unit:'scout'});$('infantry').onclick=()=>requestAction('buy',{unit:'infantry'});$('archer').onclick=()=>requestAction('buy',{unit:'archer'});$('tank').onclick=()=>requestAction('buy',{unit:'tank'});$('cavalry').onclick=()=>requestAction('buy',{unit:'cavalry'});$('farm').onclick=()=>requestAction('farm');$('turret').onclick=()=>requestAction('turret');$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
+$('pause').onclick=()=>{if(ended)return;if(mode==='pvp'&&netRole==='guest'){requestAction('pause',{paused:!paused});return;}paused=!paused;$('pause').innerHTML=paused?'▶ Tiếp tục<span>Tiếp tục trận đấu</span>':'Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';addLog(paused?'Đã tạm dừng trận đấu.':'Trận đấu tiếp tục.');updateHUD();};
+$('overlayRestart').onclick=()=>{if(mode==='pvp'){addLog('Muốn chơi trận mới, hãy tạo phòng mới hoặc tải lại trang.');return;} $('feed').innerHTML='';fresh();};
+function canvasPos(e){
+ const rect=canvas.getBoundingClientRect();
+ const ox=W*zoom<VIEW_W?(VIEW_W-W*zoom)/2:-camX*zoom;
+ const oy=H*zoom<VIEW_H?(VIEW_H-H*zoom)/2:-camY*zoom;
+ return {x:((e.clientX-rect.left)*VIEW_W/rect.width-ox)/zoom,y:((e.clientY-rect.top)*VIEW_H/rect.height-oy)/zoom};
+}
+let selectingBox=false,boxStart=null,boxPointerId=null,guiding=false,draggingTurret=null;
+
+ canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const px=(e.clientX-rect.left)*VIEW_W/rect.width;
+  const py=(e.clientY-rect.top)*VIEW_H/rect.height;
+  const ox=W*zoom<VIEW_W?(VIEW_W-W*zoom)/2:-camX*zoom;
+  const oy=H*zoom<VIEW_H?(VIEW_H-H*zoom)/2:-camY*zoom;
+  const wx=(px-ox)/zoom, wy=(py-oy)/zoom;
+  zoom=Math.max(0.12,Math.min(1.25,zoom*(e.deltaY<0?1.15:1/1.15)));
+  if(W*zoom>=VIEW_W)camX=wx-px/zoom;else camX=0;
+  if(H*zoom>=VIEW_H)camY=wy-py/zoom;else camY=0;
+  camX=Math.max(0,Math.min(W-VIEW_W/zoom,camX));camY=Math.max(0,Math.min(H-VIEW_H/zoom,camY));
+ },{passive:false});
+ let panning=false,panPointerId=null,panStart=null,panCamStart=null,justPanned=false,panMoved=false;
+ canvas.addEventListener('pointerdown',e=>{
+  const pos=canvasPos(e);
+  const hitUnit=(state?.units||[]).some(u=>u.hp>0 && u.team===localTeam() && Math.hypot(u.x-pos.x,u.y-pos.y)<Math.max(22,(specs[u.type]?.r||8)*2+8));
+  const hitBuilding=(state?.turrets||[]).some(t=>t.team===localTeam()&&Math.hypot(t.x-pos.x,t.y-pos.y)<20) || (state?.farms||[]).some(f=>f.team===localTeam()&&Math.abs(pos.x-f.x)<=28&&Math.abs(pos.y-f.y)<=34);
+  const canPan=e.button===1||e.button===2||e.pointerType==='touch';
+  if(canPan){
+   panning=true;panPointerId=e.pointerId;panStart={x:e.clientX,y:e.clientY};panCamStart={x:camX,y:camY};panMoved=false;
+   canvas.setPointerCapture?.(e.pointerId);canvas.style.cursor='grabbing';canvas.style.touchAction='none';e.preventDefault();
+  }
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(!panning||panPointerId!==e.pointerId)return;
+  if(Math.hypot(e.clientX-panStart.x,e.clientY-panStart.y)>4)panMoved=true;
+  const rect=canvas.getBoundingClientRect(),sx=VIEW_W/rect.width,sy=VIEW_H/rect.height;
+  camX=panCamStart.x-(e.clientX-panStart.x)*sx/zoom;
+  camY=panCamStart.y-(e.clientY-panStart.y)*sy/zoom;
+  camX=Math.max(0,Math.min(W-VIEW_W/zoom,camX));camY=Math.max(0,Math.min(H-VIEW_H/zoom,camY));
+ });
+ function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});selected=null;}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
+ canvas.addEventListener('pointerup',stopPan);canvas.addEventListener('pointercancel',stopPan);
+ window.addEventListener('keydown',e=>{
+  const step=(e.shiftKey?360:180)/zoom;
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','_'].includes(e.key)){e.preventDefault();
+   if(e.key==='+'||e.key==='=')zoom=Math.max(.12,zoom/1.15);
+   if(e.key==='-'||e.key==='_')zoom=Math.min(1.25,zoom*1.15);
+   if(e.key==='ArrowLeft')camX-=step;if(e.key==='ArrowRight')camX+=step;
+   if(e.key==='ArrowUp')camY-=step;if(e.key==='ArrowDown')camY+=step;
+   camX=Math.max(0,Math.min(W-VIEW_W/zoom,camX));camY=Math.max(0,Math.min(H-VIEW_H/zoom,camY));
+  }
+ });
+canvas.addEventListener('click',e=>{
+ if(selectingBox)return;
+ const {x,y}=canvasPos(e);
+ let hit=null;for(const u of state.units){if(u.team===localTeam()&&Math.hypot(u.x-x,u.y-y)<specs[u.type].r*2+9)hit=u;}
+ if(hit){
+  for(const u of state.units)u.selected=false;localSelectedIds.clear();
+  hit.selected=true;localSelectedIds.add(hit.id);selected=hit;addLog('Đã chọn '+specs[hit.type].name+'. Giữ Shift hoặc kéo khung để chọn nhiều lính.');
+ }else if(selected){
+  requestAction('move',{ids:[selected.id],x,y});addLog('Đã đặt điểm đến cho đơn vị.');selected=null;
+ }
+});
+canvas.style.touchAction='none';
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{
+ if(e.button!==0)return;
+ const pos=canvasPos(e);
+ if(e.button===0){
+  // Farms take priority over unit selection: drag a farm by grabbing its visible body.
+  // Turrets can be picked up and repositioned by dragging their body.
+  const turretHit=state.turrets.find(t=>t.team===localTeam()&&Math.hypot(t.x-pos.x,t.y-pos.y)<22);
+  if(turretHit){draggingTurret=turretHit;canvas.setPointerCapture?.(e.pointerId);e.preventDefault();return;}
+  const farmHit=state.farms.find(f=>f.team===localTeam()&&Math.abs(pos.x-f.x)<=28&&Math.abs(pos.y-f.y)<=34);
+  if(farmHit){draggingFarm=farmHit;canvas.setPointerCapture?.(e.pointerId);e.preventDefault();return;}
+  // Units cannot be dragged; click to select and right-click to move.
+  const unitHit=state.units.find(u=>u.team===localTeam()&&u.hp>0&&Math.hypot(u.x-pos.x,u.y-pos.y)<specs[u.type].r*2+9);
+  // Drag on open ground to box-select multiple friendly units.
+  if(!unitHit){
+   selectingBox=true;boxPointerId=e.pointerId;boxStart=pos;dragSelect={x:pos.x,y:pos.y,cx:pos.x,cy:pos.y};
+   canvas.setPointerCapture?.(e.pointerId);
+  }else if(e.shiftKey){
+   const hit=state.units.find(u=>u.team===localTeam()&&Math.hypot(u.x-pos.x,u.y-pos.y)<specs[u.type].r*2+9);
+   if(hit){hit.selected=!hit.selected;if(hit.selected)localSelectedIds.add(hit.id);else localSelectedIds.delete(hit.id);selected=hit.selected?hit:null;}
+   e.preventDefault();
+  }
+ }
+ // Right mouse drag pans the map. A right click without dragging orders selected units to move.
+});
+canvas.addEventListener('pointermove',e=>{
+ const pos=canvasPos(e);
+ if(draggingTurret){
+  // Keep towers on the explored map and away from overlapping friendly units/buildings.
+  const nx=Math.max(25,Math.min(W-25,pos.x)),ny=Math.max(35,Math.min(H-35,pos.y));
+  const home=state.bases.find(b=>b.team===localTeam());
+  const outsideBaseRange=home&&Math.hypot(home.x-nx,home.y-ny)>200;
+  const blocked=outsideBaseRange||state.bases.some(b=>Math.hypot(b.x-nx,b.y-ny)<65)||
+   state.units.some(u=>Math.hypot(u.x-nx,u.y-ny)<(specs[u.type]?.r||9)+16)||
+   state.farms.some(f=>Math.hypot(f.x-nx,f.y-ny)<35)||
+   state.turrets.some(t=>t!==draggingTurret&&Math.hypot(t.x-nx,t.y-ny)<34);
+  if(!blocked){draggingTurret.x=nx;draggingTurret.y=ny;}
+  return;
+ }
+ if(draggingFarm){
+  const nx=Math.max(33,Math.min(W-33,pos.x)),ny=Math.max(36,Math.min(H-36,pos.y));
+  if(farmPlacementValid(localTeam(),nx,ny,draggingFarm)){draggingFarm.x=nx;draggingFarm.y=ny;}
+  return;
+ }
+ if(selectingBox&&boxPointerId===e.pointerId&&dragSelect){dragSelect.cx=pos.x;dragSelect.cy=pos.y;}
+ if(guiding){
+  for(const u of state.units)if(u.team===localTeam()&&u.selected){u.dest={x:Math.max(25,Math.min(W-25,pos.x)),y:Math.max(45,Math.min(H-30,pos.y))};u.order='move';}
+ }
+});
+function endPointer(e){
+ if(draggingTurret){if(mode==='pvp'&&netRole==='guest'){const index=state.turrets.filter(t=>t.team===localTeam()).indexOf(draggingTurret);requestAction('moveTurret',{index,x:draggingTurret.x,y:draggingTurret.y});}draggingTurret=null;if(window._miniWarQueuedSnapshot){applySnapshot(window._miniWarQueuedSnapshot);window._miniWarQueuedSnapshot=null;}return;}
+ if(draggingFarm){if(mode==='pvp'&&netRole==='guest'){const index=state.farms.filter(f=>f.team===localTeam()).indexOf(draggingFarm);requestAction('moveFarm',{index,x:draggingFarm.x,y:draggingFarm.y});}draggingFarm=null;if(window._miniWarQueuedSnapshot){applySnapshot(window._miniWarQueuedSnapshot);window._miniWarQueuedSnapshot=null;}return;}
+ if(selectingBox&&boxPointerId===e.pointerId&&dragSelect){
+  const x1=Math.min(dragSelect.x,dragSelect.cx),x2=Math.max(dragSelect.x,dragSelect.cx);
+  const y1=Math.min(dragSelect.y,dragSelect.cy),y2=Math.max(dragSelect.y,dragSelect.cy);
+  if(Math.abs(x2-x1)+Math.abs(y2-y1)>8){
+   for(const u of state.units){if(u.team===localTeam()){u.selected=u.x>=x1&&u.x<=x2&&u.y>=y1&&u.y<=y2;if(u.selected)localSelectedIds.add(u.id);else localSelectedIds.delete(u.id);}}
+   selected=null;
+   addLog(`${state.units.filter(u=>u.team===localTeam()&&u.selected).length} lính được chọn.`);
+  }
+ }
+ selectingBox=false;boxStart=null;boxPointerId=null;dragSelect=null;guiding=false;
+}
+canvas.addEventListener('pointerup',endPointer);
+canvas.addEventListener('pointercancel',endPointer);
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();$('pause').click();}if(e.key.toLowerCase()==='a')requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});});
+fresh();gameStarted=false;requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html><style>
+/* One-screen command layout on desktop: keep battlefield and controls visible together. */
+@media (min-width: 900px) and (min-height: 650px){
+ html,body{height:100%;min-height:0;overflow:hidden}
+ .wrap{width:100%;max-width:none;height:100vh;min-height:0;padding:8px 12px;display:grid;grid-template-rows:auto minmax(180px,1fr) auto auto auto;gap:6px;overflow:hidden}
+ .top{margin:0;padding:8px 12px;gap:8px;border-radius:12px;min-height:0}
+ h1{font-size:clamp(18px,1.7vw,25px)}.sub{font-size:10px;margin-top:1px}
+ .hud{gap:6px;flex-wrap:nowrap}
+ .stat{min-width:72px;padding:5px 8px;border-radius:8px}
+ .stat small{font-size:8px}.stat b{font-size:16px}.stat small:last-child{font-size:8px}
+ .gamebox{min-height:0;height:100%;border-radius:11px}
+ canvas{width:100%;height:100%;aspect-ratio:auto}
+ .legend{margin:0;padding:5px 9px;gap:12px;font-size:9px;border-radius:8px}
+ .controls{margin:0;padding:6px;gap:6px;border-radius:10px;grid-template-columns:repeat(8,minmax(0,1fr))}
+ .controls:before{font-size:8px;padding:0 2px}
+ .btn{min-height:0;padding:6px 7px;font-size:11px;border-radius:8px}
+ .btn span{font-size:9px;line-height:1.2;margin-top:2px}
+ .lower{margin:0;gap:6px;grid-template-columns:1fr 1.5fr;min-height:0}
+ .card{padding:6px 9px;border-radius:9px;min-height:0}
+ .card h3{font-size:10px;margin:0 0 3px;padding-bottom:3px}
+ .card p{font-size:9px;line-height:1.25;margin:2px 0}
+ .feed{height:38px;font-size:9px;line-height:1.25;overflow:hidden}
+ .feed div{padding:1px 0}
+ .tip{margin:0;padding:4px 8px;font-size:9px;line-height:1.25;border-radius:8px}
+}
+@media (max-width:899px), (max-height:649px){
+ .wrap{padding:10px}
+}
+</style>

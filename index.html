@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mini War — Storybook Command</title>
+
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+
+<div id="modeScreen" class="mode-screen">
+  <section class="mode-panel" aria-live="polite">
+    <div id="modeHome">
+      <div style="font-size:12px;font-weight:900;letter-spacing:.18em;color:#72c3ff;margin-bottom:10px">MINI WAR · CHỌN CHẾ ĐỘ</div>
+      <h2>⚔️ Bạn muốn chơi kiểu nào?</h2>
+      <p class="intro">Chọn đấu với AI như hiện tại hoặc tạo phòng riêng để solo 1 đấu 1 với bạn bè.</p>
+      <div class="mode-options">
+        <button class="mode-choice" id="modeAI"><strong>🤖 Chơi với AI</strong><span>Chế độ hiện tại, chiến đấu với máy. Không cần kết nối Internet.</span></button>
+        <button class="mode-choice friend" id="modeFriends"><strong>👥 Solo với bạn bè</strong><span>Tạo phòng riêng, gửi mã hoặc link mời để chơi 1 đấu 1 qua Internet.</span></button>
+      </div>
+      <p class="mode-note">Chế độ chơi với bạn bè cần mở game từ một địa chỉ web (ví dụ GitHub Pages), không chỉ mở file trên máy. Cần Internet để kết nối.</p>
+    </div>
+    <div id="friendPanel" class="lobby">
+      <button class="mode-back" id="modeBack">← Quay lại chọn chế độ</button>
+      <h2>👥 Solo với bạn bè</h2>
+      <p class="intro">Tạo phòng để làm chủ phòng, hoặc nhập mã do bạn bè gửi.</p>
+      <div id="friendActions">
+        <div class="mode-actions"><button class="btn primary" id="createRoom">＋ Tạo phòng mới</button></div>
+        <label for="roomInput" style="display:block;margin-top:18px;font-size:13px;color:#b7cbe0">Mã phòng của bạn bè</label>
+        <input class="mode-field" id="roomInput" maxlength="8" inputmode="text" autocomplete="off" placeholder="Ví dụ: A7K2Q9">
+        <div class="mode-actions"><button class="btn" id="joinRoom">Tham gia phòng</button></div>
+      </div>
+      <div id="roomWaiting" class="lobby">
+        <p style="margin:16px 0 6px;color:#bed0e1;text-align:center">Gửi mã này cho bạn của bạn</p>
+        <div id="roomCode" class="room-code">------</div>
+        <div class="mode-actions"><button class="btn primary" id="copyRoomLink">⧉ Sao chép link mời</button><button class="btn" id="copyRoomCode">Sao chép mã</button></div>
+      </div>
+      <div class="mode-status" id="netStatus">Chưa kết nối.</div>
+      <p class="mode-note">Chủ phòng nên giữ tab này mở trong suốt trận. Kết nối P2P phụ thuộc vào mạng hai người; một số mạng có thể chặn kết nối trực tiếp.</p>
+    </div>
+  </section>
+</div>
+
+<div class="wrap" id="gameApp">
+  <div class="top">
+    <div><h1>⚔️ MINI WAR <span style="color:#6fbaff">: CAPTURE THE BASE</span></h1><div class="sub" id="modeStatus">Bản demo chiến thuật · Chưa bắt đầu</div></div>
+    <button class="toggle-panel" id="toggleSideHud" type="button" aria-label="Thu gọn bảng điều khiển">▣</button>
+    <div class="hud">
+      <div class="stat"><small>🪙 Vàng</small><b id="gold">150</b></div>
+      <div class="stat"><small>⚡ Năng lượng</small><b id="energy">100</b></div>
+      <div class="stat"><small>⏱ Thời gian</small><b id="time">00:00</b><small id="deployTimer">Mở khóa xuất quân sau 02:00</small></div>
+      <div class="stat"><small>🪖 Quân xanh</small><b id="unitCount">0</b><small id="unitBreakdown">Lính 0 · Cung 0 · Trinh sát 0 · Kỵ binh 0</small></div>
+      <div class="stat"><small>�️ Lính giáo</small><b id="spearmanCount">0</b></div>
+    </div>
+  </div>
+  <div class="gamebox">
+    <canvas id="game" width="960" height="540" tabindex="0" aria-label="Chiến trường Mini War — nhấp vào bản đồ để dùng phím mũi tên và dấu cộng/trừ"></canvas>
+  
+ 
+    <div class="sideHud">
+<div class="controls">
+    <button class="btn primary" id="scout">🔭 Trinh sát<span>40 vàng · đi trước 2 phút</span></button>
+    <button class="btn primary" id="infantry">🪖 Tạo lính<span>50 vàng</span></button>
+    <button class="btn primary" id="archer">🏹 Tạo cung thủ<span>75 vàng · 15 năng lượng</span></button>
+    <button class="btn primary" id="spearman">🗡️ Tạo lính giáo<span>110 vàng · 25 năng lượng</span></button>
+    <button class="btn primary" id="cavalry">🐎 Tạo lính kỵ binh<span>250 vàng · 70 năng lượng</span></button>
+    <button class="btn" id="farm">🌾 Xây nông trại<span>80 vàng · +2 vàng/giây · không giới hạn</span></button>
+    <button class="btn" id="turret">🏰 Nâng cấp pháo đài<span>100 vàng · tích hợp pháo thứ hai</span></button>
+    <button class="btn warn" id="attack">⚔️ Tấn công<span>Ra lệnh tiến quân</span></button>
+    <button class="btn" id="pause">Ⅱ Tạm dừng<span>Dừng / tiếp tục</span></button>
+    <button class="btn" id="fullscreen">⛶ Toàn màn hình<span>Mở rộng game</span></button>
+  </div>
+<div class="legend">
+    <span><i class="dot" style="background:#4aaaff"></i>Quân xanh của bạn</span>
+    <span><i class="dot" style="background:#ff626b"></i>Quân đỏ của máy</span>
+    <span>⛏ 3 mỏ vàng ngẫu nhiên mỗi trận: chiếm mỏ để tăng thu nhập</span>
+  </div>
+<div class="lower">
+    <div class="card"><h3>📜 Nhật ký chiến trường</h3><div class="feed" id="feed"><div>Chào chỉ huy! Hãy tạo quân rồi nhấn Tấn công.</div><div>Chiếm các mỏ vàng rải khắp bản đồ để tăng tốc độ kiếm tài nguyên.</div></div></div>
+    <div class="card"><h3>🎯 Mục tiêu & hướng dẫn</h3><p>• Phá hủy căn cứ đỏ để chiến thắng; bảo vệ căn cứ xanh.</p><p>• Nông trại giá 80 vàng tạo +2 vàng/giây (hoàn vốn sau 40 giây), không giới hạn số nông trại; pháo đài tích hợp tối đa 2 khẩu pháo mỗi bên. Quân mới tập kết tại sân riêng cạnh pháo đài. Bấm “Xây nông trại”, chọn vị trí xanh trên vùng đã khám phá rồi nhấp trái để đặt; nhấp phải hoặc Escape để hủy. Không thể xây trên nước, đá hoặc chồng lên công trình/đơn vị; có thể kéo nông trại đã xây bằng chuột trái. Quân đỏ có thể tấn công và phá hủy nông trại; tiêu diệt chúng trước khi chiếm mỏ. Trinh sát là quân duy nhất được ra ngoài trong 2 phút đầu.</p><p>• Quân sẽ tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> chỉ ra lệnh cho nhóm đang chọn.</p><p>• AI mức vừa: tự tích lũy, tạo quân và định kỳ tổ chức tấn công.</p></div>
+  </div>
+<div class="tip">Bản đồ chiến trường rộng gấp đôi phiên bản trước · Lăn con lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ. Mẹo: đừng chỉ tạo một loại quân — phối hợp lính, cung thủ, lính giáo và kỵ binh để vượt qua phòng thủ.</div>
+  </div>
+    <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div>
+  </div>
+  
+ 
+  
+</div>
+
+</body>
+</html>
+

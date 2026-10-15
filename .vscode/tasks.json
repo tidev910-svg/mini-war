@@ -1,0 +1,408 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Prepare Spearman Atlas",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"cd /d D:\\game && if not exist \"backup\\spearman-asset-20261014\" mkdir \"backup\\spearman-asset-20261014\" && copy /Y \"public\\assets\\spearman-spritesheet.svg\" \"backup\\spearman-asset-20261014\\spearman-spritesheet.svg\" && dir \"public\\assets\" && copy /Y \"public\\assets\\spearman-reference.png.png\" \"public\\assets\\spearman-spritesheet.png\" && dir \"public\\assets\" && echo READY"
+			],
+			"options": {
+				"cwd": "D:\\game"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"cd /d D:\\game && npm.cmd run build"
+			],
+			"options": {
+				"cwd": "D:\\game"
+			},
+			"problemMatcher": "$tsc",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Analyze Spearman atlas",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"python -c \"from PIL import Image; import numpy as np; img=Image.open('D:/game/public/assets/spearman-reference.png.png').convert('RGBA'); arr=np.array(img); alpha=arr[:,:,3]; ys=np.where(np.any(alpha>10,axis=1))[0]; xs=np.where(np.any(alpha>10,axis=0))[0]; print('size', img.size); print('bbox', (xs.min(), ys.min(), xs.max(), ys.max())); rows=[]; for y in range(img.height): if np.any(alpha[y]>10): rows.append(y); print('row count', len(rows)); prev=None; start=None; for y in rows: if start is None: start=y; prev=y; continue; if y!=prev+1: print('range', start, prev); start=y; prev=y; if start is not None: print('range', start, prev)\""
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Analyze Spearman atlas",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"where py && py -c \"from PIL import Image; import numpy as np; img=Image.open('D:/game/public/assets/spearman-reference.png.png').convert('RGBA'); arr=np.array(img); alpha=arr[:,:,3]; ys=np.where(np.any(alpha>10,axis=1))[0]; xs=np.where(np.any(alpha>10,axis=0))[0]; print('size', img.size); print('bbox', (xs.min(), ys.min(), xs.max(), ys.max())); rows=[]; for y in range(img.height):\n if np.any(alpha[y]>10): rows.append(y)\nprint('row count', len(rows));\nprev=None; start=None;\nfor y in rows:\n if start is None: start=y; prev=y; continue\n if y != prev+1:\n  print('range', start, prev)\n  start=y; prev=y\n else: prev=y\nif start is not None: print('range', start, prev)\""
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Backup spearman assets",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"cd /d D:\\game && if not exist \"backup\\spearman-asset-20261014\" mkdir \"backup\\spearman-asset-20261014\" && copy /Y \"public\\assets\\spearman-reference.png.png\" \"backup\\spearman-asset-20261014\\spearman-reference.png.png\" && copy /Y \"public\\assets\\spearman-spritesheet.svg\" \"backup\\spearman-asset-20261014\\spearman-spritesheet.svg\" && echo BACKUP_OK"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"cd /d D:\\game && npm.cmd run build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Backup Spearman reference",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"copy \"D:\\game\\public\\assets\\spearman-reference.png.png\" \"D:\\game\\backup\\spearman-asset-20261014\\spearman-reference.png.png\" && copy \"D:\\game\\public\\assets\\spearman-spritesheet.svg\" \"D:\\game\\backup\\spearman-asset-20261014\\spearman-spritesheet.svg\" && dir \"D:\\game\\backup\\spearman-asset-20261014\""
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Check Python runtime",
+			"type": "shell",
+			"command": "cmd /d /c \"where py && py -3 --version\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Check Python runtime",
+			"type": "shell",
+			"command": "cmd /d /c \"py -3 --version ; where py\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Check Python command",
+			"type": "shell",
+			"command": "cmd /d /c \"where py\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Check Python command 2",
+			"type": "shell",
+			"command": "cmd /d /c \"where python\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Analyze spearman sheet",
+			"type": "shell",
+			"command": "cmd /d /c \"python d:\\game\\tools\\analyze_spearman.py\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Find Python install",
+			"type": "shell",
+			"command": "cmd /d /c \"dir /b C:\\Users\\Pc\\AppData\\Local\\Programs\\Python\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "List app dirs",
+			"type": "shell",
+			"command": "cmd /d /c \"dir /b %USERPROFILE%\\AppData\\Local\\Programs\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Check Node runtime",
+			"type": "shell",
+			"command": "cmd /d /c \"node -v\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Install image processing dependency",
+			"type": "shell",
+			"command": "cmd /d /c \"npm install sharp --save-dev\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Install sharp with legacy deps",
+			"type": "shell",
+			"command": "cmd /d /c \"npm install sharp --save-dev --legacy-peer-deps\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Check pnpm",
+			"type": "shell",
+			"command": "cmd /d /c \"pnpm -v\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Copy cut spritesheet into project",
+			"type": "shell",
+			"command": "cmd /d /c \"copy /Y \"\"C:\\Users\\Pc\\Downloads\\spearman-spritesheet-cut.png\"\" \"\"D:\\game\\public\\assets\\spearman-spritesheet-cut.png\"\"\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Copy cut spritesheet into project v2",
+			"type": "shell",
+			"command": "copy /Y \"C:\\Users\\Pc\\Downloads\\spearman-spritesheet-cut.png\" D:\\game\\public\\assets\\spearman-spritesheet-cut.png",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Copy cut spritesheet into project v3",
+			"type": "shell",
+			"command": "Copy-Item -Path \"C:\\Users\\Pc\\Downloads\\spearman-spritesheet-cut.png\" -Destination \"D:\\game\\public\\assets\\spearman-spritesheet-cut.png\" -Force",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cd /d D:\\game ; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cd /d D:\\game ; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cd /d D:\\game ; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Back up Spearman asset",
+			"type": "shell",
+			"command": "Copy-Item -Path \"D:\\game\\public\\assets\\Hiệp sĩ giáo xanh vàng kiêu hùng.png\" -Destination \"D:\\game\\backup\\spearman-asset-20261014\\spearman-bluegold-reference.png\" -Force",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Copy transparent Spearman asset",
+			"type": "shell",
+			"command": "Copy-Item -Path \"C:\\Users\\Pc\\Downloads\\spearman-hero-bluegold-transparent.png\" -Destination \"D:\\game\\public\\assets\\spearman-hero-bluegold-transparent.png\" -Force",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cd /d D:\\game && npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Install transparent Spearman asset",
+			"type": "shell",
+			"command": "Copy-Item -Path \"C:\\Users\\Pc\\Downloads\\spearman-hero-bluegold-alpha.png\" -Destination \"D:\\game\\public\\assets\\spearman-hero-bluegold-transparent.png\" -Force",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cmd /d /c \"cd /d D:\\game && npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cmd /d /c \"cd /d D:\\game && npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cmd /d /c \"cd /d D:\\game && npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Mini War",
+			"type": "shell",
+			"command": "cmd /d /c \"cd /d D:\\game && npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify Mini War build",
+			"type": "shell",
+			"command": "cmd /d /c \"cd /d D:\\game && npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify Mini War build after motion tweak",
+			"type": "shell",
+			"command": "cmd /d /c \"cd /d D:\\game && npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify build in PowerShell",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Confirm build with npm.cmd",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; & \"C:\\Program Files\\nodejs\\npm.cmd\" run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Confirm build with npm.cmd",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; & 'C:\\Program Files\\nodejs\\npm.cmd' run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify build via npm.cmd",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Backup Spearman asset and code",
+			"type": "shell",
+			"command": "cmd /d /c \"if not exist \"D:\\game\\backup\\spearman-frame-pass-20261014\" mkdir \"D:\\game\\backup\\spearman-frame-pass-20261014\" & copy /Y \"D:\\game\\src\\main.ts\" \"D:\\game\\backup\\spearman-frame-pass-20261014\\main.ts\" & copy /Y \"D:\\game\\public\\assets\\spearman-hero-bluegold-transparent.png\" \"D:\\game\\backup\\spearman-frame-pass-20261014\\spearman-hero-bluegold-transparent.png\" & copy /Y \"D:\\game\\public\\assets\\ảnh chuyển động.png\" \"D:\\game\\backup\\spearman-frame-pass-20261014\\ảnh chuyển động.png\"\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "backup"
+		},
+		{
+			"label": "Final Spearman sprite check",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Restore previous Spearman version",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Backup Spearman files and copy motion sheet",
+			"type": "shell",
+			"command": "cmd /d /c \"copy /Y D:\\game\\public\\assets\\spearman-spritesheet-v2.svg D:\\game\\public\\assets\\spearman-motion-sheet.svg && if not exist D:\\game\\backup\\spearman-motion-pass-20261014 mkdir D:\\game\\backup\\spearman-motion-pass-20261014 && copy /Y D:\\game\\src\\main.ts D:\\game\\backup\\spearman-motion-pass-20261014\\main.ts\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "backup"
+		},
+		{
+			"label": "Verify spearman sheet integration",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify spearman motion-sheet integration",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify reverted Spearman version",
+			"type": "shell",
+			"command": "Set-Location 'D:\\game'; npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

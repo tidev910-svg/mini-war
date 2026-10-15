@@ -1,0 +1,296 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Spearman sprite sheet v2">
+  <defs>
+    <style>
+      .shadow { fill: rgba(10, 18, 28, 0.30); }
+      .blue-armor { fill: #2f5ec8; stroke: #163b83; stroke-width: 2; }
+      .blue-cloak { fill: #183d95; stroke: #0d295e; stroke-width: 2; }
+      .red-armor { fill: #8f465c; stroke: #4b1d2d; stroke-width: 2; }
+      .red-cloak { fill: #6f2e47; stroke: #3b1523; stroke-width: 2; }
+      .gold { fill: #edc96f; stroke: #8a6a1d; stroke-width: 1.6; }
+      .steel { fill: #dfe5ee; stroke: #8393a7; stroke-width: 2; }
+      .steel-dark { fill: #7e8998; }
+      .skin { fill: #efd0ab; }
+      .boot { fill: #2d261f; }
+      .shield-blue { fill: #2b62d9; stroke: #e0c25e; stroke-width: 3; }
+      .shield-red { fill: #ac4b5f; stroke: #e0c25e; stroke-width: 3; }
+      .spear { stroke: #e2c58b; stroke-width: 3.5; stroke-linecap: round; }
+      .spear-tip { fill: #f8f0d5; }
+      .cape-blue { fill: #2f5fc9; }
+      .cape-red { fill: #7f3151; }
+      .plume-blue { fill: #5c7af5; }
+      .plume-red { fill: #d97797; }
+    </style>
+  </defs>
+
+  <!-- Blue idle row -->
+  <g transform="translate(0,0)">
+    <g transform="translate(0,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="blue-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-blue" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-blue" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M42 18 L56 44"/>
+      <polygon class="spear-tip" points="56,44 60,43 58,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+    <g transform="translate(64,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="blue-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-blue" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-blue" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M43 18 L57 44"/>
+      <polygon class="spear-tip" points="57,44 61,43 59,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+    <g transform="translate(128,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="blue-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-blue" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-blue" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M41 18 L56 44"/>
+      <polygon class="spear-tip" points="56,44 60,43 58,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+    <g transform="translate(192,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="blue-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-blue" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-blue" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M40 18 L54 44"/>
+      <polygon class="spear-tip" points="54,44 58,43 56,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+  </g>
+
+  <!-- Blue walk row -->
+  <g transform="translate(0,64)">
+    <g transform="translate(0,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="blue-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-blue" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-blue" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M40 18 L58 43"/>
+      <polygon class="spear-tip" points="58,43 62,42 60,47"/>
+      <path class="boot" d="M24 50 L27 50 L26 57 L22 57 Z"/>
+      <path class="boot" d="M38 49 L42 49 L43 55 L37 55 Z"/>
+    </g>
+    <g transform="translate(64,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="blue-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-blue" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-blue" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M41 18 L59 43"/>
+      <polygon class="spear-tip" points="59,43 63,42 61,47"/>
+      <path class="boot" d="M22 50 L25 50 L24 57 L20 57 Z"/>
+      <path class="boot" d="M38 50 L42 50 L43 57 L37 57 Z"/>
+    </g>
+    <g transform="translate(128,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="blue-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-blue" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-blue" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M39 18 L58 43"/>
+      <polygon class="spear-tip" points="58,43 62,42 60,47"/>
+      <path class="boot" d="M23 50 L26 50 L25 57 L21 57 Z"/>
+      <path class="boot" d="M38 49 L41 49 L42 55 L36 55 Z"/>
+    </g>
+    <g transform="translate(192,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="blue-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="blue-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-blue" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-blue" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M41 18 L58 42"/>
+      <polygon class="spear-tip" points="58,42 62,41 60,46"/>
+      <path class="boot" d="M22 50 L25 50 L24 57 L20 57 Z"/>
+      <path class="boot" d="M39 49 L43 49 L44 56 L38 56 Z"/>
+    </g>
+  </g>
+
+  <!-- Red idle row -->
+  <g transform="translate(0,128)">
+    <g transform="translate(0,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="red-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-red" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-red" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M42 18 L56 44"/>
+      <polygon class="spear-tip" points="56,44 60,43 58,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+    <g transform="translate(64,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="red-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-red" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-red" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M43 18 L57 44"/>
+      <polygon class="spear-tip" points="57,44 61,43 59,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+    <g transform="translate(128,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="red-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-red" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-red" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M41 18 L56 44"/>
+      <polygon class="spear-tip" points="56,44 60,43 58,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+    <g transform="translate(192,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 24 L32 16 L44 24 L42 42 L32 49 L22 42 Z"/>
+      <path class="red-armor" d="M16 26 L32 18 L48 26 L47 42 L32 52 L17 42 Z"/>
+      <path class="gold" d="M19 29 L32 23 L45 29 L32 35 Z"/>
+      <path class="steel" d="M22 14 L32 7 L42 14 L40 26 L24 25 Z"/>
+      <circle class="steel-dark" cx="32" cy="12" r="5.2"/>
+      <circle class="skin" cx="32" cy="12" r="3.2"/>
+      <path class="plume-red" d="M28 5 L32 2 L36 5 L33 14 Z"/>
+      <path class="shield-red" d="M9 26 L18 20 L18 38 L9 44 Z"/>
+      <path class="gold" d="M10 27 L17 22 L17 35 L10 40 Z"/>
+      <path class="spear" d="M40 18 L54 44"/>
+      <polygon class="spear-tip" points="54,44 58,43 56,48"/>
+      <path class="boot" d="M25 49 L28 49 L27 56 L23 56 Z"/>
+      <path class="boot" d="M36 49 L39 49 L40 56 L35 56 Z"/>
+    </g>
+  </g>
+
+  <!-- Red walk row -->
+  <g transform="translate(0,192)">
+    <g transform="translate(0,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="red-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-red" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-red" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M40 18 L58 43"/>
+      <polygon class="spear-tip" points="58,43 62,42 60,47"/>
+      <path class="boot" d="M24 50 L27 50 L26 57 L22 57 Z"/>
+      <path class="boot" d="M38 49 L42 49 L43 55 L37 55 Z"/>
+    </g>
+    <g transform="translate(64,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="red-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-red" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-red" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M41 18 L59 43"/>
+      <polygon class="spear-tip" points="59,43 63,42 61,47"/>
+      <path class="boot" d="M22 50 L25 50 L24 57 L20 57 Z"/>
+      <path class="boot" d="M38 50 L42 50 L43 57 L37 57 Z"/>
+    </g>
+    <g transform="translate(128,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="red-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-red" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-red" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M39 18 L58 43"/>
+      <polygon class="spear-tip" points="58,43 62,42 60,47"/>
+      <path class="boot" d="M23 50 L26 50 L25 57 L21 57 Z"/>
+      <path class="boot" d="M38 49 L41 49 L42 55 L36 55 Z"/>
+    </g>
+    <g transform="translate(192,0)">
+      <ellipse class="shadow" cx="32" cy="53" rx="14" ry="5"/>
+      <path class="red-cloak" d="M20 25 L32 17 L44 25 L42 43 L32 50 L22 43 Z"/>
+      <path class="red-armor" d="M16 27 L32 19 L48 27 L46 42 L32 53 L17 42 Z"/>
+      <path class="gold" d="M18 30 L32 24 L46 30 L32 36 Z"/>
+      <path class="steel" d="M22 15 L32 8 L42 15 L40 24 L26 25 Z"/>
+      <circle class="steel-dark" cx="31" cy="13" r="5.2"/>
+      <circle class="skin" cx="31" cy="13" r="3.2"/>
+      <path class="plume-red" d="M27 6 L31 2 L35 6 L32 15 Z"/>
+      <path class="shield-red" d="M10 26 L19 21 L19 39 L10 45 Z"/>
+      <path class="gold" d="M11 27 L18 22 L18 35 L11 40 Z"/>
+      <path class="spear" d="M41 18 L58 42"/>
+      <polygon class="spear-tip" points="58,42 62,41 60,46"/>
+      <path class="boot" d="M22 50 L25 50 L24 57 L20 57 Z"/>
+      <path class="boot" d="M39 49 L43 49 L44 56 L38 56 Z"/>
+    </g>
+  </g>
+</svg>
