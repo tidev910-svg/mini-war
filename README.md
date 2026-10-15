@@ -2,6 +2,8 @@
 
 Browser-only RTS using Vite, TypeScript, HTML/CSS, and Canvas 2D.
 
+Hướng dẫn tải và chạy dự án (tiếng Việt): [docs/HUONG-DAN-CHAY-DU-AN.md](docs/HUONG-DAN-CHAY-DU-AN.md).
+
 Start with pnpm install followed by pnpm dev. Create a static build with pnpm build and inspect it using pnpm preview.
 
 Project layout:

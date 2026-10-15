@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Bản HTML của HUONG-DAN-CHAY-DU-AN.md. Khi sửa nội dung, sửa cả hai file cho khớp. -->
+<title>Chạy dự án Mini War</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bitter:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky table of contents beside one reading column; each step is a numbered section because the order matters. */
+:root{
+  --bg:#f6f4ee; --surface:#fffdf8; --ink:#1b2433; --muted:#5b6475; --line:#e2dccd;
+  --navy:#1f3352; --gold:#a87b1c; --gold-soft:#f3e7c7; --code-bg:#17202e; --code-ink:#e8edf5;
+  --ok:#2f7a4f; --warn:#a2541a; --warn-soft:#fbe9dc;
+  --font-display:"Bitter",Georgia,"Times New Roman",serif;
+  --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1622; --surface:#161f2e; --ink:#e7ebf2; --muted:#9aa5b8; --line:#28344a;
+  --navy:#9fbbe6; --gold:#e2b754; --gold-soft:#2c2617; --code-bg:#0a0f18; --code-ink:#e8edf5;
+  --ok:#6fcf97; --warn:#f0a36b; --warn-soft:#2e2118; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1622; --surface:#161f2e; --ink:#e7ebf2; --muted:#9aa5b8; --line:#28344a;
+  --navy:#9fbbe6; --gold:#e2b754; --gold-soft:#2c2617; --code-bg:#0a0f18; --code-ink:#e8edf5;
+  --ok:#6fcf97; --warn:#f0a36b; --warn-soft:#2e2118; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+a{color:var(--navy);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+code{font-family:var(--font-mono);font-size:.88em;background:var(--gold-soft);padding:.1em .35em;border-radius:4px;overflow-wrap:anywhere}
+
+.masthead{max-width:1100px;margin:0 auto;padding-block:40px 28px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+h1{font-family:var(--font-display);font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.15;margin:0;color:var(--ink);text-wrap:balance}
+.lede{margin:0;max-width:62ch;color:var(--muted);font-size:17px}
+.repo{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-family:var(--font-mono);font-size:14px}
+.repo span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;overflow-wrap:anywhere;min-width:0}
+
+.layout{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;padding-top:32px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:14px}
+.toc p{margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:toc}
+.toc a{display:flex;gap:10px;padding:6px 10px;border-radius:6px;text-decoration:none;color:var(--muted)}
+.toc a::before{counter-increment:toc;content:counter(toc);font-family:var(--font-mono);color:var(--gold);min-width:1ch}
+.toc a:hover,.toc a.active{background:var(--surface);color:var(--ink)}
+
+main{min-width:0;display:grid;gap:56px}
+section{display:grid;gap:16px;scroll-margin-top:24px}
+.step-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--line);padding-bottom:8px}
+.step-no{font-family:var(--font-mono);font-weight:600;color:var(--gold);font-size:15px}
+h2{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,3vw,27px);line-height:1.25;margin:0;text-wrap:balance}
+.when{font-size:13px;color:var(--muted);margin-left:auto;white-space:nowrap}
+h3{font-family:var(--font-display);font-weight:700;font-size:18px;margin:8px 0 0}
+p{margin:0;max-width:68ch}
+ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:68ch}
+
+.cmd{position:relative;background:var(--code-bg);color:var(--code-ink);border-radius:10px;overflow:hidden}
+.cmd pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--font-mono);font-size:14px;line-height:1.7}
+.cmd .c{color:#8c9ab0}
+.cmd button{position:absolute;top:8px;right:8px;font:600 12px var(--font-body);color:var(--code-ink);background:#ffffff14;border:1px solid #ffffff2a;border-radius:6px;padding:5px 10px;cursor:pointer}
+.cmd button:hover{background:#ffffff26}
+.cmd button.done{color:#8ee0b0;border-color:#8ee0b066}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+
+.note{border-left:3px solid var(--gold);background:var(--gold-soft);padding:12px 16px;border-radius:0 8px 8px 0;max-width:72ch}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)}
+.note strong{display:block;margin-bottom:2px}
+
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--font-mono);font-size:13px}
+.flow span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.flow i{font-style:normal;color:var(--gold)}
+
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.links div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.links code{background:none;padding:0;color:var(--navy);font-weight:600}
+.links p{color:var(--muted);font-size:14px;margin-top:4px}
+
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:24px}
+  .toc{position:static}
+  .toc ol{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .when{display:none}
+}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">Mini War · Hướng dẫn cài đặt</div>
+  <h1>Tải và chạy dự án Mini War</h1>
+  <p class="lede">Dành cho người muốn tải dự án từ GitHub về máy và chạy game. Mỗi bước có lệnh sao chép được và chạy ngay trên Windows (PowerShell, Command Prompt hoặc Git Bash).</p>
+  <div class="repo"><span id="repoUrl">https://github.com/tidev910-svg/mini-war</span><a href="https://github.com/tidev910-svg/mini-war">Mở trên GitHub</a></div>
+</header>
+
+<div class="layout">
+  <nav class="toc" aria-label="Mục lục">
+    <p>Các bước</p>
+    <ol>
+      <li><a href="#cai-cong-cu">Cài công cụ</a></li>
+      <li><a href="#clone">Tải dự án lần đầu</a></li>
+      <li><a href="#chay">Cài thư viện và chạy</a></li>
+      <li><a href="#pull">Cập nhật bản mới</a></li>
+      <li><a href="#push">Lưu và gửi thay đổi</a></li>
+      <li><a href="#loi">Gặp lỗi</a></li>
+      <li><a href="#doc-tiep">Đọc tiếp</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="cai-cong-cu">
+      <div class="step-head"><span class="step-no">01</span><h2>Cài công cụ</h2><span class="when">Chỉ làm một lần</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Công cụ</th><th>Dùng để</th><th>Tải về</th><th>Kiểm tra đã cài</th></tr></thead>
+        <tbody>
+          <tr><td>Git</td><td>Tải và cập nhật mã nguồn</td><td><a href="https://git-scm.com/downloads">git-scm.com</a></td><td><code>git --version</code></td></tr>
+          <tr><td>Node.js (bản LTS)</td><td>Chạy server game</td><td><a href="https://nodejs.org">nodejs.org</a></td><td><code>node --version</code></td></tr>
+          <tr><td>pnpm</td><td>Cài thư viện của dự án</td><td>Sau khi có Node.js, chạy <code>npm install -g pnpm</code></td><td><code>pnpm --version</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><strong>Cài xong, đóng terminal rồi mở lại</strong>để Windows nhận các lệnh mới.</div>
+      <p>Lần đầu dùng Git trên máy, khai báo tên và email. Git dùng thông tin này để ghi tên bạn vào commit.</p>
+      <div class="cmd"><pre>git config --global user.name "Tên của bạn"
+git config --global user.email "email@cua-ban.com"</pre></div>
+    </section>
+
+    <section id="clone">
+      <div class="step-head"><span class="step-no">02</span><h2>Tải dự án về lần đầu</h2><span class="when">git clone</span></div>
+      <p>Mở terminal tại thư mục muốn chứa dự án (ví dụ <code>D:\Game</code>), rồi chạy:</p>
+      <div class="cmd"><pre>git clone https://github.com/tidev910-svg/mini-war.git
+cd mini-war</pre></div>
+      <p>Lệnh <code>git clone</code> tạo thư mục <code>mini-war</code> chứa toàn bộ mã nguồn và lịch sử thay đổi.</p>
+      <div class="note"><strong>Kho để chế độ riêng tư (private)?</strong>Bạn cần được chủ kho mời làm cộng tác viên. Khi Git hỏi đăng nhập, cửa sổ đăng nhập GitHub sẽ hiện ra. Nếu đã cài GitHub CLI, có thể chạy <code>gh auth login</code> trước.</div>
+    </section>
+
+    <section id="chay">
+      <div class="step-head"><span class="step-no">03</span><h2>Cài thư viện và chạy game</h2><span class="when">pnpm</span></div>
+      <p>Trong thư mục dự án:</p>
+      <div class="cmd"><pre>pnpm install
+pnpm dev</pre></div>
+      <p>Rồi mở trình duyệt vào <a href="http://localhost:5173/"><code>http://localhost:5173/</code></a>.</p>
+      <ul class="plain">
+        <li><code>pnpm install</code> chỉ cần chạy lần đầu, và chạy lại mỗi khi <code>package.json</code> hoặc <code>pnpm-lock.yaml</code> thay đổi sau một lần pull.</li>
+        <li>Muốn dừng server: bấm <strong>Ctrl+C</strong> trong terminal.</li>
+        <li>Cách nhanh trên Windows: bấm đúp file <code>start-game.bat</code>. Vẫn phải chạy <code>pnpm install</code> một lần trước đó.</li>
+      </ul>
+      <h3>Các lệnh khác</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Lệnh</th><th>Tác dụng</th></tr></thead>
+        <tbody>
+          <tr><td><code>pnpm build</code></td><td>Kiểm tra code và đóng gói game vào thư mục <code>dist/</code></td></tr>
+          <tr><td><code>pnpm preview</code></td><td>Chạy thử bản trong <code>dist/</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><strong>Chơi với bạn bè trong cùng mạng Wi-Fi/LAN</strong>Máy kia mở địa chỉ <em>Network</em> mà terminal in ra sau khi chạy <code>pnpm dev</code> (dạng <code>http://192.168.x.x:5173/</code>). Cả hai máy cần có Internet để kết nối P2P.</div>
+    </section>
+
+    <section id="pull">
+      <div class="step-head"><span class="step-no">04</span><h2>Cập nhật bản mới nhất</h2><span class="when">Mỗi lần bắt đầu làm việc</span></div>
+      <p>Lấy thay đổi mới nhất từ GitHub về:</p>
+      <div class="cmd"><pre>git pull
+pnpm install</pre></div>
+      <p><code>pnpm install</code> ở đây phòng trường hợp có thư viện mới. Nếu không có gì thay đổi, lệnh chạy rất nhanh.</p>
+      <div class="note warn"><strong>Pull báo lỗi vì bạn đang có thay đổi chưa lưu?</strong>Tạm cất thay đổi, pull, rồi lấy lại:</div>
+      <div class="cmd"><pre>git stash
+git pull
+git stash pop</pre></div>
+    </section>
+
+    <section id="push">
+      <div class="step-head"><span class="step-no">05</span><h2>Lưu và gửi thay đổi của bạn</h2><span class="when">commit &amp; push</span></div>
+      <div class="flow" aria-hidden="true"><span>status</span><i>→</i><span>add</span><i>→</i><span>commit</span><i>→</i><span>pull</span><i>→</i><span>push</span></div>
+      <div class="cmd"><pre>git status                      <span class="c"># xem file nào đã thay đổi</span>
+git add -A                      <span class="c"># chọn tất cả thay đổi để lưu</span>
+git commit -m "Mô tả ngắn thay đổi"
+git pull                        <span class="c"># lấy bản mới nhất trước khi gửi, tránh xung đột</span>
+git push                        <span class="c"># gửi lên GitHub</span></pre></div>
+      <h3>Lệnh xem thông tin hay dùng</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Lệnh</th><th>Tác dụng</th></tr></thead>
+        <tbody>
+          <tr><td><code>git status</code></td><td>Trạng thái hiện tại: file nào đã sửa, file nào mới</td></tr>
+          <tr><td><code>git log --oneline -10</code></td><td>10 commit gần nhất</td></tr>
+          <tr><td><code>git diff</code></td><td>Xem chi tiết các dòng đã sửa nhưng chưa commit</td></tr>
+          <tr><td><code>git restore &lt;file&gt;</code></td><td><strong>Bỏ</strong> thay đổi chưa commit của một file. Không lấy lại được.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Làm việc trên nhánh riêng</h3>
+      <p>Nên dùng khi làm tính năng lớn, hoặc khi nhiều người cùng làm.</p>
+      <div class="cmd"><pre>git switch -c ten-tinh-nang     <span class="c"># tạo nhánh mới và chuyển sang</span>
+<span class="c"># ... sửa code, commit ...</span>
+git push -u origin ten-tinh-nang</pre></div>
+      <p>Sau đó vào trang GitHub của kho để tạo Pull Request gộp vào nhánh <code>main</code>.</p>
+    </section>
+
+    <section id="loi">
+      <div class="step-head"><span class="step-no">06</span><h2>Gặp lỗi</h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Hiện tượng</th><th>Cách xử lý</th></tr></thead>
+        <tbody>
+          <tr><td><code>git</code>, <code>node</code> hoặc <code>pnpm</code> “is not recognized”</td><td>Chưa cài, hoặc chưa mở lại terminal sau khi cài</td></tr>
+          <tr><td><code>MODULE_NOT_FOUND</code>, hoặc <code>vite</code> / <code>tsc</code> không chạy</td><td>Chạy lại <code>pnpm install</code>; nếu pnpm hỏi xoá thư mục <code>node_modules</code> thì đồng ý</td></tr>
+          <tr><td>Pull báo <code>CONFLICT</code></td><td>Hai người cùng sửa một chỗ. Mở file bị báo, chọn giữ phần đúng, xoá các dòng <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>, rồi chạy <code>git add -A</code> và <code>git commit</code></td></tr>
+          <tr><td>Push bị từ chối (<code>rejected</code>)</td><td>Trên GitHub có thay đổi mới hơn: chạy <code>git pull</code> rồi <code>git push</code> lại</td></tr>
+          <tr><td>Server tự tắt với lỗi <code>EBUSY</code></td><td>Do chép file vào <code>public/</code> khi server đang chạy. Chạy lại <code>pnpm dev</code></td></tr>
+          <tr><td>Cổng 5173 đang bận</td><td>Vite tự chuyển sang 5174, 5175…; xem địa chỉ in trong terminal</td></tr>
+          <tr><td>Sửa ảnh xong nhưng game vẫn hiện ảnh cũ</td><td>Tải lại trang bằng <strong>Ctrl+F5</strong></td></tr>
+          <tr><td>Không tạo hay vào được phòng chơi với bạn bè</td><td>Kiểm tra Internet; một số mạng công ty hoặc trường học chặn kết nối P2P</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="doc-tiep">
+      <div class="step-head"><span class="step-no">07</span><h2>Đọc tiếp trong thư mục docs/</h2></div>
+      <div class="links">
+        <div><a href="README.md"><code>docs/README.md</code></a><p>Mục lục tài liệu về cơ chế game.</p></div>
+        <div><a href="HUONG-DAN-SU-DUNG.md"><code>docs/HUONG-DAN-SU-DUNG.md</code></a><p>Cách dùng thư mục <code>docs/</code> khi làm việc với Claude Code.</p></div>
+        <div><a href="assets.md"><code>docs/assets.md</code></a><p>Nơi đặt ảnh nhân vật và quy ước đặt tên file.</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// Copy button on every command block; comments (# …) are stripped so the copied text runs as-is.
+document.querySelectorAll('.cmd').forEach(function(block){
+  var pre=block.querySelector('pre'),btn=document.createElement('button');
+  btn.type='button';btn.textContent='Sao chép';btn.setAttribute('aria-label','Sao chép lệnh');
+  btn.addEventListener('click',function(){
+    var text=pre.innerText.split('\n').map(function(l){return l.replace(/\s+#.*$/,'');}).filter(function(l){return l.trim()&&!/^\s*#/.test(l);}).join('\n');
+    function ok(){btn.textContent='Đã chép';btn.classList.add('done');setTimeout(function(){btn.textContent='Sao chép';btn.classList.remove('done');},1600);}
+    function fallback(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Đã chọn, nhấn Ctrl+C';}
+    try{navigator.clipboard.writeText(text).then(ok,fallback);}catch(e){fallback();}
+  });
+  block.appendChild(btn);
+});
+// Highlight the section currently being read in the table of contents.
+var links=[].slice.call(document.querySelectorAll('.toc a'));
+var obs=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id);});}});
+},{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('main section').forEach(function(s){obs.observe(s);});
+</script>
+</body>
+</html>

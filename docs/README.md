@@ -2,6 +2,7 @@
 
 Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính năng, để người và Claude Code đọc đúng phần cần thiết trước khi sửa code. Code trong `src/main.ts` là nguồn đúng cuối cùng; nếu thấy lệch thì sửa tài liệu.
 
+> Tải và chạy dự án: [HUONG-DAN-CHAY-DU-AN.md](HUONG-DAN-CHAY-DU-AN.md).
 > Mới dùng thư mục này? Đọc [HUONG-DAN-SU-DUNG.md](HUONG-DAN-SU-DUNG.md).
 
 ## Đọc gì trước
