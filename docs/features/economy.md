@@ -3,7 +3,7 @@
 > Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
-Bốn tài nguyên: **lúa, gỗ, đá, vàng**. **Không có thu nhập nền**: lúa chỉ đến từ nông trại, gỗ/đá/vàng chỉ đến từ mỏ trong các **vùng đã cắm cờ** (xem [territory.md](territory.md)). Mỗi phe sở hữu sẵn một vùng gỗ gần nhà nên có +30 gỗ/phút ngay từ đầu trận.
+Bốn tài nguyên: **lúa, gỗ, đá, vàng**. **Không có thu nhập nền**: lúa chỉ đến từ nông trại, gỗ/đá/vàng chỉ đến từ mỏ trong các **vùng đã cắm cờ** (xem [territory.md](territory.md)). Mỗi phe sở hữu sẵn vùng nhà (vùng chứa pháo đài, có một mỏ gỗ) nên có +30 gỗ/phút ngay từ đầu trận.
 
 Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **thiếu tiếp tế**. Thiết kế đầy đủ: [resource-system.md](resource-system.md).
 
@@ -23,7 +23,7 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 | `gold` | 15 vàng/phút | MỎ VÀNG +15/PHÚT |
 | mỏ giàu (`rich`) | × 1,5 (`RICH_MINE_MULTIPLIER`), có vòng vàng quanh mỏ | thêm chữ "GIÀU" |
 
-**Mỏ**: mỗi vùng lãnh thổ có đúng một mỏ (28 mỏ khi đủ vùng: 14 gỗ, 6 đá, 8 vàng; vùng gần giữa bản đồ có mỏ giàu). Cách sinh vùng và mỏ: [territory.md](territory.md).
+**Mỏ**: mỗi vùng lãnh thổ có 1–2 mỏ (mỏ chính cùng loại vùng; 40% vùng có thêm mỏ phụ khác loại); vùng gần giữa bản đồ có mỏ chính giàu. Khi chạy thử: 32 mỏ trên 21 vùng. Cách sinh vùng và mỏ: [territory.md](territory.md).
 
 **Lúa duy trì & thiếu tiếp tế** (`updateSupply(team)`, mỗi giây sau khi cộng thu nhập):
 - Mỗi quân còn sống tiêu `specs[type].upkeep` lúa/phút (trinh sát 0,5; lính, lính giáo 1; cung thủ 1,5; kỵ binh 3), kể cả khi đứng yên. Quân trong hàng chờ xuất quân chưa tính.

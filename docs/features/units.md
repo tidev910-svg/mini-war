@@ -29,7 +29,7 @@ Quy tắc mua (`buy()`):
 
 Vị trí xuất quân (`spawn()`):
 - Sân tập kết: `musterYard(base)` — hình chữ nhật 170×144, phía trước pháo đài (bên phải với xanh, bên trái với đỏ).
-- Xếp theo lưới 4 hàng ngang theo số quân cùng loại; nếu ô bận thì dò lưới 7×5 trong sân.
+- Xếp theo lưới 4 hàng ngang theo số quân cùng loại; nếu ô bận thì dò lưới 7×5 trong sân; nếu cả sân bận (quân đứng kín, hoặc sân nằm trên đá/nước) thì dò vòng tròn quanh sân tới 8 vòng, vẫn trong vùng căn cứ khi đang khoá xuất quân.
 - Ô bị coi là bận nếu: ngoài sân, trên nước/đá, đè quân khác, công trình (theo footprint) hay pháo đài. Công trình không được đặt đè sân tập kết. Khi đang khoá xuất quân, quân không phải trinh sát phải nằm trong `BASE_DEPLOYMENT_RADIUS`.
 - `processPendingSpawns()` thử lại hàng chờ mỗi 0.35 giây; quân xuất từ hàng chờ giữ `id` và `order` đã đặt.
 
@@ -55,11 +55,11 @@ Guest gửi `buy` với `{unit}`; host gọi `buy(unit, 1)`.
 ## Kiểm thử thủ công
 - [ ] Mua đủ 5 loại; tiền trừ đúng bảng.
 - [ ] Mua trinh sát thứ 3 → bị từ chối.
-- [ ] Mua liên tục cho kín sân → log "Sân tập kết đã kín", HUD hiện "Chờ N"; dời quân đi → quân trong hàng chờ xuất hiện.
+- [ ] Mua liên tục cho kín sân → quân xuất ra chỗ trống quanh sân; khi cả vùng quanh sân cũng kín → log "Sân tập kết đã kín", HUD hiện "Chờ N"; dời quân đi → quân trong hàng chờ xuất hiện.
+- Đã chạy thử 2026-10-16: chặn toàn bộ sân tập kết bằng đá → lính giáo vẫn xuất hiện cách pháo đài 5,3 ô, không vào hàng chờ.
 - [ ] Lính giáo: ra lệnh đi lên/xuống/trái/phải → hình quay đúng hướng và có hoạt ảnh bước; dừng lại vẫn giữ hướng; đứng cạnh địch thì quay về phía địch. Ở PvP, guest thấy hướng quay giống host.
 - [ ] Thêm loại quân mới: cập nhật `specs`, `unitVisionRadius()`, `unitTargetHeight()`, `drawUnit()`, `updateHUD()`, nút trong `index.html`, AI trong `update()`, và file này.
 
 ## Giới hạn / việc tồn đọng
-- Log giới hạn trinh sát hiện cho cả hai phe (thiếu kiểm tra `team===localTeam()`).
 - Quân di chuyển không kiểm tra nước/đá; chỉ lúc xuất quân mới kiểm tra.
 - Lính thường, cung thủ, trinh sát, kỵ binh chưa có sprite 4 hướng (spritesheet chỉ có hướng xuống).

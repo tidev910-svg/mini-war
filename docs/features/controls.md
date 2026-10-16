@@ -16,7 +16,7 @@
 | Trái vào pháo đài mình | Chọn pháo đài (bỏ chọn quân), hiện vòng tầm pháo |
 | Trái giữ trên nông trại mình | Kéo nông trại ([farms.md](farms.md)) |
 | Trái vào công trình mình (không phải nông trại thì chỉ chọn) | Chọn công trình: vòng nét đứt, log thông tin; nút nâng cấp dùng công trình đang chọn |
-| Bấm nút xây rồi trái trên bản đồ | Đặt công trình ([buildings.md](buildings.md)); phải hoặc Escape để huỷ |
+| Bấm nút xây rồi trái trên bản đồ | Đặt công trình ([buildings.md](buildings.md)); phải hoặc Escape để huỷ. Cột cờ tự hút vào điểm chiếm trong 3 ô; nếu đang chọn quân, quân đó được gửi tới làm thợ xây |
 | Phải nhấp (không kéo) | Ra lệnh `move` cho cả nhóm đang chọn |
 | Giữ phải / giữa rồi kéo; kéo bằng cảm ứng | Di chuyển camera (ngưỡng 4 px mới tính là kéo) |
 | Lăn chuột | Zoom ×1.15 quanh con trỏ |
@@ -25,11 +25,12 @@
 | Phím | Kết quả |
 |---|---|
 | Mũi tên | Kéo camera 180/zoom (Shift: 360/zoom) |
-| `+` / `=` | Zoom **ra** (÷1.15) |
-| `-` / `_` | Zoom **vào** (×1.15) |
+| `+` / `=` | Phóng to (×1.15) |
+| `-` / `_` | Thu nhỏ (÷1.15) |
 | Space | Tạm dừng/tiếp tục |
 | A | Lệnh tấn công cho quân đang chọn |
 | Escape | Huỷ đặt công trình |
+| T | Ẩn/hiện lớp lãnh thổ (không cần focus canvas; bỏ qua khi đang gõ trong ô nhập) |
 
 **Đội hình** (action `move`): quân được xếp lưới vuông `ceil(√n)` cột, khoảng cách 34, tâm lưới là điểm nhấp và được đẩy vào trong nếu sát mép. Toạ độ kẹp trong `[25, W−25] × [45, H−30]`. Khi đang khoá xuất quân, quân có ô đích ngoài vùng căn cứ bị chuyển `hold`.
 
@@ -58,6 +59,5 @@
 - [ ] Phím mũi tên chỉ chạy sau khi nhấp vào canvas.
 
 ## Giới hạn / việc tồn đọng
-- Phím `+` zoom ra và `-` zoom vào: ngược với thói quen thông thường.
 - Biến `guiding` và nhánh sửa `u.dest` trong `pointermove` là code chết (không nơi nào đặt `guiding=true`).
 - Ở host/AI, nhấp trái vùng trống sau khi chọn một quân gửi `move`; với nhóm chọn bằng khung thì phải dùng chuột phải.

@@ -7,7 +7,10 @@ const canvas=document.getElementById('game');
 const gameApp=document.getElementById('gameApp');
 const toggleSideHud=document.getElementById('toggleSideHud');
 const portraitMode=window.matchMedia('(max-width: 720px) and (orientation: portrait)').matches;
-let VIEW_W=canvas.width,VIEW_H=canvas.height,W=VIEW_W*10,H=W,MAP_TILES=256,TILE_SIZE=W/MAP_TILES;
+// The world is a fixed 9600×9600 square (256 tiles of 37.5); only the view and zoom depend on the canvas size,
+// so PvP peers with different screens and a resized window keep identical coordinates.
+const WORLD_SIZE=9600;
+let VIEW_W=canvas.width,VIEW_H=canvas.height,W=WORLD_SIZE,H=W,MAP_TILES=256,TILE_SIZE=W/MAP_TILES;
 let MAP_WORLD_W=W,MAP_WORLD_H=H,MIN_ZOOM=Math.min(VIEW_W/MAP_WORLD_W,VIEW_H/MAP_WORLD_H),DEFAULT_ZOOM=VIEW_W/(TILE_SIZE*64),MAX_ZOOM=VIEW_W/(TILE_SIZE*32);
 const DEPLOYMENT_LOCK_SECONDS=120,BASE_DEPLOYMENT_RADIUS=TILE_SIZE*8;
 let camX=0,camY=0,zoom=DEFAULT_ZOOM;
@@ -18,7 +21,7 @@ function syncWorldMetrics(){
   const dpr=window.devicePixelRatio||1;
   canvas.width=Math.max(540,Math.round(cssWidth*dpr));
   canvas.height=Math.max(320,Math.round(cssHeight*dpr));
-  VIEW_W=canvas.width;VIEW_H=canvas.height;W=VIEW_W*10;H=W;TILE_SIZE=W/MAP_TILES;
+  VIEW_W=canvas.width;VIEW_H=canvas.height;
   MAP_WORLD_W=W;MAP_WORLD_H=H;MIN_ZOOM=Math.min(VIEW_W/MAP_WORLD_W,VIEW_H/MAP_WORLD_H);DEFAULT_ZOOM=VIEW_W/(TILE_SIZE*64);MAX_ZOOM=VIEW_W/(TILE_SIZE*32);
   zoom=Math.max(MIN_ZOOM,Math.min(zoom || DEFAULT_ZOOM,MAX_ZOOM));
   clampCamera();
@@ -147,7 +150,11 @@ const BUILDING_TYPES={
 const OUTPOST={cost:{wood:200,stone:100},buildTime:40,hp:1500,visionTiles:14,gun:{range:160,damage:10,cooldown:1.2}};
 const FARM_LEVELS=[null,{food:20},{food:30,cost:{wood:80,stone:40}},{food:45,cost:{wood:120,stone:80}}],FARM_UPGRADE_SECONDS=15;
 const UNIT_REQUIREMENTS={infantry:'barracks',archer:'archery',cavalry:'stable'};
-const HOME_TERRITORY_TILES=14,HOME_REGION_TILES=5;
+const HOME_TERRITORY_TILES=14;
+// Territory map: ~20 regions (7 wood, 6 stone, 7 gold) plus the two home regions that contain the fortresses.
+const REGION_TARGETS={wood:7,stone:6,gold:7},REGION_MIN_BASE_TILES=22,SECOND_MINE_CHANCE=.4;
+// Flags go on a region's capture point; a flag only builds or upgrades while a friendly unit stands within BUILDER_RADIUS_TILES.
+const CAPTURE_POINT_SNAP_TILES=3,BUILDER_RADIUS_TILES=4;
 // After a flag is finished it still needs FLAG_CAPTURE_SECONDS uncontested to claim its region; no flags this close to the enemy fortress.
 const FLAG_CAPTURE_SECONDS=10,FLAG_ENEMY_BASE_MIN_TILES=20;
 const FORTRESS_GUN_COST={stone:100};
@@ -226,7 +233,7 @@ function startGuestFromSnapshot(packet){
  mode='pvp';netRole='guest';gameStarted=true;hideModeScreen();setGameModeLabel();
  // Drop the fog this browser made for its own pre-lobby map, then reveal the host's real home territories.
  if(state){state.fogSeen=new Uint8Array(MAP_TILES*MAP_TILES);state.enemyFogSeen=new Uint8Array(MAP_TILES*MAP_TILES);}
- applySnapshot(packet);revealHomeTerritory();zoom=DEFAULT_ZOOM;centerCameraOnHome();addLog('Đã vào phòng. Bạn là quân đỏ.');
+ applySnapshot(packet);ensureRegionMap();revealHomeTerritory();zoom=DEFAULT_ZOOM;centerCameraOnHome();addLog('Đã vào phòng. Bạn là quân đỏ.');
 }
 function createRoom(){
  if(peer||conn)destroyPeer();connectionIntent='host';setNetStatus('Đang khởi tạo phòng...');$('createRoom').disabled=true;$('joinRoom').disabled=true;
@@ -293,7 +300,12 @@ function setupConnection(connection,role){
  connection.on('close',()=>{
   if(conn===connection)conn=null;
   if(role==='host'){paused=true;updateHUD();setNetStatus('Đối thủ đã ngắt kết nối. Trận đang tạm dừng. Bạn có thể gửi lại mã phòng để kết nối lại.');addLog('Đối thủ đã rời phòng.');}
-  else{gameStarted=false;showModeScreen();showFriendPanel();setNetStatus('Đã mất kết nối với chủ phòng. Hãy thử tham gia lại.');}
+  else{
+   const lastRoom=roomCode;destroyPeer();gameStarted=false;showModeScreen();showFriendPanel();
+   $('createRoom').disabled=false;$('joinRoom').disabled=false;$('friendActions').style.display='block';$('roomWaiting').classList.remove('show');
+   if(lastRoom)$('roomInput').value=lastRoom;
+   setNetStatus('Đã mất kết nối với chủ phòng. Bấm “Tham gia phòng” để vào lại.');
+  }
  });
  connection.on('error',err=>setNetStatus('Lỗi kết nối: '+(err?.message||err)));
 }
@@ -311,7 +323,7 @@ function applySnapshot(packet){
  const oldFog=state?.fogSeen instanceof Uint8Array&&state.fogSeen.length===MAP_TILES*MAP_TILES?state.fogSeen:new Uint8Array(MAP_TILES*MAP_TILES);
  const oldEnemyFog=state?.enemyFogSeen instanceof Uint8Array&&state.enemyFogSeen.length===MAP_TILES*MAP_TILES?state.enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES);
  const picked=new Set(localSelectedIds),hadFortressSelected=!!selectedFortress,selectedBuildingId=selectedBuilding?.id;
- state=packet.state;state.units=(state.units||[]).map(u=>({...u,type:normalizeUnitType(u.type)}));state.pendingSpawns=(state.pendingSpawns||[]).map(p=>({...p,type:normalizeUnitType(p.type)}));selectedFortress=hadFortressSelected?state.bases.find(b=>b.team===localTeam())||null:null;state.pendingSpawns??=[];state.fogSeen=oldFog;state.enemyFogSeen=oldEnemyFog;
+ state=packet.state;ensureRegionMap();state.units=(state.units||[]).map(u=>({...u,type:normalizeUnitType(u.type)}));state.pendingSpawns=(state.pendingSpawns||[]).map(p=>({...p,type:normalizeUnitType(p.type)}));selectedFortress=hadFortressSelected?state.bases.find(b=>b.team===localTeam())||null:null;state.pendingSpawns??=[];state.fogSeen=oldFog;state.enemyFogSeen=oldEnemyFog;
  gameTime=Number(packet.gameTime)||0;paused=!!packet.paused;ended=!!packet.ended;
  const hostWon=String(packet.resultTitle||'').includes('CHIẾN THẮNG!');
  const localWon=localTeam()===0?hostWon:!hostWon;
@@ -403,38 +415,8 @@ function fresh(){
  const marginY=260;
  const blueBase={team:0,x:220+Math.random()*W*0.16,y:marginY+Math.random()*(H-2*marginY),hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]};
  const redBase={team:1,x:W-220-Math.random()*W*0.16,y:marginY+Math.random()*(H-2*marginY),hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]};
- // Territories: a small wood region near each fortress, plus every forest (wood), rock (stone) and golden field (gold)
- // region of the terrain. Each region holds one mine; a finished flag in the region makes all its mines pay its owner.
- const regions=[],mines=[];
- function homeRegionCenter(base){
-  const forward=base.team===0?1:-1;
-  for(let tries=0;tries<200;tries++){
-   const angle=(Math.random()-.5)*Math.PI*.9,d=TILE_SIZE*(10+Math.random()*4);
-   const x=base.x+Math.cos(angle)*d*forward,y=base.y+Math.sin(angle)*d;
-   if(tilePassable(x,y))return {x,y};
-  }
-  return {x:base.x+forward*TILE_SIZE*12,y:base.y};
- }
- const addRegion=(resource,cx,cy,rx,ry,home=null)=>regions.push({id:regions.length,resource,cx,cy,rx,ry,home,owner:-1});
- // Home regions are owned from the start and cannot be flagged by either side.
- for(const base of [blueBase,redBase]){const c=homeRegionCenter(base);addRegion('wood',c.x,c.y,TILE_SIZE*HOME_REGION_TILES,TILE_SIZE*HOME_REGION_TILES,base.team);regions[regions.length-1].owner=base.team;}
- for(const [list,resource] of [[forestRegions,'wood'],[rockRegions,'stone'],[goldRegions,'gold']])for(const [cx,cy,rx,ry] of list)addRegion(resource,cx*W,cy*H,rx*W*.8,ry*H*.8);
- for(const r of regions){
-  let spot=r.home!==null?{x:r.cx,y:r.cy}:null;
-  // Search near the centre first, then out to the rim: rock regions are mostly impassable stone in the middle.
-  for(let i=0;!spot&&i<240;i++){
-   const a=Math.random()*Math.PI*2,k=Math.sqrt(Math.random())*(i<80?.45:.95),x=r.cx+Math.cos(a)*r.rx*k,y=r.cy+Math.sin(a)*r.ry*k;
-   if(tilePassable(x,y)&&!stateBaseTooClose(x,y,blueBase,redBase)&&!mines.some(m=>Math.hypot(x-m.x,y-m.y)<260))spot={x,y};
-  }
-  if(!spot)continue;
-  const rich=r.home===null&&Math.abs(r.cx/W-.5)<.15&&Math.abs(r.cy/H-.5)<.15;
-  mines.push({...spot,resource:r.resource,rich,regionId:r.id,income:MINE_TYPES[r.resource].perSecond*(rich?RICH_MINE_MULTIPLIER:1),owner:-1});
- }
- // Drop regions where no mine fits (water, rock or too close to a fortress) and renumber so regions[id] stays valid.
- const usable=regions.filter(r=>mines.some(m=>m.regionId===r.id));
- for(const m of mines)m.regionId=usable.findIndex(r=>r.id===m.regionId);
- usable.forEach((r,i)=>{r.id=i;});
- regions.length=0;regions.push(...usable);
+ // Territory regions, their mines and capture points (generateRegions, territory.md).
+ const {regions,mines}=generateRegions(blueBase,redBase);
  state={resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[]};
  buildWorldDecor();revealHomeTerritory();
  gameTime=0;aiTimer=5;incomeTimer=0;nextId=1;lastHudSecond=-1;pendingSpawnRetryTimer=0;selected=null;paused=false;ended=false;camX=0;camY=0;zoom=DEFAULT_ZOOM;
@@ -461,6 +443,10 @@ function spawn(team,type,x,y,queueIfBlocked=true,pendingOrder='hold'){
  let px=yard.x+forward*row*spacing,py=yard.y+(col-1.5)*spacing,found=false;
  if(inPrepArea(px,py)&&!occupied(px,py))found=true;
  if(!found){outer:for(let rowIndex=-3;rowIndex<=3;rowIndex++)for(let colIndex=-2;colIndex<=2;colIndex++){const ax=yard.x+forward*rowIndex*18,ay=yard.y+colIndex*20;if(!inPrepArea(ax,ay)||occupied(ax,ay))continue;px=ax;py=ay;found=true;break outer;}}
+ if(!found){
+  const blocked=(ax,ay)=>terrainBlocked(ax,ay)||state.units.some(u=>Math.hypot(u.x-ax,u.y-ay)<radius+(specs[u.type]?.r||9)+3)||state.buildings.some(b=>Math.abs(b.x-ax)<BUILDING_TYPES[b.kind].halfW+radius&&Math.abs(b.y-ay)<BUILDING_TYPES[b.kind].halfH+radius)||state.bases.some(b=>Math.hypot(b.x-ax,b.y-ay)<radius+Math.max(b.w||74,b.h||92)*.42);
+  around:for(let ring=1;ring<=8;ring++)for(let k=0;k<16;k++){const a=k*Math.PI/8,ax=yard.x+Math.cos(a)*ring*TILE_SIZE*.8,ay=yard.y+Math.sin(a)*ring*TILE_SIZE*.8;if(!inPrepArea(ax,ay)||blocked(ax,ay))continue;px=ax;py=ay;found=true;break around;}
+ }
  if(!found){if(!queueIfBlocked)return null;state.pendingSpawns??=[];state.pendingSpawns.push({id:nextId++,team,type,order:pendingOrder,queuedAt:gameTime});if(team===localTeam())addLog(`Sân tập kết đã kín; ${spec.name} đang chờ chỗ trống.`);return null;}
  const unit={id:nextId++,team,type,x:px,y:py,hp:spec.hp,max:spec.hp,attackTimer:Math.random()*.35,order:'hold',target:null,dest:null,selected:false,walk:Math.random()*6,moving:false};state.units.push(unit);return unit;
 }
@@ -476,7 +462,7 @@ function processPendingSpawns(){
 function buy(type,team=localTeam()){
  if(ended||paused||!Object.hasOwn(specs,type))return;const s=specs[type];
  const required=UNIT_REQUIREMENTS[type];if(required&&!hasBuilding(team,required)){if(team===localTeam())addLog(`Cần xây xong ${BUILDING_TYPES[required].name} để tuyển ${s.name}.`);return;}
- if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length>=2){addLog('Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.');return;}
+ if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length>=2){if(team===localTeam())addLog('Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.');return;}
  if(!canAfford(team,s.cost)){if(team===localTeam())addLog('Không đủ tài nguyên để tạo '+s.name+': thiếu '+missingText(team,s.cost)+'.');return;}
  spend(team,s.cost);const unit=spawn(team,type);if(team===localTeam()&&unit)addLog('Đã tạo '+s.name+' gần căn cứ.');updateHUD();
 }
@@ -487,6 +473,103 @@ function isTeamAreaExplored(team,x,y){
  const gx=Math.floor(x/cellW),gy=Math.floor(y/cellH);
  return gx>=0&&gx<cols&&gy>=0&&gy<rows&&fog[gy*cols+gx]===1;
 }
+// ---- Territory map (docs/features/territory.md) ----
+// regionMap[tile] = region id. Built by a multi-source Dijkstra from each region's seed tile; water and rock cost more
+// to cross, so borders follow rivers and rocky ground. Deterministic from the seeds, so a guest rebuilds the same map.
+let regionMap=null,regionMapKey='',regionEdges=[],regionEdgesByRegion=[],regionTintKey='',showTerritory=true;
+const regionTintCanvas=document.createElement('canvas');regionTintCanvas.width=MAP_TILES;regionTintCanvas.height=MAP_TILES;
+const regionTintCtx=regionTintCanvas.getContext('2d');
+function regionSeedKey(regions){return regions.map(r=>r.sgx+','+r.sgy).join(';');}
+function buildRegionMap(regions){
+ const N=MAP_TILES*MAP_TILES,dist=new Float32Array(N).fill(Infinity),owner=new Int16Array(N).fill(-1),heapD=[],heapI=[];
+ const push=(d,i)=>{let k=heapD.length;heapD.push(d);heapI.push(i);while(k>0){const p=(k-1)>>1;if(heapD[p]<=d)break;heapD[k]=heapD[p];heapI[k]=heapI[p];k=p;}heapD[k]=d;heapI[k]=i;};
+ const pop=()=>{const d=heapD[0],i=heapI[0],ld=heapD.pop(),li=heapI.pop(),n=heapD.length;if(n){let k=0;for(;;){let c=2*k+1;if(c>=n)break;if(c+1<n&&heapD[c+1]<heapD[c])c++;if(heapD[c]>=ld)break;heapD[k]=heapD[c];heapI[k]=heapI[c];k=c;}heapD[k]=ld;heapI[k]=li;}popped=i;return d;};
+ let popped=0;
+ const cost=i=>{const t=terrainType[i];return t===2?6:t===3?3:1;};
+ for(const r of regions){const i=r.sgy*MAP_TILES+r.sgx;if(dist[i]>0){dist[i]=0;owner[i]=r.id;push(0,i);}}
+ while(heapD.length){
+  const d=pop(),i=popped;if(d>dist[i])continue;const x=i%MAP_TILES,y=(i-x)/MAP_TILES;
+  const visit=j=>{const nd=d+cost(j);if(nd<dist[j]){dist[j]=nd;owner[j]=owner[i];push(nd,j);}};
+  if(x>0)visit(i-1);if(x<MAP_TILES-1)visit(i+1);if(y>0)visit(i-MAP_TILES);if(y<MAP_TILES-1)visit(i+MAP_TILES);
+ }
+ regionMap=owner;regionMapKey=regionSeedKey(regions);regionTintKey='';
+ // Border edges in tile units: [x1,y1,x2,y2,regionA,regionB,tileA,tileB].
+ regionEdges=[];regionEdgesByRegion=regions.map(()=>[]);
+ for(let y=0;y<MAP_TILES;y++)for(let x=0;x<MAP_TILES;x++){
+  const i=y*MAP_TILES+x,a=owner[i];
+  if(x<MAP_TILES-1&&owner[i+1]!==a){const e=[x+1,y,x+1,y+1,a,owner[i+1],i,i+1];regionEdges.push(e);regionEdgesByRegion[a]?.push(e);regionEdgesByRegion[owner[i+1]]?.push(e);}
+  if(y<MAP_TILES-1&&owner[i+MAP_TILES]!==a){const e=[x,y+1,x+1,y+1,a,owner[i+MAP_TILES],i,i+MAP_TILES];regionEdges.push(e);regionEdgesByRegion[a]?.push(e);regionEdgesByRegion[owner[i+MAP_TILES]]?.push(e);}
+ }
+}
+// Guests (and any state from a snapshot) rebuild the tile map when the region seeds differ from the cached one.
+function ensureRegionMap(){if(state?.regions&&regionMapKey!==regionSeedKey(state.regions))buildRegionMap(state.regions);}
+function generateRegions(blueBase,redBase){
+ const T=TILE_SIZE,regions=[],mines=[],bases=[blueBase,redBase];
+ const tileOf=v=>Math.max(1,Math.min(MAP_TILES-2,Math.floor(v/T)));
+ const add=(resource,sgx,sgy,home=null)=>regions.push({id:regions.length,resource,sgx,sgy,home,owner:home===null?-1:home,cp:null});
+ for(const b of bases)add('wood',tileOf(b.x),tileOf(b.y),b.team);
+ const candidates=[...forestRegions.map(c=>['wood',c]),...rockRegions.map(c=>['stone',c]),...goldRegions.map(c=>['gold',c])]
+  .map(([resource,[cx,cy]])=>({resource,sgx:tileOf(cx*W),sgy:tileOf(cy*H)}))
+  .filter(c=>bases.every(b=>Math.hypot(c.sgx*T-b.x,c.sgy*T-b.y)>T*REGION_MIN_BASE_TILES))
+  .sort(()=>Math.random()-.5);
+ const want={...REGION_TARGETS};
+ for(const c of candidates)if(want[c.resource]>0){add(c.resource,c.sgx,c.sgy);want[c.resource]--;}
+ buildRegionMap(regions);
+ // Tiles of each region, nearest to the seed first.
+ const tiles=regions.map(()=>[]);for(let i=0;i<regionMap.length;i++)if(regionMap[i]>=0)tiles[regionMap[i]].push(i);
+ regions.forEach((r,k)=>tiles[k].sort((a,b)=>Math.hypot(a%MAP_TILES-r.sgx,(a-a%MAP_TILES)/MAP_TILES-r.sgy)-Math.hypot(b%MAP_TILES-r.sgx,(b-b%MAP_TILES)/MAP_TILES-r.sgy)));
+ const at=i=>({x:(i%MAP_TILES+.5)*T,y:((i-i%MAP_TILES)/MAP_TILES+.5)*T});
+ // A spot is usable when its 3×3 tiles are passable and inside the same region.
+ const clear=(i,id)=>{const x=i%MAP_TILES,y=(i-x)/MAP_TILES;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const j=(y+dy)*MAP_TILES+x+dx;if(regionMap[j]!==id||terrainType[j]===2||terrainType[j]===3)return false;}return true;};
+ const find=(r,ok)=>{for(const i of tiles[r.id]){if(!clear(i,r.id))continue;const p=at(i);if(ok(p))return p;}return null;};
+ const farFromMines=(p,d)=>!mines.some(m=>Math.hypot(p.x-m.x,p.y-m.y)<d);
+ for(const r of regions){
+  const home=r.home!==null?bases[r.home]:null;
+  const primary=find(r,p=>farFromMines(p,260)&&(home?Math.hypot(p.x-home.x,p.y-home.y)>=T*9&&Math.hypot(p.x-home.x,p.y-home.y)<=T*16:!stateBaseTooClose(p.x,p.y,blueBase,redBase)));
+  if(!primary)continue;
+  const rich=!home&&Math.abs(r.sgx/MAP_TILES-.5)<.15&&Math.abs(r.sgy/MAP_TILES-.5)<.15;
+  mines.push({...primary,resource:r.resource,rich,regionId:r.id,income:MINE_TYPES[r.resource].perSecond*(rich?RICH_MINE_MULTIPLIER:1),owner:r.owner});
+  if(!home&&Math.random()<SECOND_MINE_CHANCE){
+   const other=['wood','stone','gold'].filter(k=>k!==r.resource)[Math.floor(Math.random()*2)];
+   const spot=find(r,p=>Math.hypot(p.x-primary.x,p.y-primary.y)>=T*8&&farFromMines(p,260)&&!stateBaseTooClose(p.x,p.y,blueBase,redBase));
+   if(spot)mines.push({...spot,resource:other,rich:false,regionId:r.id,income:MINE_TYPES[other].perSecond,owner:r.owner});
+  }
+  // Capture point: nearest clear tile to the seed, away from mines and outside both fortresses' no-flag radius.
+  if(!home)r.cp=find(r,p=>farFromMines(p,T*4)&&bases.every(b=>Math.hypot(p.x-b.x,p.y-b.y)>T*(FLAG_ENEMY_BASE_MIN_TILES+1)));
+ }
+ // Drop regions with no mine or no capture point, renumber, and rebuild the map from the remaining seeds.
+ const keep=regions.filter(r=>mines.some(m=>m.regionId===r.id)&&(r.home!==null||r.cp));
+ const newId=new Map(keep.map((r,i)=>[r.id,i]));
+ const keptMines=mines.filter(m=>newId.has(m.regionId)).map(m=>({...m,regionId:newId.get(m.regionId)}));
+ keep.forEach((r,i)=>{r.id=i;});
+ buildRegionMap(keep);
+ return {regions:keep,mines:keptMines};
+}
+// Translucent owner colours per tile, redrawn only when ownership changes.
+function refreshRegionTint(){
+ const key=state.regions.map(r=>r.owner).join('');if(key===regionTintKey||!regionMap)return;regionTintKey=key;
+ const img=regionTintCtx.createImageData(MAP_TILES,MAP_TILES),colors={0:[74,170,255],1:[255,98,107]};
+ for(let i=0;i<regionMap.length;i++){const r=state.regions[regionMap[i]];const c=r&&colors[r.owner];if(!c)continue;img.data[i*4]=c[0];img.data[i*4+1]=c[1];img.data[i*4+2]=c[2];img.data[i*4+3]=34;}
+ regionTintCtx.putImageData(img,0,0);
+}
+function drawTerritory(viewLeft,viewTop,viewRight,viewBottom){
+ const T=TILE_SIZE,fog=localTeam()===0?state.fogSeen:state.enemyFogSeen,forced=placement?.kind==='flag';
+ if(!regionMap||(!showTerritory&&!forced))return;
+ refreshRegionTint();ctx.save();ctx.drawImage(regionTintCanvas,0,0,W,H);
+ const x1=viewLeft/T-1,x2=viewRight/T+1,y1=viewTop/T-1,y2=viewBottom/T+1;
+ // Neutral borders first, then each owned region's border in its colour on top.
+ const stroke=(edges,color,width)=>{ctx.beginPath();for(const e of edges){if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;ctx.moveTo(e[0]*T,e[1]*T);ctx.lineTo(e[2]*T,e[3]*T);}ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();};
+ ctx.lineCap='round';stroke(regionEdges,'#fff4c866',4);
+ for(const r of state.regions)if(r.owner>=0)stroke(regionEdgesByRegion[r.id]||[],r.owner===0?'#4aaaffcc':'#ff626bcc',6);
+ // Capture points: a ring with a small flag where no flag stands yet.
+ for(const r of state.regions){
+  if(!r.cp||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y)||state.buildings.some(b=>b.kind==='flag'&&b.regionId===r.id))continue;
+  const {x,y}=r.cp;ctx.strokeStyle=forced?'#ffe08a':'#fff4c8cc';ctx.lineWidth=3;ctx.setLineDash([6,5]);ctx.beginPath();ctx.arc(x,y,T*.9,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle='#5b4630';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y+10);ctx.lineTo(x,y-18);ctx.stroke();ctx.fillStyle='#fff4c8';ctx.beginPath();ctx.moveTo(x+1,y-18);ctx.lineTo(x+16,y-13);ctx.lineTo(x+1,y-8);ctx.closePath();ctx.fill();
+ }
+ ctx.restore();
+}
+function setShowTerritory(on){showTerritory=on;const el=$('toggleTerritory');if(el){el.querySelector('span').textContent=(on?'Đang hiện':'Đang ẩn')+' · phím T';el.classList.toggle('placing',!on);}}
 // ---- Buildings & territory (docs/features/buildings.md, docs/features/territory.md) ----
 function tilePassable(x,y){const gx=Math.floor(x/TILE_SIZE),gy=Math.floor(y/TILE_SIZE);if(gx<1||gy<1||gx>=MAP_TILES-1||gy>=MAP_TILES-1)return false;const t=terrainType[gy*MAP_TILES+gx];return t!==2&&t!==3;}
 function buildingDef(b){return BUILDING_TYPES[b.kind];}
@@ -496,13 +579,8 @@ function visionOf(def){return def.visionTiles?def.visionTiles*TILE_SIZE:def.visi
 function buildingVision(b){return !buildingDone(b)?60:visionOf(b.outpost?OUTPOST:buildingDef(b));}
 function buildingGun(b){return buildingDone(b)?(b.outpost?OUTPOST.gun:buildingDef(b).gun||null):null;}
 function hasBuilding(team,kind){return state.buildings.some(b=>b.team===team&&b.kind===kind&&buildingDone(b));}
-function regionLabel(r){return 'vùng '+RESOURCE_NAMES[r.resource]+(r.home!==null?' gần nhà':'');}
-// Home regions win where they overlap a terrain region; otherwise the region whose centre is relatively closest.
-function regionAt(x,y){
- let best=null,bestD=Infinity;
- for(const r of state.regions){const dx=(x-r.cx)/r.rx,dy=(y-r.cy)/r.ry,d=dx*dx+dy*dy;if(d>1)continue;if(r.home!==null)return r;if(d<bestD){bestD=d;best=r;}}
- return best;
-}
+function regionLabel(r){return r.home!==null?'vùng nhà':'vùng '+RESOURCE_NAMES[r.resource];}
+function regionAt(x,y){if(!regionMap||!state?.regions)return null;const gx=Math.floor(x/TILE_SIZE),gy=Math.floor(y/TILE_SIZE);if(gx<0||gy<0||gx>=MAP_TILES||gy>=MAP_TILES)return null;return state.regions[regionMap[gy*MAP_TILES+gx]]||null;}
 function inOwnTerritory(team,x,y){const base=state.bases[team];if(base&&Math.hypot(x-base.x,y-base.y)<=HOME_TERRITORY_TILES*TILE_SIZE)return true;const r=regionAt(x,y);return !!r&&r.owner===team;}
 function revealCircle(arr,x,y,r){const cell=W/MAP_TILES,x1=Math.max(0,Math.floor((x-r)/cell)),x2=Math.min(MAP_TILES-1,Math.ceil((x+r)/cell)),y1=Math.max(0,Math.floor((y-r)/cell)),y2=Math.min(MAP_TILES-1,Math.ceil((y+r)/cell));for(let gy=y1;gy<=y2;gy++)for(let gx=x1;gx<=x2;gx++){const dx=(gx+.5)*cell-x,dy=(gy+.5)*cell-y;if(dx*dx+dy*dy<=r*r)arr[gy*MAP_TILES+gx]=1;}}
 // Each side knows its own home territory from the start so it has room to build.
@@ -522,11 +600,13 @@ function buildingPlacementProblem(team,kind,x,y,ignore=null){
   if(Math.abs(x-b.x)<hw+(b.w||74)/2&&Math.abs(y-b.y)<hh+(b.h||92)/2)return 'Quá sát pháo đài.';
   const yard=musterYard(b);if(Math.abs(x-yard.x)<hw+yard.w/2&&Math.abs(y-yard.y)<hh+yard.h/2)return 'Không xây đè lên sân tập kết.';
  }
- for(const u of state.units){if(u.hp<=0)continue;const qx=Math.max(x-hw,Math.min(u.x,x+hw)),qy=Math.max(y-hh,Math.min(u.y,y+hh));if(Math.hypot(u.x-qx,u.y-qy)<(specs[u.type]?.r||9)+2)return 'Có quân đang đứng ở đó.';}
+ // Units may stand on a capture point (builders gather there), so flags skip the unit check.
+ if(kind!=='flag')for(const u of state.units){if(u.hp<=0)continue;const qx=Math.max(x-hw,Math.min(u.x,x+hw)),qy=Math.max(y-hh,Math.min(u.y,y+hh));if(Math.hypot(u.x-qx,u.y-qy)<(specs[u.type]?.r||9)+2)return 'Có quân đang đứng ở đó.';}
  if(def.where==='territory'&&!inOwnTerritory(team,x,y))return 'Phải xây trong lãnh thổ của mình (gần pháo đài hoặc trong vùng đã cắm cờ).';
  if(def.where==='neutralRegion'){
-  const r=regionAt(x,y);if(!r)return 'Cột cờ phải cắm trong một vùng tài nguyên (vòng nét đứt trên bản đồ).';
-  if(r.home!==null)return 'Vùng gần nhà luôn thuộc phe sở hữu, không cắm cờ được.';
+  const r=regionAt(x,y);if(!r)return 'Cột cờ phải cắm trong một vùng lãnh thổ.';
+  if(r.home!==null)return 'Vùng nhà luôn thuộc phe sở hữu, không cắm cờ được.';
+  if(!r.cp||Math.hypot(x-r.cp.x,y-r.cp.y)>4)return 'Cột cờ phải cắm đúng điểm chiếm của vùng (vòng tròn có lá cờ).';
   const enemy=state.bases[1-team];if(enemy&&Math.hypot(x-enemy.x,y-enemy.y)<FLAG_ENEMY_BASE_MIN_TILES*TILE_SIZE)return `Không cắm cờ trong vòng ${FLAG_ENEMY_BASE_MIN_TILES} ô quanh pháo đài địch.`;
   if(r.owner!==-1||state.buildings.some(b=>b!==ignore&&b.kind==='flag'&&b.regionId===r.id))return 'Vùng này đã có cột cờ.';
  }
@@ -543,9 +623,9 @@ function placeBuilding(team,kind,x,y){
  if(problem){if(mine)addLog(def.name+': '+problem);return null;}
  if(!canAfford(team,def.cost)){if(mine)addLog(`Không đủ tài nguyên để xây ${def.name}: thiếu ${missingText(team,def.cost)}.`);return null;}
  spend(team,def.cost);
- const b={id:nextId++,kind,team,x,y,hp:def.hp*.2,max:def.hp,level:1,progress:0,upgrade:null,cool:0,outpost:false,regionId:kind==='flag'?regionAt(x,y).id:null,capture:kind==='flag'?0:1,contested:false};
+ const b={id:nextId++,kind,team,x,y,hp:def.hp*.2,max:def.hp,level:1,progress:0,upgrade:null,cool:0,outpost:false,regionId:kind==='flag'?regionAt(x,y).id:null,capture:kind==='flag'?0:1,contested:false,waiting:false};
  state.buildings.push(b);
- if(mine)addLog(`Bắt đầu xây ${def.name} (${def.buildTime} giây).`);
+ if(mine)addLog(`Bắt đầu xây ${def.name} (${def.buildTime} giây).`+(kind==='flag'?' Cần ít nhất một quân của bạn đứng cạnh cột cờ thì mới xây.':''));
  updateHUD();return b;
 }
 function upgradeCost(b){return b.kind==='farm'?FARM_LEVELS[b.level+1]?.cost||null:b.kind==='flag'&&!b.outpost?OUTPOST.cost:null;}
@@ -563,7 +643,7 @@ function startUpgrade(team,kind,id=null){
  const cost=upgradeCost(b);
  if(!canAfford(team,cost)){if(mine)addLog(`Không đủ tài nguyên để ${kind==='farm'?'nâng cấp nông trại':'nâng thành tiền đồn'}: thiếu ${missingText(team,cost)}.`);return false;}
  spend(team,cost);b.upgrade={progress:0,time:kind==='farm'?FARM_UPGRADE_SECONDS:OUTPOST.buildTime};
- if(mine)addLog(kind==='farm'?`Đang nâng nông trại lên cấp ${b.level+1} (${FARM_UPGRADE_SECONDS} giây).`:`Đang nâng cột cờ thành tiền đồn (${OUTPOST.buildTime} giây).`);
+ if(mine)addLog(kind==='farm'?`Đang nâng nông trại lên cấp ${b.level+1} (${FARM_UPGRADE_SECONDS} giây).`:`Đang nâng cột cờ thành tiền đồn (${OUTPOST.buildTime} giây, cần quân đứng cạnh).`);
  updateHUD();return true;
 }
 function completeBuilding(b){
@@ -574,7 +654,9 @@ function completeBuilding(b){
   if(mine)addLog(`Cột cờ đã dựng xong: đang chiếm ${regionLabel(r)} (${FLAG_CAPTURE_SECONDS} giây, dừng lại nếu có quân địch trong vùng).`);
  }else if(mine)addLog(`${def.name} đã xây xong.`+(def.unlocks?` Có thể tuyển ${specs[def.unlocks].name}.`:''));
 }
-function unitInRegion(u,r){const dx=(u.x-r.cx)/r.rx,dy=(u.y-r.cy)/r.ry;return dx*dx+dy*dy<=1;}
+function unitInRegion(u,r){return regionAt(u.x,u.y)===r;}
+function needsBuilder(b){return b.kind==='flag'&&(!buildingDone(b)||!!b.upgrade);}
+function hasBuilder(b){const r=BUILDER_RADIUS_TILES*TILE_SIZE;return state.units.some(u=>u.team===b.team&&u.hp>0&&Math.hypot(u.x-b.x,u.y-b.y)<=r);}
 // A finished flag claims its region after FLAG_CAPTURE_SECONDS; progress pauses while living enemy units are inside the region.
 function updateCapture(b,dt){
  const r=state.regions[b.regionId];if(!r||r.owner!==-1)return;
@@ -602,13 +684,16 @@ function updateBuildings(dt){
  for(const b of [...state.buildings]){
   const def=buildingDef(b);
   if(!buildingDone(b)){
+   b.waiting=b.kind==='flag'&&!hasBuilder(b);if(b.waiting)continue;
    const step=dt/def.buildTime;b.progress=Math.min(1,b.progress+step);b.hp=Math.min(b.max,b.hp+b.max*.8*step);
    if(buildingDone(b))completeBuilding(b);
    continue;
   }
+  if(!b.upgrade)b.waiting=false;
   if(b.kind==='flag'&&b.capture<1)updateCapture(b,dt);
   if(b.upgrade){
-   b.upgrade.progress+=dt/b.upgrade.time;
+   b.waiting=b.kind==='flag'&&!hasBuilder(b);
+   if(!b.waiting)b.upgrade.progress+=dt/b.upgrade.time;
    if(b.upgrade.progress>=1){
     b.upgrade=null;
     if(b.kind==='farm'){b.level++;if(b.team===localTeam())addLog(`Nông trại đã lên cấp ${b.level}: ${FARM_LEVELS[b.level].food} lúa/phút.`);}
@@ -701,9 +786,11 @@ function runEnemyAI(){
  const own=state.buildings.filter(b=>b.team===team),count=kind=>own.filter(b=>b.kind===kind).length;
  const underway=kind=>own.some(b=>b.kind===kind&&!buildingDone(b));
  const build=(kind,ax,ay,minR,maxR)=>{if(!canAfford(team,BUILDING_TYPES[kind].cost))return false;const spot=findBuildSpot(team,kind,ax,ay,minR,maxR);return !!(spot&&placeBuilding(team,kind,spot.x,spot.y));};
- const freeMines=()=>state.mines.filter(m=>{const r=state.regions[m.regionId];return r.owner===-1&&!state.buildings.some(b=>b.kind==='flag'&&b.regionId===r.id)&&isTeamAreaExplored(team,m.x,m.y);})
-  .sort((a,b)=>(b.resource==='wood')-(a.resource==='wood')||Math.hypot(a.x-base.x,a.y-base.y)-Math.hypot(b.x-base.x,b.y-base.y));
- const flagFirst=m=>build('flag',m.x,m.y,45,220);
+ // Neutral regions whose capture point the AI has seen; wood first, then nearest.
+ const regionHas=(r,k)=>state.mines.some(m=>m.regionId===r.id&&m.resource===k);
+ const freeRegions=()=>state.regions.filter(r=>r.owner===-1&&r.cp&&!state.buildings.some(b=>b.kind==='flag'&&b.regionId===r.id)&&isTeamAreaExplored(team,r.cp.x,r.cp.y))
+  .sort((a,b)=>regionHas(b,'wood')-regionHas(a,'wood')||Math.hypot(a.cp.x-base.x,a.cp.y-base.y)-Math.hypot(b.cp.x-base.x,b.cp.y-base.y));
+ const flagFirst=r=>!!placeBuilding(team,'flag',r.cp.x,r.cp.y);
  // 1. The home wood region is owned from the start (territory.md), so the AI begins with food.
  // 2. Food: two farms to start, then only as many as the army needs (+10 lúa/phút of slack).
  const farmsUnderway=own.filter(b=>b.kind==='farm'&&!buildingDone(b)).length;
@@ -718,10 +805,16 @@ function runEnemyAI(){
  const saving=!!militaryNext&&!underway(militaryNext)&&gameTime>45&&state.regions.filter(r=>r.owner===team).length>=2&&missing.every(earning);
  const wanted=missing.filter(k=>!earning(k));
  // 3. Territory: flag the nearest explored neutral region (wood regions first), one at a time, more as the match goes on.
- const expanding=!saving&&!underway('flag')&&count('flag')<2+Math.floor(gameTime/90)&&freeMines().length>0;
+ const expanding=!saving&&!underway('flag')&&count('flag')<2+Math.floor(gameTime/90)&&freeRegions().length>0;
  if(expanding&&canAfford(team,BUILDING_TYPES.flag.cost)){
-  const options=freeMines().sort((a,b)=>wanted.includes(b.resource)-wanted.includes(a.resource));
-  for(const m of options.slice(0,3)){if(flagFirst(m))break;}
+  const options=freeRegions().sort((a,b)=>wanted.some(k=>regionHas(b,k))-wanted.some(k=>regionHas(a,k)));
+  for(const r of options.slice(0,3)){if(flagFirst(r))break;}
+ }
+ // Builders: each flag still being built or upgraded gets the nearest free unit that may leave the base.
+ for(const b of own.filter(needsBuilder)){
+  if(state.units.some(u=>u.team===team&&u.hp>0&&u.buildTarget===b.id))continue;
+  const free=state.units.filter(u=>u.team===team&&u.hp>0&&!u.buildTarget&&!isDeploymentLocked(u)).sort((p,q)=>Math.hypot(p.x-b.x,p.y-b.y)-Math.hypot(q.x-b.x,q.y-b.y));
+  if(free[0]){free[0].buildTarget=b.id;free[0].dest={x:b.x,y:b.y+30};free[0].order='explore';}
  }
  // Wood kept back from unit purchases for the next flag or military building.
  const woodReserve=saving?(nextCost.wood||0):expanding?BUILDING_TYPES.flag.cost.wood:0;
@@ -766,7 +859,11 @@ function update(dt){
   constrainToBaseDeploymentZone(u);
   let target=nearestEnemy(u);if(!unitTargetValid(target,u))target=null;
   if(mode==='ai'&&u.team===1&&!target){
-   if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
+   // Assigned builders stay at their flag until it no longer needs them.
+   const job=u.buildTarget?state.buildings.find(b=>b.id===u.buildTarget&&needsBuilder(b)):null;
+   if(!job)u.buildTarget=null;
+   if(job){if(!u.dest||Math.hypot(u.dest.x-job.x,u.dest.y-job.y)>60)u.dest={x:job.x,y:job.y+30};}
+   else if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
     const cols=MAP_TILES,rows=MAP_TILES,cw=W/cols,ch=H/rows;
     // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell.
     const mineTargets=state.mines.filter(m=>m.owner!==1).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
@@ -1165,12 +1262,13 @@ function drawBuildingOverlay(b,preview){
  if(preview){const color=b.previewValid?'#72f2a0':'#ff6875';ctx.fillStyle=b.previewValid?'#47df7a38':'#f23d4f42';ctx.fillRect(x-hw,y-hh,hw*2,hh*2);ctx.strokeStyle=color;ctx.lineWidth=3;ctx.setLineDash([7,4]);ctx.strokeRect(x-hw,y-hh,hw*2,hh*2);ctx.setLineDash([]);ctx.restore();return;}
  const barW=Math.max(44,hw*2),barY=y+hh+6;
  const progressBar=(value,color)=>{ctx.fillStyle='#111827';ctx.fillRect(x-barW/2,barY,barW,6);ctx.fillStyle=color;ctx.fillRect(x-barW/2+1,barY+1,(barW-2)*Math.max(0,Math.min(1,value)),4);};
- if(!buildingDone(b))progressBar(b.progress,'#f0c24f');
+ if(b.waiting)progressBar(b.upgrade?b.upgrade.progress:b.progress,'#8a8f97');
+ else if(!buildingDone(b))progressBar(b.progress,'#f0c24f');
  else if(b.kind==='flag'&&b.capture<1)progressBar(b.capture,b.contested?'#ff9f43':b.team===0?'#4baeff':'#ff626b');
  else if(b.upgrade)progressBar(b.upgrade.progress,'#8be0ff');
  else if(b.hp<b.max)bar(x-barW/2,barY,barW,6,b.hp,b.max,b.team);
  if(selectedBuilding===b){ctx.strokeStyle=b.team===0?'#74c8ff':'#ff777f';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.beginPath();ctx.ellipse(x,y+hh*.4,hw+14,hh*.75+10,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
- const label=(b.kind==='farm'?'NÔNG TRẠI'+(b.level>1?' CẤP '+b.level:''):buildingName(b).toUpperCase())+(!buildingDone(b)?' · ĐANG XÂY':b.kind==='flag'&&b.capture<1?(b.contested?' · TRANH CHẤP':' · ĐANG CHIẾM'):'');
+ const label=(b.kind==='farm'?'NÔNG TRẠI'+(b.level>1?' CẤP '+b.level:''):buildingName(b).toUpperCase())+(b.waiting?' · CHỜ QUÂN XÂY':!buildingDone(b)?' · ĐANG XÂY':b.kind==='flag'&&b.capture<1?(b.contested?' · TRANH CHẤP':' · ĐANG CHIẾM'):'');
  ctx.font='900 10px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#34533c';ctx.strokeText(label,x,barY+18);ctx.fillStyle='#fff';ctx.fillText(label,x,barY+18);
  ctx.restore();
 }
@@ -1259,13 +1357,8 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  ctx.save();ctx.beginPath();ctx.moveTo(W*.18,H*.21);ctx.quadraticCurveTo(W*.30,H*.29,W*.38,H*.26);ctx.quadraticCurveTo(W*.52,H*.33,W*.64,H*.25);ctx.quadraticCurveTo(W*.73,H*.18,W*.82,H*.26);
  ctx.strokeStyle='#9a7d59aa';ctx.lineWidth=26;ctx.stroke();ctx.strokeStyle='#f0d9a3cc';ctx.lineWidth=18;ctx.stroke();ctx.restore(); // Once a mine is discovered, keep its location visible on explored terrain.
  // Unexplored mines remain hidden by fog; current vision is not required after discovery.
- // Territory outlines: dashed ellipse per region once its mine has been discovered; owned regions are tinted.
- for(const r of state.regions){
-  const m=state.mines.find(m=>m.regionId===r.id);if(!m||(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y)))continue;
-  const color=r.owner===0?'#4aaaff':r.owner===1?'#ff626b':'#fff4c8';
-  ctx.save();ctx.beginPath();ctx.ellipse(r.cx,r.cy,r.rx,r.ry,0,0,Math.PI*2);if(r.owner>=0){ctx.fillStyle=color+'16';ctx.fill();}
-  ctx.setLineDash([22,16]);ctx.lineWidth=5;ctx.strokeStyle=color+(r.owner>=0?'b0':'70');ctx.stroke();ctx.setLineDash([]);ctx.restore();
- }
+ // Territory layer: owner tint, borders (only where explored) and capture points; toggled with T.
+ drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  for(const m of state.mines){
   if(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y))continue;
   drawUprightAt(m.x,m.y,()=>{
@@ -1339,7 +1432,7 @@ for(const type of Object.keys(specs))$(type).querySelector('span').textContent=c
 for(const [kind,def] of Object.entries(BUILDING_TYPES))$(def.button).querySelector('span').textContent=costText(def.cost)+' · '+def.buildTime+'s'+(kind==='farm'?' · +'+FARM_LEVELS[1].food+' lúa/phút':def.unlocks?' · mở '+specs[def.unlocks].name.toLowerCase():kind==='flag'?' · chiếm vùng':kind==='tower'?' · trong lãnh thổ':'');
 $('upgradeOutpost').querySelector('span').textContent=costText(OUTPOST.cost)+' · '+OUTPOST.buildTime+'s · máu '+OUTPOST.hp+', có súng';
 $('turret').querySelector('span').textContent=costText(FORTRESS_GUN_COST)+' · tích hợp pháo thứ hai';
-$('scout').onclick=()=>requestAction('buy',{unit:'scout'});$('infantry').onclick=()=>requestAction('buy',{unit:'infantry'});$('archer').onclick=()=>requestAction('buy',{unit:'archer'});$('spearman').onclick=()=>requestAction('buy',{unit:'spearman'});$('cavalry').onclick=()=>requestAction('buy',{unit:'cavalry'});for(const [kind,def] of Object.entries(BUILDING_TYPES))$(def.button).onclick=()=>beginPlacement(kind);$('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('upgradeOutpost').onclick=()=>requestAction('upgrade',{kind:'flag',id:selectedBuilding?.kind==='flag'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('turret').onclick=()=>requestAction('turret');$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
+$('scout').onclick=()=>requestAction('buy',{unit:'scout'});$('infantry').onclick=()=>requestAction('buy',{unit:'infantry'});$('archer').onclick=()=>requestAction('buy',{unit:'archer'});$('spearman').onclick=()=>requestAction('buy',{unit:'spearman'});$('cavalry').onclick=()=>requestAction('buy',{unit:'cavalry'});for(const [kind,def] of Object.entries(BUILDING_TYPES))$(def.button).onclick=()=>beginPlacement(kind);$('toggleTerritory').onclick=()=>setShowTerritory(!showTerritory);$('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('upgradeOutpost').onclick=()=>requestAction('upgrade',{kind:'flag',id:selectedBuilding?.kind==='flag'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('turret').onclick=()=>requestAction('turret');$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
 $('fullscreen').onclick=async()=>{const app=$('gameApp');try{if(document.fullscreenElement){await document.exitFullscreen();}else{await app.requestFullscreen();}}catch{addLog('Trình duyệt không cho phép bật toàn màn hình.');}};
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').innerHTML=document.fullscreenElement?'⤢ Thoát toàn màn hình<span>Thu nhỏ game</span>':'⛶ Toàn màn hình<span>Mở rộng game</span>';});
 function setSidebarCollapsed(collapsed){gameApp.classList.toggle('panel-collapsed',collapsed);toggleSideHud.textContent=collapsed?'▢':'▣';toggleSideHud.setAttribute('aria-label',collapsed?'Mở bảng điều khiển':'Thu gọn bảng điều khiển');setTimeout(()=>syncWorldMetrics(),0);}
@@ -1368,7 +1461,7 @@ let selectingBox=false,boxStart=null,boxPointerId=null,guiding=false;
   if(placement){
    e.preventDefault();e.stopImmediatePropagation();
    if(e.button===2){endPlacement();addLog('Đã hủy đặt công trình.');return;}
-   if(e.button===0){suppressNextCanvasClick=true;placement.problem=buildingPlacementProblem(localTeam(),placement.kind,placement.x,placement.y);placement.valid=!placement.problem;if(placement.valid){const {kind,x,y}=placement;endPlacement();requestAction('build',{kind,x,y});}else addLog(BUILDING_TYPES[placement.kind].name+': '+placement.problem);}
+   if(e.button===0){suppressNextCanvasClick=true;placement.problem=buildingPlacementProblem(localTeam(),placement.kind,placement.x,placement.y);placement.valid=!placement.problem;if(placement.valid){const {kind,x,y}=placement;endPlacement();requestAction('build',{kind,x,y});if(kind==='flag'){const ids=state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id);if(ids.length){requestAction('move',{ids,x,y:y+40});addLog(`Đã gửi ${ids.length} quân đang chọn tới xây cột cờ.`);}}}else addLog(BUILDING_TYPES[placement.kind].name+': '+placement.problem);}
    return;
   }
   canvas.focus({preventScroll:true});
@@ -1395,8 +1488,8 @@ let selectingBox=false,boxStart=null,boxPointerId=null,guiding=false;
   if(document.activeElement!==canvas)return;
   const step=(e.shiftKey?360:180)/zoom;
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','_'].includes(e.key)){e.preventDefault();
-   if(e.key==='+'||e.key==='=')zoom=Math.max(MIN_ZOOM,zoom/1.15);
-   if(e.key==='-'||e.key==='_')zoom=Math.min(MAX_ZOOM,zoom*1.15);
+   if(e.key==='+'||e.key==='=')zoom=Math.min(MAX_ZOOM,zoom*1.15);
+   if(e.key==='-'||e.key==='_')zoom=Math.max(MIN_ZOOM,zoom/1.15);
    if(e.key==='ArrowLeft')camX-=step;if(e.key==='ArrowRight')camX+=step;
    if(e.key==='ArrowUp')camY-=step;if(e.key==='ArrowDown')camY+=step;
    clampCamera();
@@ -1454,7 +1547,10 @@ canvas.addEventListener('pointerdown',e=>{
 });
 canvas.addEventListener('pointermove',e=>{
  const pos=canvasPos(e);
- if(placement){placement.x=pos.x;placement.y=pos.y;placement.problem=buildingPlacementProblem(localTeam(),placement.kind,pos.x,pos.y);placement.valid=!placement.problem;canvas.style.cursor=placement.valid?'copy':'not-allowed';return;}
+ if(placement){placement.x=pos.x;placement.y=pos.y;
+  // Flags snap to the capture point of the region under the cursor.
+  if(placement.kind==='flag'){const r=regionAt(pos.x,pos.y);if(r?.cp&&Math.hypot(pos.x-r.cp.x,pos.y-r.cp.y)<=CAPTURE_POINT_SNAP_TILES*TILE_SIZE){placement.x=r.cp.x;placement.y=r.cp.y;}}
+  pos.x=placement.x;pos.y=placement.y;placement.problem=buildingPlacementProblem(localTeam(),placement.kind,pos.x,pos.y);placement.valid=!placement.problem;canvas.style.cursor=placement.valid?'copy':'not-allowed';return;}
  if(draggingFarm){
   const nx=Math.max(33,Math.min(W-33,pos.x)),ny=Math.max(36,Math.min(H-36,pos.y));
   if(!buildingPlacementProblem(localTeam(),'farm',nx,ny,draggingFarm)){draggingFarm.x=nx;draggingFarm.y=ny;}
@@ -1480,7 +1576,7 @@ function endPointer(e){
 }
 canvas.addEventListener('pointerup',endPointer);
 canvas.addEventListener('pointercancel',endPointer);
-document.addEventListener('keydown',e=>{if(placement&&e.key==='Escape'){endPlacement();addLog('Đã hủy đặt công trình.');return;}if(e.code==='Space'){e.preventDefault();$('pause').click();}if(e.key.toLowerCase()==='a')requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});});
+document.addEventListener('keydown',e=>{if(placement&&e.key==='Escape'){endPlacement();addLog('Đã hủy đặt công trình.');return;}if(e.key.toLowerCase()==='t'&&!e.ctrlKey&&!e.metaKey&&document.activeElement?.tagName!=='INPUT'){setShowTerritory(!showTerritory);return;}if(e.code==='Space'){e.preventDefault();$('pause').click();}if(e.key.toLowerCase()==='a')requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});});
 fresh();gameStarted=false;requestAnimationFrame(loop);
 })();
 

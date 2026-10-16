@@ -34,7 +34,7 @@ Hiển thị (`draw()`): chọn bản đồ theo `localTeam()`; chỉ tô ô tro
 ## Tương tác
 - [combat.md](combat.md): lọc mục tiêu theo tầm nhìn.
 - [buildings.md](buildings.md): mọi công trình chỉ đặt được trên vùng đã khám phá; công trình là nguồn tầm nhìn.
-- [territory.md](territory.md): viền vùng chỉ hiện khi đã thấy mỏ của vùng.
+- [territory.md](territory.md): ranh giới vùng chỉ vẽ ở cạnh mà một ô kề đã khám phá; điểm chiếm hiện khi đã khám phá.
 - [economy.md](economy.md): mỏ ẩn khi chưa khám phá.
 - [multiplayer.md](multiplayer.md): mỗi trình duyệt giữ fog riêng.
 

@@ -12,6 +12,7 @@ Game RTS 1 đấu 1 chạy trên trình duyệt: Vite + TypeScript + Canvas 2D. 
 - Bắt đầu từ `docs/README.md` (mục lục), rồi `docs/architecture.md`, `docs/conventions.md` và file tính năng liên quan trong `docs/features/`.
 - Code là nguồn đúng cuối cùng. Nếu tài liệu lệch với code, sửa tài liệu cho khớp và báo lại cho người dùng.
 - `docs/archive/` đã lỗi thời, không dùng làm căn cứ.
+- Việc tồn đọng cho phiên sau: `docs/backlog.md`. Hỏi người dùng muốn làm mục nào; làm xong thì xoá dòng ở đó và trong file tính năng.
 - Ảnh: game dùng `public/assets/units/<quân>/<quân>-sheet.png`; ảnh nguồn ở `art/units/<quân>/`. Đặt tên và xếp file theo `docs/assets.md`.
 
 ## Quy tắc cập nhật tài liệu (bắt buộc, làm trong cùng lần sửa code)

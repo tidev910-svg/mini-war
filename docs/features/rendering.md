@@ -20,7 +20,7 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions` và m�
 **Lớp vẽ trong `draw()`** (theo thứ tự):
 1. Nền tối `#0b1411`, rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
 2. `drawTerrainDetail()`, đường chính (bezier ngang ~y=0.55H) và đường phụ phía trên.
-3. Viền vùng lãnh thổ (elip nét đứt), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
+3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô, điểm chiếm; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
 4. Danh sách `sceneActors` sắp theo Y: cây, đá, pháo đài (+ sân tập kết), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân.
 5. Thanh máu quân, vòng chọn, đạn, hiệu ứng.
 6. Sương mù (chỉ ô trong khung nhìn), bản xem trước công trình đang đặt.

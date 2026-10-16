@@ -21,7 +21,7 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 4. Tiện ích team/tài nguyên, lobby & mạng (`createRoom()`, `joinRoom()`, `setupConnection()`, snapshot).
 5. `requestAction()` / `applyAction()`: cửa vào duy nhất cho lệnh người chơi.
 6. Tầm nhìn, pháo đài, `fresh()` (tạo trận mới).
-7. Xuất quân, mua quân; khối "Buildings & territory" (đặt/xây/nâng cấp/phá công trình, vùng, lãnh thổ); nâng cấp pháo đài, lệnh tấn công.
+7. Xuất quân, mua quân; khối "Territory map" (sinh/dựng bản đồ vùng, vẽ lớp lãnh thổ); khối "Buildings & territory" (đặt/xây/nâng cấp/phá công trình, vùng, lãnh thổ); nâng cấp pháo đài, lệnh tấn công.
 8. HUD (`updateHUD()`), chọn mục tiêu & sát thương (`nearestEnemy()`, `hurt()`), `finish()`.
 9. `runEnemyAI()` rồi `update(dt)`: một bước mô phỏng.
 10. Các hàm vẽ `draw*()` và `draw()`.
@@ -31,6 +31,7 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 - `state`: dữ liệu trận, tạo bởi `fresh()`:
   `resources[2] ({food, wood, stone, gold} theo team), supply[2], units[], bullets[], effects[], buildings[], regions[], guards[], bases[2], mines[], fogSeen, enemyFogSeen, enemyMemory, aiExploreTarget, pendingSpawns[]`.
 - Ngoài `state`: `gameTime`, `paused`, `ended`, `gameStarted`, `mode` (`'ai'|'pvp'`), `netRole` (`'host'|'guest'|null`), `nextId`, các bộ đếm `aiTimer`, `incomeTimer`, `pendingSpawnRetryTimer`.
+- Dữ liệu dẫn xuất cấp module (không trong `state`, không gửi qua mạng): `regionMap`, `regionEdges`, `regionEdgesByRegion`, `regionTintCanvas` — dựng từ `state.regions` bằng `buildRegionMap()`/`ensureRegionMap()`; `showTerritory` (UI).
 - Trạng thái UI cục bộ (không đồng bộ): `camX, camY, zoom`, `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `draggingFarm`, `dragSelect`.
 
 ## Vòng lặp
@@ -53,4 +54,4 @@ Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm'|'f
 ## Camera & toạ độ
 - `worldToScreenPlane()` / `screenPlaneToWorld()` hiện là hàm đồng nhất (góc nhìn từ trên xuống, chưa phải isometric thật); giữ lại làm điểm mở rộng.
 - `viewOffsets()`, `worldToCanvas()`, `canvasPos()` đổi giữa toạ độ thế giới và canvas; `clampCamera()` giữ camera trong bản đồ.
-- `syncWorldMetrics()` chạy khi resize và tính lại `W`, `H`, `TILE_SIZE` theo kích thước canvas. **Cảnh báo:** đổi kích thước cửa sổ giữa trận làm đổi `W/H` trong khi `state` vẫn giữ toạ độ cũ.
+- Thế giới cố định `WORLD_SIZE` = 9600 × 9600 (`TILE_SIZE` = 37,5), không phụ thuộc kích thước canvas. `syncWorldMetrics()` chạy khi resize và chỉ tính lại khung nhìn (`VIEW_W`, `VIEW_H`) và giới hạn zoom; host và guest khác cỡ màn hình vẫn dùng chung toạ độ.

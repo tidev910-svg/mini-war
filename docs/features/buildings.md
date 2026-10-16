@@ -17,7 +17,7 @@ Cột cờ và vùng lãnh thổ: xem [territory.md](territory.md). Chi tiết r
 | `kind` | Tên | Giá | Thời gian xây | Máu | Nửa kích thước (`halfW×halfH`) | Tầm nhìn | Được đặt ở (`where`) | Tác dụng |
 |---|---|---|---:|---:|---|---:|---|---|
 | `farm` | Nông trại | 100 gỗ | 20s | 180 | 31×34 | 90 | `explored` | +20/30/45 lúa/phút theo cấp |
-| `flag` | Cột cờ | 100 gỗ | 20s | 500 | 16×22 | 8 ô (`visionTiles`) | `neutralRegion` | Chiếm vùng sau 10s không bị tranh chấp |
+| `flag` | Cột cờ | 100 gỗ | 20s, **cần quân đứng cạnh** | 500 | 16×22 | 8 ô (`visionTiles`) | `neutralRegion` (đúng điểm chiếm) | Chiếm vùng sau 10s không bị tranh chấp |
 | `barracks` | Nhà lính bộ | 150 gỗ, 50 đá | 30s | 420 | 40×32 | 100 | `territory` | Mở khoá lính bộ |
 | `archery` | Nhà lính cung | 150 gỗ, 50 vàng | 30s | 380 | 40×32 | 100 | `territory` | Mở khoá cung thủ |
 | `stable` | Chuồng ngựa | 200 gỗ, 100 đá, 100 vàng | 30s | 460 | 46×34 | 100 | `territory` | Mở khoá kỵ binh |
@@ -28,7 +28,7 @@ Cột cờ và vùng lãnh thổ: xem [territory.md](territory.md). Chi tiết r
 |---|---|---:|---|
 | Nông trại cấp 2 | 80 gỗ, 40 đá | 15s (`FARM_UPGRADE_SECONDS`) | 30 lúa/phút |
 | Nông trại cấp 3 | 120 gỗ, 80 đá | 15s | 45 lúa/phút |
-| Cột cờ → tiền đồn (`OUTPOST`) — chỉ khi đã chiếm xong vùng | 200 gỗ, 100 đá | 40s | Máu 1.500, tầm nhìn 14 ô, súng tầm 160, ST 10, 1 phát/1,2 giây |
+| Cột cờ → tiền đồn (`OUTPOST`) — chỉ khi đã chiếm xong vùng, cần quân đứng cạnh | 200 gỗ, 100 đá | 40s | Máu 1.500, tầm nhìn 14 ô, súng tầm 160, ST 10, 1 phát/1,2 giây |
 Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh tiến độ màu xanh nhạt.
 
 **Mở khoá quân** (`UNIT_REQUIREMENTS`): lính bộ ← nhà lính bộ, cung thủ ← nhà lính cung, kỵ binh ← chuồng ngựa (phải **xây xong**). Trinh sát và lính giáo tuyển ngay tại pháo đài. Quân vẫn xuất hiện ở sân tập kết cạnh pháo đài.
@@ -38,9 +38,10 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 - Đặt hợp lệ khi (`buildingPlacementProblem()` trả về chuỗi rỗng):
   1. Nằm trong bản đồ.
   2. Mọi điểm lấy mẫu (bước 8) trên footprint đã được phe đó khám phá và không phải nước/đá.
-  3. Không chồng công trình khác, pháo đài, **sân tập kết** của hai phe, hay quân đang đứng.
+  3. Không chồng công trình khác, pháo đài, **sân tập kết** của hai phe, hay quân đang đứng (riêng cột cờ được đặt lên chỗ có quân).
   4. `territory`: trong lãnh thổ của mình (≤ 14 ô quanh pháo đài hoặc trong vùng mình sở hữu — `inOwnTerritory()`).
-  5. `neutralRegion` (cột cờ): trong một vùng chưa có chủ, không phải vùng gần nhà, chưa có cột cờ nào (kể cả đang xây), và cách pháo đài địch ≥ 20 ô. Chi tiết: [territory.md](territory.md).
+  5. `neutralRegion` (cột cờ): đúng **điểm chiếm** của một vùng chưa có chủ, không phải vùng nhà, chưa có cột cờ nào (kể cả đang xây), và cách pháo đài địch ≥ 20 ô. Chi tiết: [territory.md](territory.md).
+- Cột cờ đang xây và tiền đồn đang nâng cấp chỉ tiến triển khi có quân của phe đó trong bán kính 4 ô (`hasBuilder()`); không có thì `b.waiting = true`, thanh xám, nhãn "CHỜ QUÂN XÂY". Các công trình khác tự xây.
 - Không đủ tài nguyên → log "thiếu …", không trừ.
 
 **Bắn** (tháp, tiền đồn — `updateBuildings()`): nhắm quân địch gần nhất trong tầm mà phe mình **đang nhìn thấy** (ở chế độ AI, phe xanh thấy hết, giống pháo pháo đài). Đạn đuổi mục tiêu như đạn pháo.
@@ -51,10 +52,10 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
   - `buildingDef()`, `buildingDone()`, `buildingName()`, `buildingVision()`, `buildingGun()`, `hasBuilding(team, kind)`.
   - `buildingPlacementProblem(team, kind, x, y, ignore)`, `findBuildSpot(team, kind, ax, ay, minR, maxR)` (AI dùng), `placeBuilding(team, kind, x, y)`.
   - `upgradeCost()`, `upgradeTarget(team, kind, id)`, `startUpgrade(team, kind, id)`.
-  - `updateBuildings(dt)` (xây, nâng cấp, súng), `completeBuilding()`, `destroyBuilding()` (gọi từ `hurt()`).
+  - `updateBuildings(dt)` (xây, nâng cấp, súng, thợ xây), `completeBuilding()`, `destroyBuilding()` (gọi từ `hurt()`), `needsBuilder()`, `hasBuilder()`.
   - UI: `beginPlacement(kind)`, `endPlacement()`, biến `placement {kind, x, y, valid, problem}`, `selectedBuilding`.
   - Vẽ: `drawBuilding(b, preview)`, `drawFarm()`, `drawBuildingOverlay()` (thanh tiến độ/máu, vòng chọn, nhãn).
-- Dữ liệu: `state.buildings[] = {id, kind, team, x, y, hp, max, level, progress (0..1), upgrade: null|{progress, time}, cool, outpost, regionId, capture (0..1, cột cờ), contested}`. Tầm nhìn khai báo bằng `vision` (đơn vị thế giới) hoặc `visionTiles` (ô) — đọc qua `visionOf()`. Công trình dùng trường `kind` (quân dùng `type`).
+- Dữ liệu: `state.buildings[] = {id, kind, team, x, y, hp, max, level, progress (0..1), upgrade: null|{progress, time}, cool, outpost, regionId, capture (0..1, cột cờ), contested, waiting}`. Tầm nhìn khai báo bằng `vision` (đơn vị thế giới) hoặc `visionTiles` (ô) — đọc qua `visionOf()`. Công trình dùng trường `kind` (quân dùng `type`).
 - Nút trong [index.html](../../index.html): `#farm`, `#upgradeFarm`, `#buildFlag`, `#upgradeOutpost`, `#buildBarracks`, `#buildArchery`, `#buildStable`, `#buildTower`. Nhãn giá sinh từ `BUILDING_TYPES` lúc tải trang.
 
 ## Tương tác
@@ -83,7 +84,7 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 - Đã chạy thử 2026-10-16 (Chrome headless + debugger): đặt nông trại bằng chuột, cột cờ, nhà lính; khoá/mở lính bộ; nâng cấp nông trại cấp 2 và tiền đồn; phá tiền đồn; PvP 2 trình duyệt (guest xây 3 công trình và tuyển lính bộ). Không lỗi JavaScript.
 
 ## Giới hạn / việc tồn đọng
-- Nút chiếm 17 ô nên bảng điều khiển phải cuộn trên màn hình thấp.
+- 18 nút nên bảng điều khiển phải cuộn trên màn hình thấp.
 - Công trình nhỏ ở mức zoom mặc định; nhãn khó đọc.
 - Không huỷ được công trình đang xây để lấy lại tài nguyên.
 - Quân tuyển từ nhà lính vẫn xuất hiện ở sân tập kết pháo đài, không ở nhà lính.

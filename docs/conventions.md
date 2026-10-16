@@ -18,7 +18,7 @@
 - **Team 1 = phe đỏ**: máy ở chế độ AI, khách (guest) ở PvP. Căn cứ bên phải.
 - `localTeam()` trả về team của trình duyệt hiện tại; dùng nó cho mọi thứ "của mình" trên UI.
 - Tài nguyên: `state.resources[team] = {food, wood, stone, gold}`. Giá viết dạng object chỉ gồm khoá cần (ví dụ `{food:45, wood:20}`). Kiểm tra/trừ qua `canAfford()`, `spend()`; hiển thị bằng `costText()`, `missingText()`. Không viết số giá cứng trong log hay HTML.
-- Toạ độ thế giới: hình vuông `W × H` với `W = H = VIEW_W × 10`, chia lưới `MAP_TILES = 256` ô; `TILE_SIZE = W / 256`. Lưu ý `W` phụ thuộc kích thước canvas lúc khởi tạo (xem [architecture.md](architecture.md)).
+- Toạ độ thế giới: hình vuông cố định `W = H = WORLD_SIZE = 9600`, chia lưới `MAP_TILES = 256` ô; `TILE_SIZE = 37,5`. Không suy `W` từ kích thước canvas — mọi trình duyệt phải có cùng toạ độ.
 - Loại quân cũ `'tank'` được đổi thành `'spearman'` bởi `normalizeUnitType()`.
 - Quân phân loại bằng `type` (khoá trong `specs`); công trình bằng `kind` (khoá trong `BUILDING_TYPES`). Đừng thêm `type` cho công trình: `hurt()` và tính tầm đánh dựa vào sự khác nhau này.
 - Mọi công trình nằm trong `state.buildings`, tra theo `id` (không theo chỉ số mảng).
@@ -32,7 +32,7 @@
 | Thời gian khoá xuất quân | 120 giây đầu trận, chỉ trinh sát được rời vùng căn cứ. |
 | Hàng chờ xuất quân | `state.pendingSpawns`: quân đã trả tiền nhưng sân tập kết đang kín. |
 | Snapshot | Gói toàn bộ trạng thái trận host gửi cho guest. |
-| Vùng (region) | Khu tài nguyên hình elip có 1 mỏ; chiếm bằng cột cờ. |
+| Vùng (region) | Phần bản đồ có ranh giới tự nhiên, 1–2 mỏ và một điểm chiếm; chiếm bằng cột cờ. Vùng chứa pháo đài là vùng nhà. |
 | Lãnh thổ | 14 ô quanh pháo đài + các vùng mình sở hữu; nơi được xây nhà lính và tháp. |
 | Tiền đồn | Cột cờ đã nâng cấp: máu cao hơn, có súng. |
 | Action | Lệnh guest gửi cho host (`{type:'action', action, payload}`). |
