@@ -1,6 +1,6 @@
 # Luồng trận đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
 Một trận bắt đầu khi người chơi chọn chế độ. Hai phe xuất phát ở hai đầu bản đồ, mỗi phe có một pháo đài. Trong 120 giây đầu (giai đoạn trinh sát) chỉ trinh sát được rời vùng căn cứ. Phe nào mất pháo đài trước thì thua.
@@ -13,7 +13,7 @@ Một trận bắt đầu khi người chơi chọn chế độ. Hai phe xuất 
 | Bước mô phỏng tối đa | 0.05 giây | `loop()` |
 | Vị trí pháo đài xanh | x ∈ [220, 220+0.16·W], y ngẫu nhiên, cách mép ≥ 260 | `fresh()` |
 | Vị trí pháo đài đỏ | đối xứng bên phải | `fresh()` |
-| Tài nguyên ban đầu | 150 vàng, 100 năng lượng mỗi phe | `fresh()` |
+| Tài nguyên ban đầu | 150 lúa, 400 gỗ, 50 đá, 50 vàng mỗi phe | `STARTING_RESOURCES` |
 | Nhật ký giữ tối đa | 12 dòng | `addLog()` |
 
 Quy tắc khoá (áp dụng mọi quân trừ `scout` khi `gameTime < 120`):

@@ -1,6 +1,6 @@
 # Bản đồ, địa hình & đồ hoạ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
 Bản đồ vuông lớn, nhìn từ trên xuống, phong cách "Storybook": đồng cỏ, rừng, sông/hồ, đá, ruộng tài nguyên, đường đất. Cây và đá được vẽ như sprite đứng và sắp xếp theo chiều sâu cùng quân lính để quân có thể đi trước/sau cây.
@@ -20,10 +20,10 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions` và m�
 **Lớp vẽ trong `draw()`** (theo thứ tự):
 1. Nền tối `#0b1411`, rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
 2. `drawTerrainDetail()`, đường chính (bezier ngang ~y=0.55H) và đường phụ phía trên.
-3. Mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
-4. Danh sách `sceneActors` sắp theo Y: cây, đá, pháo đài (+ sân tập kết), nông trại, quái canh mỏ, quân.
+3. Viền vùng lãnh thổ (elip nét đứt), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
+4. Danh sách `sceneActors` sắp theo Y: cây, đá, pháo đài (+ sân tập kết), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân.
 5. Thanh máu quân, vòng chọn, đạn, hiệu ứng.
-6. Sương mù (chỉ ô trong khung nhìn), bản xem trước nông trại.
+6. Sương mù (chỉ ô trong khung nhìn), bản xem trước công trình đang đặt.
 7. Lớp màn hình: khung chọn, thanh trạng thái đặt nông trại, nhãn "CHIẾN TRƯỜNG 01" và giai đoạn trận.
 
 **Sprite** (`public/assets/units/<quân>/`, đường dẫn `/assets/units/<quân>/...`; quy ước thư mục và tên: [assets.md](../assets.md)):
@@ -41,7 +41,7 @@ Clip `walk` dùng khi `u.moving`; riêng lính giáo chọn hàng theo `u.facing
 Màu phe: `teamPalette(team)` — xanh lá-lam cho team 0, đỏ đất cho team 1; thanh máu `#4baeff` / `#ff626b`.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `buildTerrain()`, `buildWorldDecor()` (cây/đá tránh căn cứ, mỏ, đường), `makePineSprite()`, `drawTree()`, `drawRock()`, `drawRockClusterSprite()`, `drawGrassPatch()`, `drawTerrainDetail()`, `drawBase()`, `drawMusterYard()`, `drawUnit()`, `drawUnitHealthBar()`, `drawUnitSelection()`, `drawFarm()`, `draw()`.
+- [src/main.ts](../../src/main.ts): `buildTerrain()`, `buildWorldDecor()` (cây/đá tránh căn cứ, mỏ, đường), `makePineSprite()`, `drawTree()`, `drawRock()`, `drawRockClusterSprite()`, `drawGrassPatch()`, `drawTerrainDetail()`, `drawBase()`, `drawMusterYard()`, `drawUnit()`, `drawUnitHealthBar()`, `drawUnitSelection()`, `drawFarm()`, `drawBuilding()`, `drawBuildingOverlay()`, `draw()`.
 - Tiện ích: `drawUprightAt()`, `roundRect()`, `bar()`, `pill()`, `teamPalette()`, `unitTargetHeight()`, `zoomLerp()`, `decorRandom()`.
 - Toạ độ & camera: xem [architecture.md](../architecture.md).
 

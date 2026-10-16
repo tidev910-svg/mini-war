@@ -1,51 +1,54 @@
 # Đối thủ AI
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
-Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển, mức độ vừa phải. AI dùng cùng tài nguyên và cùng luật mua quân với người chơi, có sương mù riêng và có "trí nhớ" về những gì nó đã thấy.
+Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, cột cờ chiếm vùng, nhà lính mở khoá quân, lúa nuôi quân. AI có sương mù riêng và chỉ xây/cắm cờ trên vùng nó đã khám phá.
 
 ## Luật & thông số
-**Mua quân** — mỗi 5 giây (`aiTimer`, bắt đầu ở 5 nên lượt đầu chạy ngay), chọn **một** nhánh theo thứ tự:
-| Điều kiện | Hành động |
-|---|---|
-| Ít hơn 2 trinh sát (kể cả hàng chờ) và ≥ 40 vàng | Mua trinh sát với `order='explore'` |
-| ≥ 250 vàng & ≥ 70 NL, xác suất 14% | Kỵ binh |
-| ≥ 110 vàng & ≥ 25 NL, xác suất 42% | Lính giáo |
-| ≥ 75 vàng & ≥ 15 NL, xác suất 60% | Cung thủ |
-| ≥ 50 vàng | Lính |
-Sau đó, nếu ≥ 100 vàng và chưa đủ 2 pháo, xác suất 25% gọi `buildTurret(1)`.
+**Kinh tế — `runEnemyAI()` chạy mỗi 5 giây** (`aiTimer`, lượt đầu chạy ngay). Mỗi bước chỉ chi khi đủ tài nguyên; vị trí tìm bằng `findBuildSpot()`:
+1. **Vùng gỗ nhà** đã thuộc AI từ đầu trận nên AI có gỗ ngay (không cần cắm cờ).
+2. **Nông trại:** giữ ít nhất 2; xây thêm khi lúa ròng (tính cả nông trại đang xây) < 10/phút; tối đa 10, tối đa 2 cái đang xây cùng lúc; đặt cách pháo đài 3–10 ô.
+3. **Dành dụm:** nếu đã giữ ≥ 2 vùng (tính cả vùng nhà), đã qua 45 giây, công trình quân sự kế tiếp (nhà lính bộ → nhà lính cung → chuồng ngựa) chưa có, và **mọi tài nguyên còn thiếu cho nó đều đang có thu nhập** → bật chế độ dành dụm (`saving`).
+4. **Mở rộng:** khi không dành dụm, không có cờ đang xây (cờ đã xây nhưng đang chiếm thì vẫn tính là đã có), số cờ < 2 + ⌊giây/90⌋ và còn vùng trung lập đã khám phá → cắm cờ ở vùng gần nhất, ưu tiên vùng sinh đúng tài nguyên đang thiếu mà chưa có thu nhập, rồi tới vùng gỗ.
+5. **Công trình quân sự:** sau 45 giây, xây công trình kế tiếp theo thứ tự trên trong lãnh thổ nhà (4–12 ô).
+6. **Nâng cấp & phòng thủ:** có nhà lính bộ và ≥ 120 đá → nâng nông trại; ≥ 180 đá và ≥ 260 gỗ → nâng cờ thành tiền đồn; dưới 2 tháp và đủ giá → 35% cơ hội xây tháp cạnh pháo đài hoặc cạnh một cột cờ.
+7. **Tuyển quân** (`aiBuy(type)`): cần công trình mở khoá, đủ giá, lúa ròng sau khi thêm quân vẫn ≥ 0; khi dành dụm thì không tuyển quá 4 quân (trừ trinh sát); không mua quân tốn gỗ nếu kéo gỗ xuống dưới mức để dành (`woodReserve` = giá gỗ của công trình đang dành dụm, hoặc 100 khi đang chờ cắm cờ). Thứ tự: trinh sát (khi < 2), kỵ binh 14%, lính giáo 42%, cung thủ 60%, lính bộ, cuối cùng lính giáo.
+8. Chưa đủ 2 pháo và đủ 100 đá → 25% cơ hội mở pháo thứ hai.
 
-AI mua bằng cách trừ tiền rồi gọi `spawn()` trực tiếp (không qua `buy()`), nên không có log.
+AI không qua `buy()`/`applyAction()` nên không có log.
 
 **Di chuyển khi không có mục tiêu** (mỗi quân đỏ):
 - Đổi đích khi chưa có đích, đã tới gần (< 35), hoặc ngẫu nhiên 0.3% mỗi frame.
-- Ưu tiên mỏ gần nhất chưa thuộc phe đỏ; nếu mỏ gần hơn 70 thì thử 48 ô ngẫu nhiên chưa khám phá; nếu vẫn không có thì chọn điểm ngẫu nhiên.
+- Ưu tiên mỏ gần nhất chưa thuộc phe đỏ (gồm cả mỏ trong vùng xanh — tới đó sẽ đánh cột cờ xanh); nếu mỏ gần hơn 70 thì thử 48 ô ngẫu nhiên chưa khám phá; nếu vẫn không có thì chọn điểm ngẫu nhiên.
 - Có mục tiêu thì luôn đuổi (không cần lệnh tấn công), nhưng vẫn tôn trọng khoá 120 giây.
 
 **Tầm nhìn & trí nhớ**:
-- Bản đồ khám phá riêng `state.enemyFogSeen`; bán kính: trinh sát 145, giáo 120, khác 105, căn cứ đỏ 160.
+- Bản đồ khám phá riêng `state.enemyFogSeen` (khu đất nhà khám phá sẵn); bán kính: trinh sát 145, giáo 120, khác 105, căn cứ đỏ 160, công trình theo `buildingVision()`.
 - `state.enemyMemory.base` lưu vị trí pháo đài xanh khi thấy; `state.enemyMemory.targets` lưu quân xanh đã thấy, xoá sau 90 giây.
 - AI chọn mục tiêu chỉ trong vùng `aiCanSee()` (cùng `teamCanSee(1)`).
 
+**Kết quả chạy thử** (AI một mình, 2026-10-16, sau khi vùng nhà sở hữu sẵn): phút 2: vùng nhà + 1 vùng gỗ (đã chiếm xong), 2 nông trại, nhà lính bộ. Lần chạy trước (vùng nhà còn phải cắm cờ): phút 9 có 3 vùng, nhà lính bộ + nhà lính cung, 8 lính bộ. Gỗ là nút thắt (≈ 30 gỗ/phút mỗi vùng gỗ).
+
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): khối `if(mode==='ai'&&aiTimer>=5)` trong `update()`; nhánh `mode==='ai'&&u.team===1&&!target` trong vòng quân; khối "AI has its own independent vision map".
-- `aiCanSee()`, `nearestEnemy()`, `spawn()`, `buildTurret()`.
+- [src/main.ts](../../src/main.ts): `runEnemyAI()` (gọi trong `update()` khi `mode==='ai'&&aiTimer>=5`), các hàm cục bộ `build()`, `freeMines()`, `aiBuy()`; nhánh `mode==='ai'&&u.team===1&&!target` trong vòng quân; khối "AI has its own independent vision map".
+- Dùng lại: `findBuildSpot()`, `placeBuilding()`, `startUpgrade()`, `hasBuilding()`, `foodPerMinute()`, `upkeepPerMinute()`, `spawn()`, `buildTurret()`, `aiCanSee()`, `nearestEnemy()`.
 - Dữ liệu: `state.enemyMemory`, `state.enemyFogSeen`, `state.aiExploreTarget` (khai báo nhưng chưa dùng).
 
 ## Tương tác
-- [units.md](units.md), [economy.md](economy.md), [fortress.md](fortress.md), [fog-of-war.md](fog-of-war.md), [combat.md](combat.md).
+- [buildings.md](buildings.md), [territory.md](territory.md), [economy.md](economy.md), [units.md](units.md), [fortress.md](fortress.md), [fog-of-war.md](fog-of-war.md), [combat.md](combat.md).
 
 ## Multiplayer
 Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 
 ## Kiểm thử thủ công
-- [ ] Đầu trận AI ra 2 trinh sát đi khám phá / chiếm mỏ.
-- [ ] Sau vài phút AI có đủ loại quân và tự tấn công khi thấy quân/căn cứ xanh.
+- [ ] Đầu trận AI xây 2 nông trại, ra 2 trinh sát, cắm cờ vùng gỗ gần nhất đã khám phá.
+- [ ] Sau ~5 phút AI có nhà lính bộ và lính bộ; sau đó nhà lính cung.
+- [ ] AI không rơi vào thiếu tiếp tế.
 - [ ] AI không nhắm quân xanh đang trong sương mù của nó.
 
 ## Giới hạn / việc tồn đọng
-- `enemyMemory` được ghi nhưng chưa được dùng để ra quyết định tấn công.
-- `aiExploreTarget` chưa dùng.
+- AI phát triển chậm (gỗ là nút thắt) và chưa tổ chức tấn công có chủ đích; quân chỉ đánh khi gặp địch hoặc khi đi tới mỏ vùng xanh.
+- AI chỉ cắm cờ ở vùng đã khám phá; nếu trinh sát chết sớm, AI mở rộng rất chậm.
+- `enemyMemory` được ghi nhưng chưa được dùng để ra quyết định tấn công; `aiExploreTarget` chưa dùng.
 - Bán kính tầm nhìn AI khác `unitVisionRadius()` (giáo 120 vs 150, cung 105 vs 130).
-- AI không xây nông trại.

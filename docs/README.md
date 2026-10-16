@@ -15,17 +15,20 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 | Tính năng | File | Hàm / dữ liệu chính | Trạng thái |
 |---|---|---|---|
 | Luồng trận, khoá xuất quân, thắng/thua | [features/match-flow.md](features/match-flow.md) | `fresh()`, `update()`, `finish()`, `DEPLOYMENT_LOCK_SECONDS` | Đang có |
-| Kinh tế & mỏ vàng | [features/economy.md](features/economy.md) | khối thu nhập trong `update()`, `state.mines` | Đang có |
+| Kinh tế: 4 tài nguyên, lúa duy trì | [features/economy.md](features/economy.md) | `state.resources`, `canAfford()`, `spend()`, `updateSupply()` | Đang có |
+| Công trình, nâng cấp, nhà lính, tháp | [features/buildings.md](features/buildings.md) | `BUILDING_TYPES`, `placeBuilding()`, `updateBuildings()` | Đang có |
+| Vùng lãnh thổ & cột cờ | [features/territory.md](features/territory.md) | `state.regions`, `regionAt()`, `inOwnTerritory()` | Đang có |
 | Quân lính & xuất quân | [features/units.md](features/units.md) | `specs`, `buy()`, `spawn()`, `state.pendingSpawns` | Đang có |
 | Pháo đài & pháo tích hợp | [features/fortress.md](features/fortress.md) | `buildTurret()`, `fortressGunPosition()`, `state.bases` | Đang có |
-| Nông trại | [features/farms.md](features/farms.md) | `placeFarmAt()`, `farmPlacementValid()`, `state.farms` | Đang có |
+| Nông trại | [features/farms.md](features/farms.md) | `BUILDING_TYPES.farm`, `FARM_LEVELS`, kéo nông trại | Đang có |
 | Chiến đấu | [features/combat.md](features/combat.md) | `nearestEnemy()`, `hurt()`, `state.bullets` | Đang có |
-| Đối thủ AI | [features/ai-opponent.md](features/ai-opponent.md) | khối AI trong `update()`, `state.enemyMemory` | Đang có |
+| Đối thủ AI | [features/ai-opponent.md](features/ai-opponent.md) | `runEnemyAI()`, `state.enemyMemory` | Đang có |
 | Sương mù & tầm nhìn | [features/fog-of-war.md](features/fog-of-war.md) | `teamCanSee()`, `state.fogSeen`, `revealTeamVision()` | Đang có |
 | Điều khiển, chọn quân, camera | [features/controls.md](features/controls.md) | sự kiện chuột/phím, `applyAction('move')` | Đang có |
 | Chọn chế độ & chơi P2P | [features/multiplayer.md](features/multiplayer.md) | `createRoom()`, `joinRoom()`, snapshot | Cần kiểm thử |
 | Bản đồ, địa hình, đồ hoạ | [features/rendering.md](features/rendering.md) | `buildTerrain()`, `draw()`, spritesheet | Đang có |
 | HUD & giao diện | [features/hud-ui.md](features/hud-ui.md) | `updateHUD()`, `index.html` | Đang có |
+| Hệ thống 4 tài nguyên & lãnh thổ | [features/resource-system.md](features/resource-system.md) | thiết kế gốc, quyết định, kế hoạch | Đang có |
 
 ## Cách cập nhật tài liệu
 - **Thêm tính năng mới:** copy [_template.md](_template.md) thành `features/<ten-kebab-case>.md`, điền đủ các mục, thêm một dòng vào bảng trên.

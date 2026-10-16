@@ -1,6 +1,6 @@
 # Điều khiển, chọn quân & camera
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
 Điều khiển bằng chuột (có hỗ trợ cảm ứng để kéo bản đồ) và phím. Người chơi chọn một hoặc nhiều quân, ra lệnh di chuyển theo đội hình hoặc tấn công; kéo/zoom bản đồ.
@@ -15,6 +15,8 @@
 | Trái vào vùng trống khi đang chọn **một** quân bằng nhấp | Ra lệnh `move` cho quân đó |
 | Trái vào pháo đài mình | Chọn pháo đài (bỏ chọn quân), hiện vòng tầm pháo |
 | Trái giữ trên nông trại mình | Kéo nông trại ([farms.md](farms.md)) |
+| Trái vào công trình mình (không phải nông trại thì chỉ chọn) | Chọn công trình: vòng nét đứt, log thông tin; nút nâng cấp dùng công trình đang chọn |
+| Bấm nút xây rồi trái trên bản đồ | Đặt công trình ([buildings.md](buildings.md)); phải hoặc Escape để huỷ |
 | Phải nhấp (không kéo) | Ra lệnh `move` cho cả nhóm đang chọn |
 | Giữ phải / giữa rồi kéo; kéo bằng cảm ứng | Di chuyển camera (ngưỡng 4 px mới tính là kéo) |
 | Lăn chuột | Zoom ×1.15 quanh con trỏ |
@@ -27,23 +29,23 @@
 | `-` / `_` | Zoom **vào** (×1.15) |
 | Space | Tạm dừng/tiếp tục |
 | A | Lệnh tấn công cho quân đang chọn |
-| Escape | Huỷ đặt nông trại |
+| Escape | Huỷ đặt công trình |
 
 **Đội hình** (action `move`): quân được xếp lưới vuông `ceil(√n)` cột, khoảng cách 34, tâm lưới là điểm nhấp và được đẩy vào trong nếu sát mép. Toạ độ kẹp trong `[25, W−25] × [45, H−30]`. Khi đang khoá xuất quân, quân có ô đích ngoài vùng căn cứ bị chuyển `hold`.
 
-**Camera**: `zoom` trong `[MIN_ZOOM, MAX_ZOOM]`; mặc định `DEFAULT_ZOOM` = khung nhìn rộng 64 ô, tối đa zoom vào 32 ô. Đầu trận camera đặt ở căn cứ xanh (kể cả khi chơi phe đỏ).
+**Camera**: `zoom` trong `[MIN_ZOOM, MAX_ZOOM]`; mặc định `DEFAULT_ZOOM` = khung nhìn rộng 64 ô, tối đa zoom vào 32 ô. Đầu trận camera đặt ở pháo đài của mình (`centerCameraOnHome()`; guest PvP là pháo đài đỏ).
 
 ## Code liên quan
 - [src/main.ts](../../src/main.ts): các `addEventListener` cuối file (`wheel`, hai `pointerdown`, hai `pointermove`, `stopPan()`, `endPointer()`, `click`, hai `keydown`).
 - `applyAction()` nhánh `'move'` (đội hình), `commandAttack()`.
 - `canvasPoint()`, `canvasPos()`, `worldToCanvas()`, `viewOffsets()`, `clampCamera()`, `unitHitRadius()`.
-- Trạng thái UI: `selected`, `localSelectedIds`, `selectedFortress`, `dragSelect`, `selectingBox`, `panning`.
+- Trạng thái UI: `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `dragSelect`, `selectingBox`, `panning`.
 - Vẽ: `drawUnitSelection()`, khung chọn trong `draw()`.
 
 ## Tương tác
 - [match-flow.md](match-flow.md): khoá 120 giây giới hạn lệnh di chuyển.
 - [combat.md](combat.md): lệnh `attack`.
-- [farms.md](farms.md): chế độ đặt nông trại chặn các thao tác khác.
+- [buildings.md](buildings.md): chế độ đặt công trình chặn các thao tác khác.
 
 ## Multiplayer
 - `move {ids, x, y}` và `attack {ids}` gửi cho host; host chỉ áp dụng cho quân có `team` đúng phe guest.

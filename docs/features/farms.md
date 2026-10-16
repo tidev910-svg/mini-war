@@ -1,55 +1,50 @@
 # Nông trại
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
-Nông trại là công trình kinh tế. Người chơi bấm "Xây nông trại", rê chuột chọn chỗ (xanh = hợp lệ, đỏ = bị chặn), nhấp trái để đặt; nhấp phải hoặc Escape để huỷ. Nông trại đã xây có thể kéo đi chỗ khác bằng chuột trái. Quân đỏ có thể tấn công và phá nông trại.
+Nông trại là công trình sinh **lúa** — nguồn lúa duy nhất để tuyển và nuôi quân. Nông trại là một loại công trình (`kind: 'farm'`) trong hệ thống chung ở [buildings.md](buildings.md): đặt bằng nút "Xây nông trại", có thời gian xây, có thể bị phá, có thể nâng cấp. Riêng nông trại còn **kéo được** sang chỗ khác bằng chuột trái.
 
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
-| Giá | 80 vàng | `placeFarmAt()`, `buildFarm()`, `beginFarmPlacement()` |
-| Thu nhập | +2 vàng/giây mỗi nông trại có `hp > 0` | `update()` |
-| HP | 180 | `placeFarmAt()` |
-| Footprint logic | 62 × 68 (nửa: 31 × 34) | `farmPlacementValid()` |
+| Giá | 100 gỗ | `BUILDING_TYPES.farm.cost` |
+| Thời gian xây | 20 giây | `BUILDING_TYPES.farm.buildTime` |
+| Máu | 180 | `BUILDING_TYPES.farm.hp` |
+| Footprint logic | 62 × 68 (nửa: 31 × 34) | `halfW`, `halfH` |
+| Sản lượng | cấp 1: 20 · cấp 2: 30 · cấp 3: 45 lúa/phút (chỉ khi đã xây xong) | `FARM_LEVELS` |
+| Nâng cấp | cấp 2: 80 gỗ + 40 đá · cấp 3: 120 gỗ + 80 đá · 15 giây mỗi lần | `FARM_LEVELS`, `FARM_UPGRADE_SECONDS` |
+| Nơi đặt | Bất kỳ đâu đã khám phá (`where: 'explored'`), không cần lãnh thổ | — |
 | Số lượng tối đa | không giới hạn | — |
-| Hoàn vốn | 40 giây | (80 / 2) |
 
-Vị trí hợp lệ (`farmPlacementValid(team, x, y, ignoreFarm)`):
-1. Footprint nằm trong bản đồ (cách mép ≥ 2).
-2. Mọi điểm lấy mẫu (bước 8) trên footprint **đã được phe đó khám phá** (`isTeamAreaExplored()`).
-3. Không có điểm nào trên ô nước (2) hoặc đá (3).
-4. Không đè nông trại khác còn HP, không đè pháo đài, không đè quân còn sống.
+Điều kiện vị trí chung (khám phá, không nước/đá, không chồng công trình/pháo đài/sân tập kết/quân): xem [buildings.md](buildings.md).
+
+Nút "Nâng cấp nông trại": nếu đang chọn một nông trại của mình thì nâng nông trại đó, nếu không thì nâng nông trại cấp thấp nhất, gần pháo đài nhất. Nhãn nút hiện giá của cấp kế tiếp.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts):
-  - `beginFarmPlacement()` — vào chế độ đặt (UI, chưa trừ tiền); `endFarmPlacement()` — thoát.
-  - Sự kiện `pointermove` cập nhật `farmPlacement {x, y, valid}`; `pointerdown` trái → `requestAction('placeFarm',{x,y})`.
-  - `placeFarmAt(team, x, y)` — kiểm tra lại, trừ 80 vàng, thêm vào `state.farms`.
-  - `buildFarm(team)` + `findOpenBaseSpot()` — tự tìm chỗ quanh căn cứ (action `farm`; hiện nút UI không dùng nữa).
-  - Kéo: `draggingFarm` trong `pointerdown`/`pointermove`/`endPointer()`; action `moveFarm`.
-  - Vẽ: `drawFarm(f, preview)` với sprite `/assets/farmstead-v2.png`.
-- Dữ liệu: `state.farms[] = {x, y, hp, max, team}`.
+- [src/main.ts](../../src/main.ts): `BUILDING_TYPES.farm`, `FARM_LEVELS`, `FARM_UPGRADE_SECONDS`; sinh lúa trong khối thu nhập của `update()` và trong `foodPerMinute()`.
+- Đặt/nâng cấp dùng chung: `beginPlacement('farm')`, `placeBuilding()`, `startUpgrade(team, 'farm', id)`.
+- Kéo: `draggingFarm` trong `pointerdown`/`pointermove`/`endPointer()`; kiểm tra bằng `buildingPlacementProblem(team, 'farm', x, y, farm)`; action `moveFarm {id, x, y}`.
+- Vẽ: `drawFarm(f, preview)` (sprite `/assets/farmstead-v2.png`, mờ khi đang xây) + `drawBuildingOverlay()` (nhãn "NÔNG TRẠI CẤP n").
 
 ## Tương tác
-- [economy.md](economy.md): thu nhập +2/giây.
-- [fog-of-war.md](fog-of-war.md): chỉ xây được trên vùng đã khám phá.
-- [combat.md](combat.md) / [ai-opponent.md](ai-opponent.md): chỉ quân **team 1** chọn nông trại làm mục tiêu (`nearestEnemy()`).
-- [controls.md](controls.md): nhấp trái vào nông trại ưu tiên kéo hơn là chọn quân.
+- [economy.md](economy.md): lúa ròng, thiếu tiếp tế.
+- [buildings.md](buildings.md): hệ thống công trình chung.
+- [combat.md](combat.md): quân hai phe tấn công nông trại địch khi thấy.
+- [ai-opponent.md](ai-opponent.md): AI xây nông trại theo nhu cầu lúa.
 
 ## Multiplayer
-- `placeFarm {x, y}`: host gọi `placeFarmAt(1, x, y)` và kiểm tra lại toàn bộ.
-- `moveFarm {index, x, y}`: `index` là thứ tự trong danh sách nông trại của phe guest. Host kiểm tra `farmPlacementValid()`.
+- Đặt: action `build {kind:'farm', x, y}`; nâng cấp: `upgrade {kind:'farm', id}`; kéo: `moveFarm {id, x, y}` — host kiểm tra lại vị trí.
 - Guest kéo nông trại cục bộ; snapshot đến trong lúc kéo được giữ ở `window._miniWarQueuedSnapshot` và áp dụng khi thả chuột.
-- Host/AI kéo nông trại thì sửa trực tiếp `f.x/f.y`, không qua `applyAction()`.
+- Host/AI kéo nông trại thì sửa trực tiếp `x/y`, không qua `applyAction()`.
 
 ## Kiểm thử thủ công
-- [ ] Đặt trên vùng sương mù / nước / đá / đè quân → bị chặn, không trừ tiền.
-- [ ] Đặt hợp lệ → −80 vàng, thu nhập tăng 2/giây.
+- [ ] Đặt trên vùng sương mù / nước / đá / sân tập kết / đè quân → bị chặn, có lý do, không trừ gỗ.
+- [ ] Đặt hợp lệ → −100 gỗ; 20 giây sau lúa ròng tăng 20/phút.
+- [ ] Nâng cấp 2 lần → 45 lúa/phút; nút nâng cấp báo hết khi đã cấp 3.
 - [ ] Kéo nông trại sang chỗ hợp lệ / không hợp lệ.
-- [ ] PvP: guest đặt và kéo nông trại, host thấy đúng vị trí.
+- [ ] PvP: guest đặt, nâng cấp và kéo nông trại; host thấy đúng.
 
 ## Giới hạn / việc tồn đọng
-- Nông trại HP ≤ 0 **không bị xoá** khỏi `state.farms`: nó ngừng sinh tiền và bị bỏ qua khi kiểm tra chỗ trống, nhưng `drawFarm()` không kiểm tra HP nên vẫn được vẽ như còn nguyên (không có thanh máu).
-- Quân xanh không thể tấn công nông trại đỏ (luật không đối xứng ở PvP).
-- `moveFarm` dùng chỉ số mảng: nếu danh sách nông trại đổi giữa lúc kéo, có thể dời nhầm nông trại.
+- Kéo được cả nông trại đang xây và nông trại đã nâng cấp; có thể dùng để "dọn đường" cho quân.
+- Kéo nông trại ở host/AI không qua `applyAction()`.

@@ -1,55 +1,79 @@
-# Kinh tế & mỏ vàng
+# Kinh tế & tài nguyên
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
-Hai tài nguyên: **vàng** và **năng lượng**. Cả hai tăng đều theo thời gian. Vàng tăng thêm nhờ nông trại và mỏ. Mỗi trận có 3 mỏ đặt ngẫu nhiên; phe có nhiều quân đứng cạnh mỏ hơn sẽ chiếm mỏ.
+Bốn tài nguyên: **lúa, gỗ, đá, vàng**. **Không có thu nhập nền**: lúa chỉ đến từ nông trại, gỗ/đá/vàng chỉ đến từ mỏ trong các **vùng đã cắm cờ** (xem [territory.md](territory.md)). Mỗi phe sở hữu sẵn một vùng gỗ gần nhà nên có +30 gỗ/phút ngay từ đầu trận.
+
+Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **thiếu tiếp tế**. Thiết kế đầy đủ: [resource-system.md](resource-system.md).
 
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
-| Vàng / năng lượng ban đầu | 150 / 100 mỗi phe | `fresh()` |
-| Thu nhập nền | +8 vàng, +5 năng lượng mỗi giây mỗi phe | `update()` |
-| Nông trại | +2 vàng/giây mỗi nông trại còn HP | `update()`, xem [farms.md](farms.md) |
-| Bán kính chiếm mỏ | 58 đơn vị thế giới | `update()` |
-| Mất quyền sở hữu khi bỏ trống/hoà | sau 5 giây liên tục | `mine.emptyTime` |
+| Tài nguyên ban đầu mỗi phe | 150 lúa, 400 gỗ, 50 đá, 50 vàng | `STARTING_RESOURCES` |
+| Thu nhập nền | Không có | — |
+| Nông trại | +20/30/45 lúa/phút theo cấp, chỉ khi đã xây xong | `FARM_LEVELS`, xem [farms.md](farms.md) |
+| Chu kỳ cộng thu nhập | Mỗi 1 giây (`incomeTimer`) | `update()` |
 
-Ba mỏ (tạo trong `fresh()`):
-| `kind` | Thu nhập/giây | Ghi chú | Nhãn trên bản đồ |
-|---|---:|---|---|
-| `ordinary` | +3 vàng | vị trí ngẫu nhiên | MỎ THƯỜNG +3 |
-| `rich` | +5 vàng | ưu tiên ô tài nguyên gần tâm bản đồ (±15%) | MỎ GIÀU +5 |
-| `special` | +3 vàng | giữ liên tục 30 giây → thưởng **+25 năng lượng** một lần cho mỗi lần chiếm | MỎ ĐẶC BIỆT +3 |
+**Loại mỏ** (`MINE_TYPES`):
+| `resource` | Sản lượng | Nhãn trên bản đồ |
+|---|---:|---|
+| `wood` | 30 gỗ/phút | MỎ GỖ +30/PHÚT |
+| `stone` | 20 đá/phút | MỎ ĐÁ +20/PHÚT |
+| `gold` | 15 vàng/phút | MỎ VÀNG +15/PHÚT |
+| mỏ giàu (`rich`) | × 1,5 (`RICH_MINE_MULTIPLIER`), có vòng vàng quanh mỏ | thêm chữ "GIÀU" |
 
-Đặt mỏ: chọn ngẫu nhiên trong `resourceTiles` (ô địa hình loại 4), cách mỗi pháo đài ≥ 340 và cách mỏ khác ≥ 380 (tối đa 160 lần thử).
+**Mỏ**: mỗi vùng lãnh thổ có đúng một mỏ (28 mỏ khi đủ vùng: 14 gỗ, 6 đá, 8 vàng; vùng gần giữa bản đồ có mỏ giàu). Cách sinh vùng và mỏ: [territory.md](territory.md).
 
-Chiếm mỏ (mỗi giây, `update()`): đếm quân còn sống của mỗi phe trong bán kính 58.
-- Bên nhiều hơn → `controller`. Nếu khác chủ cũ: đổi `owner`, reset `controlTime`, `rewarded=false`.
-- Hoà/không ai → `emptyTime++`, `controlTime=0`; `emptyTime ≥ 5` → `owner=-1` (trung lập). Trong 5 giây đó nhãn vẫn hiện chủ cũ nhưng mỏ **không** trả tiền (chỉ trả khi có `controller`).
-- Mỗi giây có `controller`: cộng `income` cho chủ mỏ.
+**Lúa duy trì & thiếu tiếp tế** (`updateSupply(team)`, mỗi giây sau khi cộng thu nhập):
+- Mỗi quân còn sống tiêu `specs[type].upkeep` lúa/phút (trinh sát 0,5; lính, lính giáo 1; cung thủ 1,5; kỵ binh 3), kể cả khi đứng yên. Quân trong hàng chờ xuất quân chưa tính.
+- Lúa ròng/phút = `foodPerMinute(team)` − `upkeepPerMinute(team)`.
+- Mỗi giây trừ `upkeep/60` khỏi kho; kho không đủ thì về 0.
+- `state.supply[team] = {status, grace}`:
+
+| Trạng thái | Vào khi | Hiệu ứng | Ra khi |
+|---|---|---|---|
+| `ok` | — | — | — |
+| `warning` | Kho không đủ trả và lúa ròng < 0 | Đếm ngược `SUPPLY_GRACE_SECONDS` = 30 giây | Lúa ròng ≥ 0 → `ok` |
+| `starving` | Hết 30 giây ân hạn | Tốc độ di chuyển × `SUPPLY_SPEED_FACTOR` (0,85); hồi chiêu ÷ `SUPPLY_ATTACK_SPEED_FACTOR` (0,9) → −10% tốc độ đánh | Lúa ròng ≥ 0 → `ok` |
+
+Chỉ thoát khi **nông trại đủ nuôi quân** (lúa ròng ≥ 0), không phải khi kho tạm có lúa, nên trạng thái không bật tắt liên tục. Pháo pháo đài không bị ảnh hưởng.
+
+**Thu từ mỏ** (mỗi giây, `update()`): `mine.owner = region.owner`; mỏ có chủ cộng `income` (mỗi giây) loại tài nguyên của mỏ cho chủ. Chủ vùng do cột cờ/tiền đồn quyết định.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): khối thu nhập trong `update()` (vòng `while(incomeTimer>=1)`).
-- `fresh()` → `randomMineSpot()`, `stateBaseTooClose()`.
-- `teamGold()`, `setTeamGold()`, `teamEnergy()`, `setTeamEnergy()`.
-- Dữ liệu mỏ: `state.mines[] = {x, y, kind, income, owner(-1|0|1), emptyTime, controlTime, rewarded}`.
-- Vẽ mỏ: trong `draw()`; mỏ chỉ hiện khi đã khám phá hoặc đang nhìn thấy.
+- [src/main.ts](../../src/main.ts): hằng số `RESOURCE_NAMES`, `STARTING_RESOURCES`, `FORTRESS_GUN_COST`, `MINE_TYPES`, `RICH_MINE_MULTIPLIER` (ngay sau `specs`).
+- Tiện ích tài nguyên: `teamResources(team)`, `canAfford(team, cost)`, `spend(team, cost)`, `costText(cost)`, `missingText(team, cost)`, `formatAmount(value)` (số thập phân kiểu Việt, dấu phẩy).
+- Lúa duy trì: `foodPerMinute(team)`, `upkeepPerMinute(team)`, `updateSupply(team)`, `supplyFactor(team, kind)`; hằng số `SUPPLY_GRACE_SECONDS`, `SUPPLY_SPEED_FACTOR`, `SUPPLY_ATTACK_SPEED_FACTOR`; dữ liệu `state.supply[team] = {status: 'ok'|'warning'|'starving', grace}`. Giá luôn là object dạng `{food, wood, stone, gold}` (chỉ ghi khoá cần).
+- Khối thu nhập trong `update()` (vòng `while(incomeTimer>=1)`).
+- Sinh mỏ theo vùng trong `fresh()` — xem [territory.md](territory.md).
+- Dữ liệu: `state.resources = [{food, wood, stone, gold}, {…}]` (chỉ số = team); `state.mines[] = {x, y, resource, rich, regionId, income (mỗi giây), owner(-1|0|1)}`.
+- Vẽ mỏ: trong `draw()`; màu tinh thể theo `MINE_TYPES[resource].crystal`; mỏ chỉ hiện khi đã khám phá hoặc đang nhìn thấy.
 - `state.guards` (quái canh mỏ) luôn rỗng — xem Giới hạn.
 
 ## Tương tác
-- [farms.md](farms.md), [units.md](units.md), [fortress.md](fortress.md): nơi tiêu vàng/năng lượng.
+- [resource-system.md](resource-system.md): thiết kế đầy đủ và các giai đoạn tiếp theo.
+- [farms.md](farms.md), [units.md](units.md), [fortress.md](fortress.md): nơi tiêu tài nguyên.
 - [fog-of-war.md](fog-of-war.md): mỏ chưa khám phá bị che.
-- [ai-opponent.md](ai-opponent.md): quân AI rảnh sẽ đi chiếm mỏ không thuộc phe đỏ.
+- [territory.md](territory.md): vùng, cột cờ, sở hữu mỏ.
+- [buildings.md](buildings.md): giá công trình.
+- [ai-opponent.md](ai-opponent.md): AI quản lý kinh tế.
+- [hud-ui.md](hud-ui.md): 4 ô tài nguyên.
 
 ## Multiplayer
-Chỉ host tính thu nhập; guest nhận tài nguyên qua snapshot.
+Chỉ host tính thu nhập, lúa duy trì và thiếu tiếp tế; `state.resources` và `state.supply` đi qua snapshot, guest hiển thị phần tử `[1]`. Log cảnh báo thiếu tiếp tế chỉ hiện ở host (guest vẫn thấy trạng thái trên HUD).
 
 ## Kiểm thử thủ công
-- [ ] Sau 10 giây không làm gì, vàng tăng ~80, năng lượng ~50.
-- [ ] Đưa 1 lính tới mỏ thường → nhãn đổi "XANH", vàng tăng thêm 3/giây.
-- [ ] Giữ mỏ đặc biệt 30 giây → log "+25 năng lượng" đúng một lần.
-- [ ] Rút quân khỏi mỏ → sau 5 giây mỏ về "TRUNG LẬP".
+- [ ] Đầu trận HUD hiện 150 lúa, 400 gỗ, 50 đá, 50 vàng; không làm gì thì chỉ gỗ tăng (~30/phút từ vùng gần nhà).
+- [ ] Xây 1 nông trại → lúa tăng ~20 mỗi phút.
+- [ ] Cắm cờ ở một vùng gỗ trung lập → 20 giây xây + 10 giây chiếm, nhãn mỏ đổi "XANH", gỗ tăng thêm ~30/phút.
+- [ ] Cột cờ bị phá → mỏ về "TRUNG LẬP", ngừng thu.
+- [ ] Mỏ vàng giàu hiện "+23/PHÚT" (15 × 1,5 làm tròn) và có vòng vàng.
+- [ ] Tuyển quân vượt sức nuôi của nông trại → HUD lúa hiện số ròng âm (màu cam); khi kho về 0 → log "Kho lúa đã cạn", HUD đếm ngược 30s; hết giờ → log thiếu tiếp tế, quân chậm rõ rệt.
+- [ ] Xây thêm nông trại cho lúa ròng ≥ 0 → log "hết thiếu tiếp tế", tốc độ trở lại bình thường.
+  (Đã chạy thử bằng debugger 2026-10-16: kỵ binh đi 49 đơn vị/giây khi thiếu tiếp tế, 58 khi bình thường.)
 
 ## Giới hạn / việc tồn đọng
+- Gỗ là nút thắt đầu trận (≈ 30 gỗ/phút mỗi vùng gỗ) nên trận phát triển chậm; cần chạy thử nhiều trận để chỉnh `STARTING_RESOURCES` và sản lượng mỏ.
 - `state.guards` và khối "Neutral monsters guarding the gold mines" trong `update()` là code chết: không nơi nào thêm quái canh mỏ.
 - Không có giới hạn trần tài nguyên.

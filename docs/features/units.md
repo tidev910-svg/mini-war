@@ -1,33 +1,36 @@
 # Quân lính & xuất quân
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
-Người chơi dùng vàng và năng lượng để mua 5 loại quân. Quân mới xuất hiện ở **sân tập kết** cạnh pháo đài. Nếu sân đã kín, quân vào hàng chờ và tự xuất khi có chỗ.
+Người chơi dùng lúa (và gỗ/vàng tuỳ loại) để mua 5 loại quân. Quân mới xuất hiện ở **sân tập kết** cạnh pháo đài. Nếu sân đã kín, quân vào hàng chờ và tự xuất khi có chỗ.
 
 ## Luật & thông số
 Bảng `specs` (đơn vị: HP, sát thương/đòn, tầm & tốc độ theo đơn vị thế giới, cooldown giây):
 
-| Khoá | Tên | HP | ST | Tầm | Tốc độ | Cooldown | Vàng | Năng lượng | Bán kính `r` | Tầm nhìn |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `scout` | Trinh sát | 60 | 5 | 18 | 72 | 1.1 | 40 | 0 | 8 | 145 |
-| `infantry` | Lính | 100 | 13 | 22 | 45 | 0.8 | 50 | 0 | 10 | 105 |
-| `archer` | Cung thủ | 65 | 10 | 125 | 34 | 1.05 | 75 | 15 | 9 | 130 |
-| `spearman` | Lính giáo | 145 | 18 | 26 | 38 | 0.82 | 110 | 25 | 11 | 150 |
-| `cavalry` | Lính kỵ binh | 210 | 24 | 27 | 58 | 0.9 | 250 | 70 | 13 | 105 |
+| Khoá | Tên | HP | ST | Tầm | Tốc độ | Cooldown | Giá (`cost`) | Nuôi (`upkeep`, lúa/phút) | Bán kính `r` | Tầm nhìn |
+|---|---|---:|---:|---:|---:|---:|---|---:|---:|---:|
+| `scout` | Trinh sát | 60 | 5 | 18 | 72 | 1.1 | 30 lúa | 0,5 | 8 | 145 |
+| `infantry` | Lính | 100 | 13 | 22 | 45 | 0.8 | 40 lúa, 10 vàng | 1 | 10 | 105 |
+| `archer` | Cung thủ | 65 | 10 | 125 | 34 | 1.05 | 55 lúa, 30 gỗ, 10 vàng | 1,5 | 9 | 130 |
+| `spearman` | Lính giáo | 145 | 18 | 26 | 38 | 0.82 | 45 lúa, 20 gỗ | 1 | 11 | 150 |
+| `cavalry` | Lính kỵ binh | 210 | 24 | 27 | 58 | 0.9 | 80 lúa, 50 vàng | 3 | 13 | 105 |
+
+`cost` là object `{food, wood, stone, gold}`; nhãn giá trên nút được sinh từ `specs` bằng `costText()` nên luôn khớp. Nhãn nút có thêm "nuôi X lúa/phút". Hết lúa nuôi quân thì quân bị chậm, xem "Lúa duy trì & thiếu tiếp tế" trong [economy.md](economy.md). Lính bộ, cung thủ, kỵ binh cần **nhà lính bộ / nhà lính cung / chuồng ngựa đã xây xong** (`UNIT_REQUIREMENTS`, xem [buildings.md](buildings.md)); trinh sát và lính giáo tuyển ngay tại pháo đài. Nút quân bị khoá mờ đi và ghi "cần …".
 
 (Tầm nhìn lấy từ `unitVisionRadius()`; AI dùng số khác, xem [fog-of-war.md](fog-of-war.md).)
 
 Quy tắc mua (`buy()`):
-- Không mua khi `ended` hoặc `paused`, hoặc `type` không có trong `specs`.
+- Không mua khi `ended` hoặc `paused`, hoặc `type` không phải khoá riêng của `specs` (`Object.hasOwn`).
 - Tối đa **2 trinh sát** mỗi phe (tính cả quân trong hàng chờ).
-- Không đủ vàng hoặc năng lượng → log, không trừ tiền.
+- Thiếu công trình mở khoá (`hasBuilding()`) → log "Cần xây xong …", không trừ.
+- Không đủ tài nguyên (`canAfford()`) → log "thiếu …" (`missingText()`), không trừ.
 - Trừ tiền **trước**, rồi `spawn()`. Nếu sân kín, quân vào `state.pendingSpawns` (tiền đã trừ).
 
 Vị trí xuất quân (`spawn()`):
 - Sân tập kết: `musterYard(base)` — hình chữ nhật 170×144, phía trước pháo đài (bên phải với xanh, bên trái với đỏ).
 - Xếp theo lưới 4 hàng ngang theo số quân cùng loại; nếu ô bận thì dò lưới 7×5 trong sân.
-- Ô bị coi là bận nếu: ngoài sân, trên nước/đá, đè quân khác, nông trại hay pháo đài. Khi đang khoá xuất quân, quân không phải trinh sát phải nằm trong `BASE_DEPLOYMENT_RADIUS`.
+- Ô bị coi là bận nếu: ngoài sân, trên nước/đá, đè quân khác, công trình (theo footprint) hay pháo đài. Công trình không được đặt đè sân tập kết. Khi đang khoá xuất quân, quân không phải trinh sát phải nằm trong `BASE_DEPLOYMENT_RADIUS`.
 - `processPendingSpawns()` thử lại hàng chờ mỗi 0.35 giây; quân xuất từ hàng chờ giữ `id` và `order` đã đặt.
 
 Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('hold'|'move'|'attack'|'explore'), target, dest, selected, walk, moving, facing?}`.
@@ -57,7 +60,6 @@ Guest gửi `buy` với `{unit}`; host gọi `buy(unit, 1)`.
 - [ ] Thêm loại quân mới: cập nhật `specs`, `unitVisionRadius()`, `unitTargetHeight()`, `drawUnit()`, `updateHUD()`, nút trong `index.html`, AI trong `update()`, và file này.
 
 ## Giới hạn / việc tồn đọng
-- `buy()` kiểm tra `!specs[type]` nên khoá như `'constructor'` lọt qua (lấy từ prototype) → nên dùng `Object.hasOwn(specs,type)`.
 - Log giới hạn trinh sát hiện cho cả hai phe (thiếu kiểm tra `team===localTeam()`).
 - Quân di chuyển không kiểm tra nước/đá; chỉ lúc xuất quân mới kiểm tra.
 - Lính thường, cung thủ, trinh sát, kỵ binh chưa có sprite 4 hướng (spritesheet chỉ có hướng xuống).

@@ -1,6 +1,6 @@
 # Chiến đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-15
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
 
 ## Mô tả
 Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung thủ và pháo bắn đạn bay đuổi theo mục tiêu; các loại khác gây sát thương ngay. Lính giáo khắc chế kỵ binh.
@@ -8,7 +8,7 @@ Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung th�
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
-| Tầm đánh thực tế | `specs.range` + bán kính mục tiêu (`r` của quân; 35 nếu mục tiêu có `w` (pháo đài); 10 cho vật khác như nông trại) | `update()` |
+| Tầm đánh thực tế | `specs.range` + bán kính mục tiêu (`r` của quân; 35 nếu mục tiêu có `w` (pháo đài); 10 cho công trình) | `update()` |
 | Đạn cung thủ | tốc độ 280, sống 2 giây, xuất phát `y−3` | `update()` |
 | Đạn pháo | ST 17, tốc độ 320, sống 1.2 giây | `update()` |
 | Trúng đạn | khi khoảng cách ≤ bước di chuyển + 7 | `update()` |
@@ -16,11 +16,16 @@ Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung th�
 | Kỵ binh đánh giáo | ×0.9 sát thương | `hurt()` |
 | Hiệu ứng trúng đòn | vòng tròn 0.18 giây (xanh `#73c8ff` / đỏ `#ff747a`) | `hurt()` |
 | Hồi chiêu ban đầu ngẫu nhiên | 0–0.35 giây | `spawn()` |
+| Thiếu tiếp tế | tốc độ × 0,85; hồi chiêu ÷ 0,9 | `supplyFactor()`, xem [economy.md](economy.md) |
 
 Chọn mục tiêu (`nearestEnemy(u)`), chạy mỗi frame cho từng quân:
 1. Quân địch gần nhất. Lọc theo tầm nhìn: ở **PvP** mọi phe chỉ nhắm quân mình đang thấy; ở **AI** chỉ quân đỏ bị lọc (`aiCanSee()`), quân xanh nhắm được cả quân trong sương mù.
 2. Pháo đài địch thay thế nếu gần hơn quân tốt nhất ít nhất 20 (hoặc chưa có mục tiêu). Ở AI, quân xanh luôn "biết" pháo đài đỏ; các trường hợp khác phải đang nhìn thấy.
-3. Chỉ team 1: nông trại địch đang thấy, nếu gần hơn ít nhất 15.
+3. Công trình địch (`state.buildings`) đang thấy — cả hai phe (ở chế độ AI, quân xanh thấy hết) — nếu gần hơn ít nhất 15.
+
+Công trình bị đánh về 0 máu → `destroyBuilding()` (xoá hẳn; cột cờ thì vùng về trung lập). Tháp và tiền đồn bắn quân địch: xem [buildings.md](buildings.md).
+
+Trong vòng quân của `update()`, tốc độ và hồi chiêu dùng biến cục bộ `speed`, `cooldown` (đã nhân hệ số thiếu tiếp tế), không dùng thẳng `s.speed`, `s.cooldown`.
 
 Di chuyển khi có mục tiêu ngoài tầm: chỉ đuổi nếu `order==='attack'` (hoặc là quân AI), và đã hết khoá xuất quân (trừ trinh sát).
 
@@ -45,6 +50,7 @@ Chỉ host tính chiến đấu. `serializeSnapshot()` gửi `target:null` cho q
 - [ ] 1 giáo vs 1 kỵ binh: giáo gây ~24.3/đòn.
 - [ ] Quân không có lệnh tấn công đứng yên khi địch ngoài tầm, đánh khi địch vào tầm.
 - [ ] Phím A / nút Tấn công → quân được chọn tiến về mục tiêu gần nhất.
+- [ ] Quân tấn công tới gần công trình địch → đánh tới khi công trình biến mất.
 
 ## Giới hạn / việc tồn đọng
 - Ở chế độ AI, quân xanh nhắm được quân đỏ trong sương mù (không đối xứng với AI).

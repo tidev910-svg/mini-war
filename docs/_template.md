@@ -14,7 +14,7 @@ Người chơi thấy gì, làm gì, tính năng giải quyết điều gì tron
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn trong code |
 |---|---:|---|
-| Ví dụ: Giá | 80 vàng | `placeFarmAt()` |
+| Ví dụ: Giá | 100 gỗ | `BUILDING_TYPES.farm.cost` |
 
 ## Code liên quan
 - [src/main.ts](../../src/main.ts): `tenHam()` — vai trò ngắn gọn.
