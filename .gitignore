@@ -3,3 +3,4 @@ dist/
 backup/
 *.bak
 /10)
+scripts/smoke/out/

@@ -1,12 +1,14 @@
 # Mini War
 
-Game RTS 1 đấu 1 chạy trên trình duyệt: Vite + TypeScript + Canvas 2D. Có chế độ chơi với AI và chơi P2P với bạn bè qua PeerJS. Toàn bộ logic nằm trong `src/main.ts` (có `// @ts-nocheck`), giao diện ở `index.html`, theme ở `src/style.css`, sprite ở `public/assets/`.
+Game RTS 1 đấu 1 chạy trên trình duyệt: Vite + TypeScript + Canvas 2D. Có chế độ chơi với AI và chơi P2P với bạn bè qua PeerJS. Logic chia module theo tính năng trong `src/` (`config/` hằng số, `core/`, `map/`, `sim/`, `ai/`, `net/`, `render/`, `ui/`; điểm vào `src/main.ts`; mọi file có `// @ts-nocheck`), giao diện ở `index.html`, theme ở `src/style.css`, sprite ở `public/assets/`. Bảng module: `docs/architecture.md`.
 
 ## Lệnh
 - `pnpm install` — cài thư viện.
 - `pnpm dev` — chạy server dev (http://localhost:5173).
-- `pnpm build` — `tsc --noEmit && vite build`. Vì có `@ts-nocheck`, build qua **không** chứng minh logic trong `main.ts` đúng; phải chạy thử trong trình duyệt.
-- Không có test tự động.
+- `pnpm build` — `tsc --noEmit && vite build`. Vì có `@ts-nocheck`, build qua **không** chứng minh logic đúng; phải chạy test.
+- `pnpm test` — unit test (vitest + jsdom) trong `tests/`, chạy chính các module game.
+- `pnpm smoke` — smoke test trên Chrome headless trong `scripts/smoke/` (cần `pnpm dev` đang chạy); chạy riêng nhóm: `pnpm smoke maps pvp`. Nhóm: boot, maps, capture, vision, economy, training, ai, pvp.
+- Sửa luật/cân bằng thì cập nhật test tương ứng (số trong test là số đã chốt).
 
 ## Tài liệu cơ chế game — đọc trước khi sửa
 - Bắt đầu từ `docs/README.md` (mục lục), rồi `docs/architecture.md`, `docs/conventions.md` và file tính năng liên quan trong `docs/features/`.
@@ -28,4 +30,5 @@ Game RTS 1 đấu 1 chạy trên trình duyệt: Vite + TypeScript + Canvas 2D. 
 - Mọi thay đổi trạng thái do người chơi gây ra phải đi qua `requestAction()` → `applyAction()` để chạy đúng ở PvP (host là nơi quyết định).
 - Giữ cả chế độ AI và PvP chạy được.
 - Sương mù: tách "đã khám phá" (`state.fogSeen` / `state.enemyFogSeen`) với "đang nhìn thấy" (`teamCanSee()`).
+- Code mới đặt đúng module (bảng trong `docs/architecture.md`): hằng số cân bằng vào `src/config/`, luật mô phỏng vào `src/sim/`, vẽ vào `src/render/`. Biến `let` dùng chung chỉ gán qua setter của module sở hữu (`setPaused()`, `setState()`…).
 - Chữ hiển thị cho người chơi viết tiếng Việt.

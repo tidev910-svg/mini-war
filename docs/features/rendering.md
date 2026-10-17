@@ -41,7 +41,7 @@ Clip `walk` dùng khi `u.moving`; riêng lính giáo chọn hàng theo `u.facing
 Màu phe: `teamPalette(team)` — xanh lá-lam cho team 0, đỏ đất cho team 1; thanh máu `#4baeff` / `#ff626b`.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `buildTerrain()`, `buildWorldDecor()` (cây/đá tránh căn cứ, mỏ, đường), `makePineSprite()`, `drawTree()`, `drawRock()`, `drawRockClusterSprite()`, `drawGrassPatch()`, `drawTerrainDetail()`, `drawBase()`, `drawMusterYard()`, `drawUnit()`, `drawUnitHealthBar()`, `drawUnitSelection()`, `drawFarm()`, `drawBuilding()`, `drawBuildingOverlay()`, `draw()`.
+- [src/map/terrain.ts](../../src/map/terrain.ts), [src/render/terrain.ts](../../src/render/terrain.ts), [src/render/buildings.ts](../../src/render/buildings.ts), [src/render/units.ts](../../src/render/units.ts), [src/render/draw.ts](../../src/render/draw.ts): `buildTerrain()`, `buildWorldDecor()` (cây/đá tránh căn cứ, mỏ, đường), `makePineSprite()`, `drawTree()`, `drawRock()`, `drawRockClusterSprite()`, `drawGrassPatch()`, `drawTerrainDetail()`, `drawBase()`, `drawMusterYard()`, `drawUnit()`, `drawUnitHealthBar()`, `drawUnitSelection()`, `drawFarm()`, `drawBuilding()`, `drawBuildingOverlay()`, `draw()`.
 - Tiện ích: `drawUprightAt()`, `roundRect()`, `bar()`, `pill()`, `teamPalette()`, `unitTargetHeight()`, `zoomLerp()`, `decorRandom()`.
 - Toạ độ & camera: xem [architecture.md](../architecture.md).
 

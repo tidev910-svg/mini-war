@@ -31,7 +31,7 @@ art/units/<quân>/
 ## Quy ước đặt tên
 **Chung**
 - Chữ thường, không dấu, không khoảng trắng; nối các từ bằng `-` (kebab-case). Ví dụ đúng: `spearman-down-left.png`; ví dụ sai: `ảnh chuyển động.png`, `Spearman Down.PNG`.
-- Tên thư mục quân = khoá trong bảng `specs` của [src/main.ts](../src/main.ts): `scout`, `infantry`, `archer`, `spearman`, `cavalry`.
+- Tên thư mục quân = khoá trong bảng `specs` của [src/config/balance.ts](../src/config/balance.ts): `scout`, `infantry`, `archer`, `spearman`, `cavalry`.
 - Mọi file bắt đầu bằng tên quân để nhận ra ngay cả khi bị copy ra ngoài thư mục.
 - **Không** thêm hậu tố phiên bản (`-v2`, `-final`, `-new`) cho file đang dùng: Git đã giữ lịch sử. Bản cũ cần giữ thì chuyển vào `legacy/` và đánh số ở đó.
 

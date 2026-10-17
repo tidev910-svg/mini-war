@@ -36,12 +36,16 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Ở host/AI, nhóm chọn bằng khung phải dùng chuột phải để di chuyển. → [controls.md](features/controls.md)
 
 ## Dọn code & hiệu năng
+- [ ] Bật kiểm tra kiểu TypeScript: bỏ `// @ts-nocheck` từng file (bắt đầu từ `src/config/`), thêm interface `GameState`, `Unit`, `Region`, `Building`. → [architecture.md](architecture.md)
+- [ ] Gỡ các import ngược lớp còn lại (sim/net gọi `updateHUD()`, `sim/combat` gọi `finish()`…), để `sim/` chạy được không cần DOM. → [architecture.md](architecture.md)
 - [ ] Code chết: `state.guards` (quái canh mỏ), biến `guiding`, `aiExploreTarget`. → [economy.md](features/economy.md), [controls.md](features/controls.md), [ai-opponent.md](features/ai-opponent.md)
 - [ ] Bán kính tầm nhìn AI lệch `unitVisionRadius()` (giáo 120 vs 150, cung 105 vs 130). → [fog-of-war.md](features/fog-of-war.md)
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-17 (cấu trúc dự án):** tách `src/main.ts` (159 KB) thành ~30 module theo tính năng; dọn thư mục gốc (`docs/guides/`, `docs/decisions/`, `scripts/`, ảnh lạc vào `art/`); thêm `pnpm test` (12 unit test) và `pnpm smoke` (8 nhóm kiểm thử trình duyệt, gồm PvP).
+
 **2026-10-17 (yêu cầu 17/10):** nông trại mở khoá sau 3 giây; bỏ nhà lính bộ, nhà lính cung, chuồng ngựa ; sau đó chốt: mọi loại quân tuyển tại pháo đài.
 
 **2026-10-17 (chốt mục 8):** cờ địch 2 giai đoạn có hiển thị; tiền đồn riêng; vùng lúa 15/phút + nông trại trong vùng +25%; rời cờ 5 giây thì tiến độ giảm về 0; trinh sát không chiếm cờ.

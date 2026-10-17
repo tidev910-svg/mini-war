@@ -1,6 +1,6 @@
 # Quy ước & nguyên tắc sửa đổi
 
-> Cập nhật lần cuối: 2026-10-16
+> Cập nhật lần cuối: 2026-10-17
 
 ## Nguyên tắc khi sửa code
 1. Giữ chế độ **Chơi với AI** chạy được khi sửa multiplayer, và ngược lại.
@@ -11,7 +11,14 @@
 6. Lệnh đội hình phải gán đích riêng cho từng quân, không để cả nhóm cùng một toạ độ.
 7. Tính năng áp dụng cho cả hai chế độ phải được thử ở cả AI lẫn PvP (2 tab trình duyệt).
 8. Khi báo cáo, ghi rõ phần nào đã chạy thử thật, phần nào mới qua `pnpm build` (typecheck).
-9. `src/main.ts` có `// @ts-nocheck`: `tsc` **không** bắt lỗi kiểu trong file này, nên build qua chưa có nghĩa là logic đúng.
+9. Mọi file trong `src/` có `// @ts-nocheck`: `tsc` **không** bắt lỗi kiểu, nên build qua chưa có nghĩa là logic đúng. Chạy `pnpm test` và `pnpm smoke`.
+
+## Quy ước module (`src/`)
+10. Đặt code theo bảng module trong [architecture.md](architecture.md): hằng số/bảng cân bằng → `config/` (chỉ dữ liệu, không logic); luật mô phỏng → `sim/`; vẽ → `render/`; DOM/HUD/sự kiện → `ui/`; mạng → `net/`.
+11. Mỗi biến `let` dùng chung có **một module sở hữu**. Module khác đọc trực tiếp qua `import`; muốn gán thì gọi setter của module sở hữu (`setPaused(v)`, `setState(v)`, `setZoom(v)`, `setNextId(nextId+1)`…). Thêm biến dùng chung mới thì viết setter `export function setX(v){return x=v;}` ngay dưới khai báo.
+12. Không chạy logic trận lúc nạp module; code cấp module chỉ tạo canvas/sprite, dựng địa hình và gán sự kiện. Trận đầu do `main.ts` khởi động.
+13. Hạn chế import ngược hướng `config` ← `core` ← `map`/`sim` ← `ai`/`net` ← `render`/`ui`; các ngoại lệ hiện có liệt kê ở [architecture.md](architecture.md).
+14. Sửa luật hoặc số cân bằng đã chốt → sửa test tương ứng trong `tests/` và `scripts/smoke/run.mjs`.
 
 ## Quy ước dữ liệu
 - **Team 0 = phe xanh**: người chơi ở chế độ AI, chủ phòng (host) ở PvP.

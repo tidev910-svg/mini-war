@@ -50,7 +50,7 @@ Rồi mở trình duyệt vào **http://localhost:5173/**.
 
 - `pnpm install` chỉ cần chạy lần đầu, và chạy lại mỗi khi `package.json` hoặc `pnpm-lock.yaml` thay đổi sau một lần pull.
 - Muốn dừng server: bấm **Ctrl+C** trong terminal.
-- Cách nhanh trên Windows: bấm đúp file `start-game.bat` (vẫn phải chạy `pnpm install` một lần trước đó).
+- Cách nhanh trên Windows: bấm đúp file `scripts/start-game.bat` (vẫn phải chạy `pnpm install` một lần trước đó).
 
 **Các lệnh khác**
 | Lệnh | Tác dụng |
@@ -124,6 +124,6 @@ Sau đó vào trang GitHub của kho để tạo Pull Request gộp vào nhánh 
 ---
 
 ## 7. Đọc tiếp
-- [README.md](README.md): mục lục tài liệu về cơ chế game.
+- [README.md](../README.md): mục lục tài liệu về cơ chế game.
 - [HUONG-DAN-SU-DUNG.md](HUONG-DAN-SU-DUNG.md): cách dùng thư mục `docs/` khi làm việc với Claude Code.
-- [assets.md](assets.md): nơi đặt ảnh nhân vật và quy ước đặt tên.
+- [assets.md](../assets.md): nơi đặt ảnh nhân vật và quy ước đặt tên.

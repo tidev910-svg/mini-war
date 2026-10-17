@@ -32,7 +32,7 @@ Khác:
 ## Code liên quan
 - [index.html](../../index.html): toàn bộ markup (lưu ý `<title>` chứa "Mini War" — `start-game.bat` dựa vào chuỗi này để dò server).
 - [src/style.css](../../src/style.css): theme, bố cục, responsive, `.mode-screen`, `.lobby`, `.overlay`.
-- [src/main.ts](../../src/main.ts): `updateHUD()`, `updateMatchClockHUD()`, `addLog()`, `setGameModeLabel()`, `setSidebarCollapsed()`, `syncWorldMetrics()`, handler `#pause`, `#fullscreen`, `#overlayRestart`.
+- [src/ui/hud.ts](../../src/ui/hud.ts), [src/core/game.ts](../../src/core/game.ts), [src/ui/modeScreen.ts](../../src/ui/modeScreen.ts), [src/core/view.ts](../../src/core/view.ts): `updateHUD()`, `updateMatchClockHUD()`, `addLog()`, `setGameModeLabel()`, `setSidebarCollapsed()`, `syncWorldMetrics()`, handler `#pause`, `#fullscreen`, `#overlayRestart`.
 
 ## Tương tác
 - [match-flow.md](match-flow.md), [units.md](units.md), [fortress.md](fortress.md), [multiplayer.md](multiplayer.md).

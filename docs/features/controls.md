@@ -38,7 +38,7 @@
 **Camera**: `zoom` trong `[MIN_ZOOM, MAX_ZOOM]`; mặc định `DEFAULT_ZOOM` = khung nhìn rộng 64 ô, tối đa zoom vào 32 ô. Đầu trận camera đặt ở pháo đài của mình (`centerCameraOnHome()`; guest PvP là pháo đài đỏ).
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): các `addEventListener` cuối file (`wheel`, hai `pointerdown`, hai `pointermove`, `stopPan()`, `endPointer()`, `click`, hai `keydown`).
+- [src/ui/input.ts](../../src/ui/input.ts): các `addEventListener` ở cấp module (`wheel`, hai `pointerdown`, hai `pointermove`, `stopPan()`, `endPointer()`, `click`, hai `keydown`).
 - `applyAction()` nhánh `'move'` (đội hình), `commandAttack()`.
 - `canvasPoint()`, `canvasPos()`, `worldToCanvas()`, `viewOffsets()`, `clampCamera()`, `unitHitRadius()`.
 - Trạng thái UI: `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `dragSelect`, `selectingBox`, `panning`.

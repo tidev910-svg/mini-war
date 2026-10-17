@@ -23,7 +23,7 @@ Nông trại là công trình sinh **lúa** — nguồn lúa chính để tuyể
 Nút "Nâng cấp nông trại": nếu đang chọn một nông trại của mình thì nâng nông trại đó, nếu không thì nâng nông trại cấp thấp nhất, gần pháo đài nhất. Nhãn nút hiện giá của cấp kế tiếp.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `BUILDING_TYPES.farm`, `FARM_LEVELS`, `FARM_UPGRADE_SECONDS`; sinh lúa qua `farmFoodPerMinute(b)` trong khối thu nhập của `update()` và trong `foodPerMinute()`. Kéo nông trại vào/ra vùng lúa đổi sản lượng ngay.
+- [src/config/balance.ts](../../src/config/balance.ts), [src/sim/economy.ts](../../src/sim/economy.ts), [src/core/match.ts](../../src/core/match.ts): `BUILDING_TYPES.farm`, `FARM_LEVELS`, `FARM_UPGRADE_SECONDS`; sinh lúa qua `farmFoodPerMinute(b)` trong khối thu nhập của `update()` và trong `foodPerMinute()`. Kéo nông trại vào/ra vùng lúa đổi sản lượng ngay.
 - Đặt/nâng cấp dùng chung: `beginPlacement('farm')`, `placeBuilding()`, `startUpgrade(team, 'farm', id)`.
 - Kéo: `draggingFarm` trong `pointerdown`/`pointermove`/`endPointer()`; kiểm tra bằng `buildingPlacementProblem(team, 'farm', x, y, farm)`; action `moveFarm {id, x, y}`.
 - Vẽ: `drawFarm(f, preview)` (sprite `/assets/farmstead-v2.png`, mờ khi đang xây) + `drawBuildingOverlay()` (nhãn "NÔNG TRẠI CẤP n").

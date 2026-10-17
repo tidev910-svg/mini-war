@@ -44,7 +44,7 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 **Bắn** (tháp, tiền đồn — `updateBuildings()`, `buildingGun()`): nhắm quân địch gần nhất trong tầm mà phe mình **đang nhìn thấy** (ở chế độ AI, phe xanh thấy hết, giống pháo pháo đài). Đạn đuổi mục tiêu như đạn pháo.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts), khối "Buildings & territory":
+- [src/config/balance.ts](../../src/config/balance.ts), [src/config/map.ts](../../src/config/map.ts), [src/sim/buildings.ts](../../src/sim/buildings.ts), [src/sim/territory.ts](../../src/sim/territory.ts), [src/sim/combat.ts](../../src/sim/combat.ts), [src/ui/input.ts](../../src/ui/input.ts), [src/core/game.ts](../../src/core/game.ts), [src/render/buildings.ts](../../src/render/buildings.ts), khối "Buildings & territory":
   - Hằng số `BUILDING_TYPES` (`farm`, `outpost`, `tower`), `FARM_LEVELS`, `FARM_UPGRADE_SECONDS`, `HOME_TERRITORY_TILES`.
   - `buildingDef()`, `buildingDone()`, `buildingName()`, `buildingVision()`, `buildingGun()`, `hasBuilding(team, kind)`.
   - `buildingPlacementProblem(team, kind, x, y, ignore)`, `findBuildSpot(team, kind, ax, ay, minR, maxR)` (AI dùng), `placeBuilding(team, kind, x, y)`.

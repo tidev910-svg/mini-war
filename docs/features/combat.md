@@ -32,7 +32,7 @@ Di chuyển khi có mục tiêu ngoài tầm: chỉ đuổi nếu `order==='atta
 Chết: `hurt()` xoá quân khỏi `state.units` khi HP ≤ 0; pháo đài HP ≤ 0 gọi `finish()`.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `nearestEnemy()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.
+- [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.
 - `commandAttack(team, ids)` đặt `order='attack'` cho các quân được chọn.
 - Dữ liệu: `state.bullets[] = {x, y, target, damage, team, speed, life, attackerType?}`, `state.effects[] = {x, y, life, max, color}`.
 

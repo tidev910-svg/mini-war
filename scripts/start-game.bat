@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 set "GAME_URL=http://127.0.0.1:5173/"
 
@@ -23,7 +23,7 @@ call :checkServer
 if not errorlevel 1 goto openGame
 
 echo Dang khoi dong may chu Mini War...
-start "Mini War - may chu" cmd /k "cd /d ""%~dp0"" && call node_modules\.bin\vite.cmd --host 127.0.0.1 --port 5173"
+start "Mini War - may chu" cmd /k "cd /d ""%~dp0.."" && call node_modules\.bin\vite.cmd --host 127.0.0.1 --port 5173"
 
 set /a attempts=0
 :waitForServer

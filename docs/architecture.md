@@ -1,38 +1,49 @@
 # Kiến trúc code
 
-> Cập nhật lần cuối: 2026-10-16
+> Cập nhật lần cuối: 2026-10-17
 
 ## Công nghệ & file
-| File | Vai trò |
+| File / thư mục | Vai trò |
 |---|---|
 | [index.html](../index.html) | Khung giao diện: màn hình chọn chế độ/phòng (`#modeScreen`), HUD, canvas `#game`, nút điều khiển, nhật ký, overlay kết quả. |
-| [src/main.ts](../src/main.ts) | **Toàn bộ** logic game trong một IIFE (~1250 dòng, `// @ts-nocheck`): mô phỏng, AI, vẽ, input, mạng. |
+| [src/](../src/) | Logic game, chia module theo tính năng (bảng bên dưới). Mọi file có `// @ts-nocheck`. |
 | [src/style.css](../src/style.css) | Theme "Storybook", bố cục, responsive, lobby. |
-| [public/assets/](../public/assets/) | Spritesheet quân, sprite pháo đài & nông trại (đường dẫn `/assets/...`). |
-| [package.json](../package.json) | Vite 6 + TypeScript 5. `pnpm dev`, `pnpm build` (`tsc --noEmit && vite build`), `pnpm preview`. |
-| [start-game.bat](../start-game.bat) | Mở nhanh trên Windows: chạy Vite ở cổng 5173 rồi mở trình duyệt. |
+| [public/assets/](../public/assets/) | Spritesheet quân, sprite pháo đài & nông trại (đường dẫn `/assets/...`). Ảnh nguồn ở [art/](../art/). |
+| [tests/](../tests/) | Unit test (vitest + jsdom) chạy chính các module game: sinh bản đồ, chiếm cờ, tầm nhìn vùng, thu nhập, hàng đợi huấn luyện. `pnpm test`. |
+| [scripts/smoke/](../scripts/smoke/) | Smoke test trên Chrome headless (cần `pnpm dev` đang chạy): `pnpm smoke` hoặc `pnpm smoke maps pvp`. Ảnh chụp ở `scripts/smoke/out/`. |
+| [scripts/start-game.bat](../scripts/start-game.bat) | Mở nhanh trên Windows: chạy Vite ở cổng 5173 rồi mở trình duyệt. |
+| [tools/](../tools/) | Script Python dựng spritesheet. |
+| [package.json](../package.json) | Vite 6 + TypeScript 5 + vitest. `pnpm dev`, `pnpm build` (`tsc --noEmit && vite build`), `pnpm test`, `pnpm smoke`, `pnpm preview`. |
 
 PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc chạy bởi `ensurePeerJs()`.
 
-## Thứ tự các phần trong `src/main.ts`
-1. Kích thước thế giới, camera, `syncWorldMetrics()`.
-2. Địa hình: `buildTerrain()` → `terrainType` (Uint8Array 256×256) và `resourceTiles`.
-3. Biến trạng thái toàn cục, bảng `specs`, nạp sprite.
-4. Tiện ích team/tài nguyên, lobby & mạng (`createRoom()`, `joinRoom()`, `setupConnection()`, snapshot).
-5. `requestAction()` / `applyAction()`: cửa vào duy nhất cho lệnh người chơi.
-6. Tầm nhìn, pháo đài, `fresh()` (tạo trận mới).
-7. Xuất quân, mua quân; khối "Territory map" (sinh/dựng bản đồ vùng, vẽ lớp lãnh thổ); khối "Buildings & territory" (đặt/xây/nâng cấp/phá công trình, vùng, lãnh thổ); nâng cấp pháo đài, lệnh tấn công.
-8. HUD (`updateHUD()`), chọn mục tiêu & sát thương (`nearestEnemy()`, `hurt()`), `finish()`.
-9. `runEnemyAI()` rồi `update(dt)`: một bước mô phỏng.
-10. Các hàm vẽ `draw*()` và `draw()`.
-11. `loop()`, gán sự kiện nút / chuột / bàn phím, rồi `fresh(); gameStarted=false; requestAnimationFrame(loop)`.
+## Module trong `src/`
+| Thư mục | File | Nội dung | Tài liệu |
+|---|---|---|---|
+| — | `main.ts` | Điểm vào: import mọi module, rồi `fresh()` và chạy `loop()` | [match-flow.md](features/match-flow.md) |
+| `config/` | `map.ts`, `balance.ts`, `visuals.ts` | **Chỉ hằng số**: kích thước bản đồ & sinh vùng; bảng cân bằng (`specs`, `BUILDING_TYPES`, `MINE_TYPES`, thu nhập, chiếm cờ, AI); màu/kích thước viền, cờ, sương mù | [economy.md](features/economy.md), [units.md](features/units.md), [territory.md](features/territory.md) |
+| `core/` | `game.ts` | Trạng thái dùng chung: `state`, `mode`, `netRole`, `paused`, `ended`, lựa chọn, `nextId`; tiện ích `localTeam()`, `canAfford()`, `spend()`, `addLog()`, `$()` | — |
+| | `view.ts` | Canvas, khung nhìn, camera/zoom, đổi toạ độ | [controls.md](features/controls.md) |
+| | `match.ts` | `fresh()`, `update(dt)`, `finish()`, `loop()`; bộ đếm `aiTimer`, `incomeTimer`… | [match-flow.md](features/match-flow.md) |
+| | `actions.ts` | `requestAction()` / `applyAction()` | [multiplayer.md](features/multiplayer.md) |
+| `map/` | `terrain.ts`, `regions.ts`, `bases.ts` | Địa hình, `walkDistances()`; bản đồ vùng và `generateRegions()`; hình học pháo đài (`baseDir()`, `musterYard()`) | [territory.md](features/territory.md), [fortress.md](features/fortress.md) |
+| `sim/` | `economy.ts`, `units.ts`, `fog.ts`, `buildings.ts`, `territory.ts`, `combat.ts` | Luật mô phỏng: lúa & tiếp tế; mua quân, hàng đợi huấn luyện, xuất quân; sương mù & tầm nhìn; công trình; chiếm cờ; chọn mục tiêu & sát thương | file tính năng cùng tên |
+| `ai/` | `enemy.ts` | `runEnemyAI()` | [ai-opponent.md](features/ai-opponent.md) |
+| `net/` | `peer.ts`, `snapshot.ts` | Phòng PeerJS; gửi/nhận snapshot | [multiplayer.md](features/multiplayer.md) |
+| `render/` | `draw.ts`, `sprites.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự | [rendering.md](features/rendering.md) |
+| `ui/` | `hud.ts`, `input.ts`, `modeScreen.ts` | HUD & bảng bên; chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
+
+Quy ước giữa các module (chi tiết ở [conventions.md](conventions.md)):
+- **Biến dùng chung**: mỗi biến `let` có một module sở hữu. Module khác đọc trực tiếp (ES module luôn thấy giá trị mới nhất), nhưng muốn gán thì gọi setter của module sở hữu, vd. `setPaused(true)`, `setState(packet.state)`, `setZoom(z)`, `setNextId(nextId+1)`.
+- **Hướng phụ thuộc mong muốn**: `config` ← `core/game`, `core/view` ← `map`, `sim` ← `ai`, `net`, `core/actions`, `core/match` ← `render`, `ui` ← `main.ts`. Ngoại lệ còn lại (có từ code gốc): `sim/*`, `net/*`, `core/actions` gọi `updateHUD()` (ui/hud); `net/peer` gọi màn hình chọn chế độ; `sim/combat` gọi `finish()`; `sim/units` gọi `requestAction()`; `core/match` gọi `draw()`, `buildWorldDecor()`, `endPlacement()`; `core/view` gọi `baseDir()`.
+- **Code chạy lúc nạp module** chỉ để gán sự kiện, tạo canvas/sprite và dựng địa hình. Trận đầu tiên do `main.ts` khởi động sau khi mọi module đã nạp xong.
 
 ## Trạng thái toàn cục chính
 - `state`: dữ liệu trận, tạo bởi `fresh()`:
   `resources[2] ({food, wood, stone, gold} theo team), supply[2], units[], bullets[], effects[], buildings[], regions[], guards[], bases[2], mines[], fogSeen, enemyFogSeen, enemyMemory, aiExploreTarget, pendingSpawns[], trainQueue[]`.
-- Ngoài `state`: `gameTime`, `paused`, `ended`, `gameStarted`, `mode` (`'ai'|'pvp'`), `netRole` (`'host'|'guest'|null`), `nextId`, các bộ đếm `aiTimer`, `incomeTimer`, `pendingSpawnRetryTimer`.
-- Dữ liệu dẫn xuất cấp module (không trong `state`, không gửi qua mạng): `regionMap`, `regionEdges`, `regionTintCanvas`, `fogMask`/`fogVisible` — dựng từ `state.regions` bằng `buildRegionMap()`/`ensureRegionMap()`; `showTerritory` (UI).
-- Trạng thái UI cục bộ (không đồng bộ): `camX, camY, zoom`, `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `draggingFarm`, `dragSelect`.
+- Ngoài `state` (trong `core/game.ts`): `gameTime`, `paused`, `ended`, `gameStarted`, `mode` (`'ai'|'pvp'`), `netRole` (`'host'|'guest'|null`), `nextId`. Bộ đếm `aiTimer`, `incomeTimer`, `pendingSpawnRetryTimer`, `last`, `snapshotClock` nằm trong `core/match.ts`.
+- Dữ liệu dẫn xuất (không trong `state`, không gửi qua mạng): `regionMap`, `regionEdges` (`map/regions.ts`), `regionTintCanvas` (`render/territory.ts`), `fogMask`/`fogVisible` (`render/fog.ts`) — dựng từ `state.regions` bằng `buildRegionMap()`/`ensureRegionMap()`; `showTerritory` (`ui/hud.ts`).
+- Trạng thái UI cục bộ (không đồng bộ): `camX, camY, zoom` (`core/view.ts`), `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `draggingFarm`, `dragSelect`.
 
 ## Vòng lặp
 ```
@@ -41,7 +52,7 @@ loop(ts) ─ dt = min(Δt, 0.05s)
   ├─ host PvP: mỗi 0.18s sendSnapshot()
   └─ draw()          luôn chạy (cả guest)
 ```
-`update(dt)` theo thứ tự: đồng hồ → hàng chờ xuất quân (mỗi 0.35s) → mỗi 1s: lúa từ nông trại, tài nguyên từ mỏ theo chủ vùng, lúa duy trì/thiếu tiếp tế (`updateSupply()`) → AI (`runEnemyAI()`, mỗi 5s, chỉ chế độ AI) → chiếm cờ (`updateCaptures()`) rồi công trình: xây, nâng cấp, súng tháp/tiền đồn (`updateBuildings()`) → di chuyển & đánh của từng quân → đạn → pháo pháo đài → quái canh mỏ (code chết) → sương mù & trí nhớ AI → hiệu ứng → `updateHUD()`.
+`update(dt)` (`core/match.ts`) theo thứ tự: đồng hồ → hàng đợi huấn luyện (`updateTraining()`) → hàng chờ xuất quân (mỗi 0.35s) → mỗi 1s: thu nhập pháo đài, lúa từ nông trại, tài nguyên từ mỏ theo chủ vùng, lúa duy trì/thiếu tiếp tế (`updateSupply()`) → AI (`runEnemyAI()`, mỗi 5s, chỉ chế độ AI) → chiếm cờ (`updateCaptures()`) rồi công trình: xây, nâng cấp, súng tháp/tiền đồn (`updateBuildings()`) → di chuyển & đánh của từng quân → đạn → pháo pháo đài → quái canh mỏ (code chết) → sương mù & trí nhớ AI → hiệu ứng → `updateHUD()`.
 
 ## Luồng lệnh
 ```

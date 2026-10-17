@@ -27,7 +27,7 @@ Kết thúc:
 Tạm dừng: nút `#pause` hoặc phím Space. Ở guest PvP gửi action `pause`; ở host/AI đổi `paused` trực tiếp.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `fresh()` chọn vị trí pháo đài (vòng chọn lại), gọi `generateRegions()`, tạo `state` mới, decor, camera về căn cứ của mình.
+- [src/core/match.ts](../../src/core/match.ts), [src/map/regions.ts](../../src/map/regions.ts), [src/core/game.ts](../../src/core/game.ts): `fresh()` chọn vị trí pháo đài (vòng chọn lại), gọi `generateRegions()`, tạo `state` mới, decor, camera về căn cứ của mình.
 - `update(dt)` — bước mô phỏng; dừng khi `!gameStarted`, `paused`, `ended` hoặc là guest.
 - `loop(ts)` — vòng `requestAnimationFrame`.
 - `finish(win)`, `updateMatchClockHUD()`, `addLog()`.

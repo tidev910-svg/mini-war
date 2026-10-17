@@ -34,7 +34,7 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
 - Dựng lại tối đa 5 lần/giây (vì tầm nhìn thay đổi theo quân), hoặc ngay khi đổi bản đồ sương.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `teamCanSee()`, `aiCanSee()`, `unitVisionRadius()`, `revealTeamVision()`, `isTeamAreaExplored()`, các khối fog cuối `update()`, `teamVisibleTiles()`, `refreshFog()`, `drawFog()` (hằng số `FOG_RGB`, `FOG_EDGE_TILES`, `FOG_BLUR_SCALE`, `FOG_PAD`, `FOG_MEMORY_ALPHA`; `fogMask`, `fogVisible`, canvas `fogCanvas`, `fogSoftCanvas`), hàm lồng `currentlyVisible()` trong `draw()`.
+- [src/sim/fog.ts](../../src/sim/fog.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/core/match.ts](../../src/core/match.ts), [src/render/fog.ts](../../src/render/fog.ts), [src/config/visuals.ts](../../src/config/visuals.ts), [src/render/draw.ts](../../src/render/draw.ts): `teamCanSee()`, `aiCanSee()`, `unitVisionRadius()`, `revealTeamVision()`, `isTeamAreaExplored()`, các khối fog cuối `update()`, `teamVisibleTiles()`, `refreshFog()`, `drawFog()` (hằng số `FOG_RGB`, `FOG_EDGE_TILES`, `FOG_BLUR_SCALE`, `FOG_PAD`, `FOG_MEMORY_ALPHA`; `fogMask`, `fogVisible`, canvas `fogCanvas`, `fogSoftCanvas`), hàm lồng `currentlyVisible()` trong `draw()`.
 - `serializeSnapshot()` bỏ `fogSeen`, `enemyFogSeen` khỏi gói gửi.
 
 ## Tương tác

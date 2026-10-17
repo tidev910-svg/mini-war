@@ -2,14 +2,18 @@
 
 Browser-only RTS using Vite, TypeScript, HTML/CSS, and Canvas 2D.
 
-Hướng dẫn tải và chạy dự án (tiếng Việt): [docs/HUONG-DAN-CHAY-DU-AN.md](docs/HUONG-DAN-CHAY-DU-AN.md).
+Hướng dẫn tải và chạy dự án (tiếng Việt): [docs/guides/HUONG-DAN-CHAY-DU-AN.md](docs/guides/HUONG-DAN-CHAY-DU-AN.md).
 
 Start with pnpm install followed by pnpm dev. Create a static build with pnpm build and inspect it using pnpm preview.
 
-Project layout:
-- index.html: accessible game shell
-- src/main.ts: simulation and browser input/network wiring
-- src/style.css: base styles and Storybook strategy skin
-- docs/: design documents and original standalone HTML baseline
+Tests: `pnpm test` (unit tests, vitest + jsdom) and `pnpm smoke` (headless Chrome, needs `pnpm dev` running).
 
-The simulation is being migrated gradually to typed modules to preserve existing gameplay. Browser P2P still depends on PeerJS and external connectivity.
+Project layout:
+- index.html: game shell
+- src/main.ts: entry point; src/config, core, map, sim, ai, net, render, ui: game modules by feature (see docs/architecture.md)
+- src/style.css: Storybook theme
+- tests/: unit tests; scripts/smoke/: browser smoke tests; scripts/start-game.bat: Windows launcher
+- public/assets/: sprites used by the game; art/: source art; tools/: sprite build scripts
+- docs/: feature documentation (Vietnamese), guides, decisions, backlog
+
+Browser P2P still depends on PeerJS (loaded from a CDN) and external connectivity.

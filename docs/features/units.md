@@ -45,7 +45,7 @@ Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('ho
 Hướng quay `facing` (`'down'|'left'|'up'|'right'`, mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy)` (trục lớn hơn thắng). Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `specs`, `TRAIN_QUEUE_MAX`, `trainQueueOf()`, `buyProblem()`, `buy()`, `requestBuy()`, `queueTraining()`, `updateTraining()`, `updateTrainQueueHUD()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
+- [src/config/balance.ts](../../src/config/balance.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/map/bases.ts](../../src/map/bases.ts), [src/core/game.ts](../../src/core/game.ts): `specs`, `TRAIN_QUEUE_MAX`, `trainQueueOf()`, `buyProblem()`, `buy()`, `requestBuy()`, `queueTraining()`, `updateTraining()`, `updateTrainQueueHUD()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
 - Hình ảnh: `*SpriteSheet` và `*Clips` (hàng 0–1 xanh idle/walk, hàng 2–3 đỏ), `drawUnit()`, `unitTargetHeight()`, `unitHitRadius()`.
 - Nút: `#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry` trong [index.html](../../index.html) → `requestAction('buy',{unit})`.
 

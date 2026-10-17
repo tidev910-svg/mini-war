@@ -1,10 +1,10 @@
 # Tài liệu Mini War
 
-Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính năng, để người và Claude Code đọc đúng phần cần thiết trước khi sửa code. Code trong `src/main.ts` là nguồn đúng cuối cùng; nếu thấy lệch thì sửa tài liệu.
+Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính năng, để người và Claude Code đọc đúng phần cần thiết trước khi sửa code. Code trong `src/` (bảng module ở [architecture.md](architecture.md)) là nguồn đúng cuối cùng; nếu thấy lệch thì sửa tài liệu.
 
-> Tải và chạy dự án: [HUONG-DAN-CHAY-DU-AN.md](HUONG-DAN-CHAY-DU-AN.md).
+> Tải và chạy dự án: [guides/HUONG-DAN-CHAY-DU-AN.md](guides/HUONG-DAN-CHAY-DU-AN.md).
 > Việc tồn đọng cho các phiên sau: [backlog.md](backlog.md).
-> Mới dùng thư mục này? Đọc [HUONG-DAN-SU-DUNG.md](HUONG-DAN-SU-DUNG.md).
+> Mới dùng thư mục này? Đọc [guides/HUONG-DAN-SU-DUNG.md](guides/HUONG-DAN-SU-DUNG.md).
 
 ## Đọc gì trước
 1. [architecture.md](architecture.md): các file, trạng thái toàn cục, vòng lặp, luồng lệnh, toạ độ.

@@ -101,7 +101,7 @@ Chưa chốt, đang làm tạm:
 - Thưởng nông trại chỉ áp dụng khi phe của nông trại đang giữ vùng lúa đó.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts):
+- [src/map/regions.ts](../../src/map/regions.ts), [src/core/game.ts](../../src/core/game.ts), [src/map/terrain.ts](../../src/map/terrain.ts), [src/render/territory.ts](../../src/render/territory.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/core/match.ts](../../src/core/match.ts), [src/map/bases.ts](../../src/map/bases.ts):
   - Khối "Territory map": `regionMap` (Int16Array, **biến cấp module, không nằm trong `state`**), `buildRegionMap()`, `ensureRegionMap()`, `regionSeedKey()`, `walkDistances()`, `landPatchSizes()`, `generateRegions()`, `refreshRegionTint()`, `drawTerritory()`, `setShowTerritory()`; `regionEdges`.
   - Trong `fresh()`: vòng chọn lại vị trí nhà; `baseSiteClear()`, `baseDir()` (hướng `base.dir` về phía địch).
 - Sáng vùng khi chiếm: `revealRegion()`, `revealOwnedRegions()`; tầm nhìn trực tiếp: `teamCanSee()`, `teamVisibleTiles()`.

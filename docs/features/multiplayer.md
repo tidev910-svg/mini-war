@@ -36,7 +36,7 @@ Ngắt kết nối:
 - Host rời (hoặc guest mất kết nối) → guest đóng peer, quay về bảng phòng, các nút được mở lại và ô mã phòng điền sẵn mã cũ; bấm "Tham gia phòng" để vào lại.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `startAIMode()`, `startHostGame()`, `startGuestFromSnapshot()`, `createRoom()`, `joinRoom()`, `setupConnection()`, `destroyPeer()`, `ensurePeerJs()`, `serializeSnapshot()`, `sendSnapshot()`, `applySnapshot()`, `requestAction()`, `applyAction()`, `localTeam()`, `isMultiplayer()`.
+- [src/ui/modeScreen.ts](../../src/ui/modeScreen.ts), [src/net/peer.ts](../../src/net/peer.ts), [src/net/snapshot.ts](../../src/net/snapshot.ts), [src/core/actions.ts](../../src/core/actions.ts), [src/core/game.ts](../../src/core/game.ts): `startAIMode()`, `startHostGame()`, `startGuestFromSnapshot()`, `createRoom()`, `joinRoom()`, `setupConnection()`, `destroyPeer()`, `ensurePeerJs()`, `serializeSnapshot()`, `sendSnapshot()`, `applySnapshot()`, `requestAction()`, `applyAction()`, `localTeam()`, `isMultiplayer()`.
 - UI lobby: `showFriendPanel()`, `showModeHome()`, `hideModeScreen()`, `showModeScreen()`, `setNetStatus()`, `setGameModeLabel()`; xử lý `?room=` ở cuối file.
 - [index.html](../../index.html): `#modeAI`, `#modeFriends`, `#createRoom`, `#roomInput`, `#joinRoom`, `#roomCode`, `#copyRoomLink`, `#copyRoomCode`, `#netStatus`, `#modeBack`.
 - Biến: `mode`, `netRole`, `peer`, `conn`, `roomCode`, `snapshotClock`, `connectionIntent` (gán nhưng chưa dùng).

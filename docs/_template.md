@@ -17,7 +17,7 @@ Người chơi thấy gì, làm gì, tính năng giải quyết điều gì tron
 | Ví dụ: Giá | 100 gỗ | `BUILDING_TYPES.farm.cost` |
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `tenHam()` — vai trò ngắn gọn.
+- [src/<thư-mục>/<file>.ts](../../src/): `tenHam()` — vai trò ngắn gọn (module nào chứa gì: xem bảng trong [architecture.md](../architecture.md)).
 - Trường trong `state`: `state.xxx` — cấu trúc dữ liệu.
 - Giao diện: phần tử `#id` trong [index.html](../../index.html), class trong [src/style.css](../../src/style.css).
 

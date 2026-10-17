@@ -22,7 +22,7 @@ Mỗi phe có một pháo đài, vừa là căn cứ chính vừa là công trì
 Pháo chọn quân địch gần nhất trong tầm **mà phe mình đang nhìn thấy**. Đạn đuổi theo mục tiêu (xem [combat.md](combat.md)).
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `buildTurret()`, `activeFortressGuns()`, `fortressGunPosition()`, `musterYard()`.
+- [src/sim/buildings.ts](../../src/sim/buildings.ts), [src/map/bases.ts](../../src/map/bases.ts): `buildTurret()`, `activeFortressGuns()`, `fortressGunPosition()`, `musterYard()`.
 - Khối "Integrated fortress cannons" trong `update()`.
 - Vẽ: `drawBase()` (sprite `/assets/fortress-sprite.png`, thanh máu, nhãn "PHÁO ĐÀI XANH/ĐỎ"), `drawMusterYard()`; vòng tầm bắn vẽ trong `draw()` khi `selectedFortress` là pháo đài của mình.
 - Dữ liệu: `state.bases[0|1] = {team, x, y, hp, max, w, h, guns:[{active, cool}, {active, cool}]}`.
