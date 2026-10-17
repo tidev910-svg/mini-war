@@ -7,7 +7,7 @@ Bản đồ được chia thành khoảng 16–20 **vùng lãnh thổ** trung l�
 
 - **Vùng nhà:** vùng chứa pháo đài. Vùng này thuộc phe đó từ đầu trận, luôn là vùng gỗ, không có cờ và không bị chiếm.
 - **Gần mỗi nhà luôn có đủ 4 loại vùng.** Trong 4 vùng gần mỗi nhà nhất, mỗi loại tài nguyên có ít nhất một vùng; các vùng còn lại được gán loại ngẫu nhiên.
-- **Chiếm cờ:** đưa quân **chiến đấu** vào vòng quanh cờ (trinh sát không chiếm được). Càng nhiều quân thì chiếm càng nhanh, nhưng có giới hạn. Nếu hai phe cùng đứng trong vòng, tiến độ tạm dừng. Bỏ trống cờ 5 giây thì tiến độ giảm dần về 0, nhưng cờ không tự đổi chủ. Chiếm xong thì cờ đổi màu, vùng và mỏ trong vùng chuyển sang phe mình.
+- **Chiếm cờ:** không tốn tài nguyên; đưa quân **chiến đấu** vào vòng quanh cờ (trinh sát không chiếm được). Càng nhiều quân thì chiếm càng nhanh, nhưng có giới hạn. Nếu hai phe cùng đứng trong vòng, tiến độ tạm dừng. Bỏ trống cờ 5 giây thì tiến độ giảm dần về 0, nhưng cờ không tự đổi chủ. Chiếm xong thì cờ đổi màu, vùng và mỏ trong vùng chuyển sang phe mình.
 - **Cờ của địch** chiếm qua 2 giai đoạn: giai đoạn 1 hạ cờ về trung lập, giai đoạn 2 chiếm. Nhãn và thanh tiến độ ghi rõ đang ở giai đoạn nào.
 - **Vùng lúa:** mỏ lúa sinh 15 lúa/phút, và nông trại của chủ vùng xây trong vùng đó sinh thêm 25%.
 - **Tiền đồn** xây cạnh cờ đã chiếm. Khi tiền đồn còn đứng, đối phương không chiếm được cờ đó; xem [buildings.md](buildings.md).
@@ -60,7 +60,7 @@ Kết quả chạy thử 2026-10-17 với 40 bản đồ:
 - Đối phương đứng ở cờ khi chủ cờ còn **tiền đồn** trong vùng (`regionOutpost()`) → cũng tính là tranh chấp. Phải phá tiền đồn trước.
 - Không ai trong vòng (`r.idle` giây): trong `FLAG_DECAY_DELAY_SECONDS` = 5 giây đầu tiến độ giữ nguyên, sau đó **giảm dần** (cả thanh hết trong `FLAG_DECAY_SECONDS` = 60 giây) về 0. Khi về 0 thì xoá `capTeam`, `stage2`; **không đổi chủ** (bỏ dở giai đoạn 2 thì cờ vẫn trung lập).
 - Mỗi giây: `mine.owner = region.owner`; mỏ có chủ cộng `income` cho chủ.
-- **Lãnh thổ** (`inOwnTerritory()`): vùng mình sở hữu (gồm vùng nhà) hoặc trong 14 ô quanh pháo đài. Nhà lính, chuồng ngựa và tháp chỉ xây được trong lãnh thổ.
+- **Lãnh thổ** (`inOwnTerritory()`): vùng mình sở hữu (gồm vùng nhà) hoặc trong 14 ô quanh pháo đài. Tháp chỉ xây được trong lãnh thổ.
 - Công trình khác phải cách cờ ≥ 2,5 ô; tiền đồn ≥ 1,2 ô (`buildingPlacementProblem()`).
 
 **Hiển thị**
@@ -109,7 +109,7 @@ Chưa chốt, đang làm tạm:
 - Biến giao diện `selectedFlag` (id vùng, chỉ ở máy người chơi). Nút `#toggleTerritory`; phím T trong `keydown`.
 
 ## Tương tác
-- [buildings.md](buildings.md): tiền đồn giữ cờ; điều kiện lãnh thổ cho nhà lính/tháp; khoảng cách tới cờ.
+- [buildings.md](buildings.md): tiền đồn giữ cờ; điều kiện lãnh thổ cho tháp; khoảng cách tới cờ.
 - [economy.md](economy.md): mỏ sinh lúa/gỗ/đá/vàng; mỏ lúa tính vào `foodPerMinute()`.
 - [fog-of-war.md](fog-of-war.md): cờ và ranh giới chỉ hiện ở chỗ đã khám phá.
 - [ai-opponent.md](ai-opponent.md): AI cử nhóm quân đứng ở cờ.

@@ -81,11 +81,11 @@ Ví dụ: 6 nông trại cấp 1 = 120; quân 2 trinh sát, 12 bộ, 8 giáo, 6 
 | 1 | Mỏ và cột cờ | **Phương án B**: xây xong cột cờ trong vùng → mọi mỏ trong vùng sinh tài nguyên cho phe đó; cột cờ/tiền đồn bị phá → vùng về trung lập, ngừng thu. Bỏ luật chiếm mỏ bằng số quân đứng gần. |
 | 2 | Chống kẹt đầu trận | **Kho khởi đầu + vùng gỗ gần nhà**: 400 gỗ, 150 lúa, 50 đá, 50 vàng; mỗi phe có 1 vùng gỗ gần căn cứ dễ chiếm. |
 | 3 | Lính bộ cần vàng, nhà lính bộ cần đá | Giữ giá thiết kế; kho khởi đầu (50 đá, 50 vàng) đủ xây nhà lính bộ đầu tiên và tuyển vài lính bộ. |
-| 4 | Nhà lính | **Bắt buộc, trừ trinh sát và lính giáo** (tuyển tại pháo đài). Nhà lính bộ → lính bộ; nhà lính cung → cung thủ; chuồng ngựa → kỵ binh. |
+| 4 | Nhà lính | ~~Bắt buộc~~ **Đã bỏ cả 3 nhà lính** (2026-10-17, "Yêu cầu sửa game RTS 1vs1 — 17/10/2026"); nơi tuyển lính bộ/cung/kỵ chờ chốt. Trước đó: **bắt buộc, trừ trinh sát và lính giáo** (tuyển tại pháo đài). Nhà lính bộ → lính bộ; nhà lính cung → cung thủ; chuồng ngựa → kỵ binh. |
 | 5 | Năng lượng | **Bỏ hẳn**. Bỏ luôn mỏ "đặc biệt" (thưởng năng lượng). |
 | 6 | Tháp & pháo pháo đài | **Giữ 2 pháo tích hợp**; mở pháo thứ hai trả **100 đá** thay cho 100 vàng. Tháp phòng thủ là công trình riêng, chỉ đặt trong vùng của mình. |
 | 7 | Khoá xuất quân 120 giây | ~~Giữ nguyên.~~ **Bỏ hẳn** (2026-10-17, tài liệu "Tổng kết yêu cầu sửa game" 16/10). |
-| 8 | Thời gian xây | **Có**: nông trại 20s (đổi thành **5s** ngày 2026-10-17), cột cờ 15s, nâng tiền đồn 30s, nhà lính/chuồng ngựa 30s, tháp 25s. Công trình đang xây có máu và có thể bị phá. |
+| 8 | Thời gian xây | **Có**: nông trại 20s (đổi thành 5s rồi **3s** ngày 2026-10-17), cột cờ 15s, nâng tiền đồn 30s, nhà lính/chuồng ngựa 30s, tháp 25s. Công trình đang xây có máu và có thể bị phá. |
 | 8b | Cấp nông trại | **Có**: cấp 2 = 80 gỗ + 40 đá (30 lúa/phút), cấp 3 = 120 gỗ + 80 đá (45 lúa/phút). |
 | 9 | Duy trì khi đứng yên | **Có**, quân luôn tiêu lúa. |
 

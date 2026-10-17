@@ -12,7 +12,7 @@ Bản đồ phủ sương đen. Vùng quân mình từng đi qua được **khá
 | Lính / Kỵ binh | 105 | `unitVisionRadius()` |
 | Pháo đài | 175 | `teamCanSee()`, `revealTeamVision()` |
 | Mỗi pháo đang bật | 105 (chỉ cho "đang nhìn thấy") | `teamCanSee()` |
-| Công trình | theo loại (nông trại 90, tiền đồn 14 ô, tháp 200, nhà lính 100); đang xây: 60. Cột cờ không cho tầm nhìn | `buildingVision()`, `visionOf()` |
+| Công trình | theo loại (nông trại 90, tiền đồn 14 ô, tháp 200); đang xây: 60. Cột cờ không cho tầm nhìn | `buildingVision()`, `visionOf()` |
 | Khu đất nhà | 14 ô quanh pháo đài, khám phá sẵn từ đầu trận (không phải "đang nhìn thấy") | `revealHomeTerritory()` |
 | Lưới sương mù | 256 × 256 ô (`MAP_TILES`) | — |
 | Màu ô chưa khám phá | Xanh xám `FOG_RGB` = (30, 40, 60), alpha `FOG_ALPHA` = 212/255 (hơi trong), mép mềm khoảng 2 ô | `drawFog()` |

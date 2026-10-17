@@ -16,7 +16,8 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3; nhà vẫn ở hai dải trái/phải). → [territory.md](features/territory.md)
 - [ ] Tốc độ giảm tiến độ khi bỏ trống cờ (60 giây cho cả thanh) là số tạm. → [territory.md](features/territory.md)
 - [ ] **Chưa quyết thiết kế:** mỏ cạn dần hay vô hạn; có điều kiện thắng theo vùng không; thưởng lãnh thổ +10% (hiện: không). → [territory.md](features/territory.md)
-- [ ] Không huỷ được công trình đang xây; quân từ nhà lính xuất hiện ở pháo đài; kéo được nông trại đang xây. → [buildings.md](features/buildings.md), [farms.md](features/farms.md)
+- [ ] **Chờ chốt:** nơi tuyển lính bộ, cung thủ, kỵ binh sau khi bỏ nhà lính (nhà chính hay cơ chế khác). Hiện 3 loại này bị khoá (`RECRUIT_SITE_PENDING`). → [units.md](features/units.md)
+- [ ] Không huỷ được công trình đang xây; kéo được nông trại đang xây. → [buildings.md](features/buildings.md), [farms.md](features/farms.md)
 - [ ] Thợ xây tiền đồn là "bất kỳ quân nào", chưa có loại quân thợ xây riêng. → [territory.md](features/territory.md)
 - [ ] Không có giới hạn trần tài nguyên. → [economy.md](features/economy.md)
 
@@ -29,7 +30,7 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] **Chưa kiểm thử:** 2 mạng khác nhau, nhiều trình duyệt, điện thoại. → [multiplayer.md](features/multiplayer.md)
 
 ## Giao diện & đồ hoạ
-- [ ] 17 nút khiến bảng điều khiển phải cuộn; công trình và nhãn nhỏ ở zoom mặc định. → [hud-ui.md](features/hud-ui.md), [buildings.md](features/buildings.md)
+- [ ] 14 nút, màn hình thấp vẫn có thể phải cuộn; công trình và nhãn nhỏ ở zoom mặc định. → [hud-ui.md](features/hud-ui.md), [buildings.md](features/buildings.md)
 - [ ] Chỉ lính giáo có sprite 4 hướng; công trình (trừ nông trại) chưa có sprite. → [units.md](features/units.md), [buildings.md](features/buildings.md)
 - [ ] Văn bản hướng dẫn trong `index.html` viết cứng. → [hud-ui.md](features/hud-ui.md)
 - [ ] Vùng nhấp chọn pháo đài không khớp kích thước logic; sương mù căn cứ xanh không cộng tầm nhìn pháo. → [fortress.md](features/fortress.md)
@@ -42,6 +43,8 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-17 (yêu cầu 17/10):** nông trại mở khoá sau 3 giây; bỏ nhà lính bộ, nhà lính cung, chuồng ngựa (3 loại quân giữ trong dữ liệu, tạm khoá tuyển).
+
 **2026-10-17 (chốt mục 8):** cờ địch 2 giai đoạn có hiển thị; tiền đồn riêng; vùng lúa 15/phút + nông trại trong vùng +25%; rời cờ 5 giây thì tiến độ giảm về 0; trinh sát không chiếm cờ.
 
 **2026-10-17** (tài liệu "Tổng kết yêu cầu sửa game RTS 1vs1"): mỗi vùng một loại tài nguyên + vùng lúa, đủ 4 loại gần mỗi nhà, kiểm tra công bằng/tiếp cận khi sinh bản đồ, pháo đài không còn rơi vào đá; cột cờ có sẵn chiếm bằng số quân, tranh chấp, hạ cờ địch, tiền đồn giữ cờ; AI chiếm cờ bằng nhóm quân; viền lãnh thổ dày theo pixel; sương mù mép mềm; bỏ khoá 120 giây; nông trại 5 giây.

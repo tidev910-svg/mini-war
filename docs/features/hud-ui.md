@@ -19,7 +19,7 @@ Giao diện quanh canvas: thanh trên (tiêu đề, chế độ, chỉ số), b�
 
 Nhãn giá trên các nút mua/xây được gán lúc tải trang từ `specs`, `BUILDING_TYPES` (gồm `outpost` cho `#upgradeOutpost`), `FORTRESS_GUN_COST` (qua `costText()`). Nhãn "Quân xanh/đỏ" và "Lính giáo xanh/đỏ" lấy theo phần tử cha của `#unitCount`, `#spearmanCount`.
 
-Nút trong `.controls` (theo thứ tự): `#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry`, `#attack`, `#farm`, `#upgradeFarm`, `#upgradeOutpost` ("Xây tiền đồn" cho cờ đang chọn hoặc vùng gần nhất), `#buildBarracks`, `#buildArchery`, `#buildStable`, `#buildTower`, `#turret`, `#pause`, `#toggleTerritory` (ẩn/hiện lớp lãnh thổ, nhãn "Đang hiện/ẩn · phím T"), `#fullscreen`. Nút quân thiếu công trình mở khoá có class `locked` (mờ) và nhãn "· cần …"; nút "Nâng cấp nông trại" hiện giá cấp kế. Các nhãn này cập nhật trong `updateHUD()` qua `setText()` (chỉ ghi khi đổi). Khi `paused`/`ended` các nút mua/xây/tấn công bị vô hiệu; `#turret` còn bị vô hiệu khi đã đủ 2 pháo.
+Nút trong `.controls` (theo thứ tự): `#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry`, `#attack`, `#farm`, `#upgradeFarm`, `#upgradeOutpost` ("Xây tiền đồn" cho cờ đang chọn hoặc vùng gần nhất), `#buildTower`, `#turret`, `#pause`, `#toggleTerritory` (ẩn/hiện lớp lãnh thổ, nhãn "Đang hiện/ẩn · phím T"), `#fullscreen`. Nút quân chưa có nơi tuyển (`RECRUIT_SITE_PENDING`) có class `locked` (mờ) và nhãn "· chờ chốt nơi tuyển"; nút "Nâng cấp nông trại" hiện giá cấp kế. Các nhãn này cập nhật trong `updateHUD()` qua `setText()` (chỉ ghi khi đổi). Khi `paused`/`ended` các nút mua/xây/tấn công bị vô hiệu; `#turret` còn bị vô hiệu khi đã đủ 2 pháo.
 
 Khác:
 - `#feed`: nhật ký, mới nhất ở trên, tối đa 12 dòng (`addLog()`).
@@ -47,4 +47,4 @@ HUD luôn hiển thị theo `localTeam()`; nhãn chỉ số và chú thích (`.l
 
 ## Giới hạn / việc tồn đọng
 - Văn bản hướng dẫn trong `index.html` viết cứng; cần sửa tay khi luật đổi (giá nông trại, số pháo…).
-- 17 nút khiến bảng điều khiển phải cuộn trên màn hình thấp.
+- 14 nút; màn hình thấp vẫn có thể phải cuộn.

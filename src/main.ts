@@ -138,16 +138,15 @@ const STARTING_RESOURCES={food:150,wood:400,stone:50,gold:50};
 // Buildings are placed instantly but take buildTime seconds to finish; halfW/halfH is the logical footprint.
 // where: 'explored' (any explored ground), 'territory' (near own fortress or in an owned region), 'flag' (next to the flag of an owned region).
 const BUILDING_TYPES={
- farm:{name:'Nông trại',button:'farm',cost:{wood:100},buildTime:5,hp:180,halfW:31,halfH:34,vision:90,where:'explored'},
+ farm:{name:'Nông trại',button:'farm',cost:{wood:100},buildTime:3,hp:180,halfW:31,halfH:34,vision:90,where:'explored'},
  // Outpost: defensive post beside a captured flag (no placement button; built with "Xây tiền đồn" via startOutpost).
  outpost:{name:'Tiền đồn',cost:{wood:200,stone:100},buildTime:40,hp:1500,halfW:26,halfH:24,visionTiles:14,where:'flag',gun:{range:160,damage:10,cooldown:1.2}},
- barracks:{name:'Nhà lính bộ',button:'buildBarracks',cost:{wood:150,stone:50},buildTime:30,hp:420,halfW:40,halfH:32,vision:100,where:'territory',unlocks:'infantry',icon:'⚔'},
- archery:{name:'Nhà lính cung',button:'buildArchery',cost:{wood:150,gold:50},buildTime:30,hp:380,halfW:40,halfH:32,vision:100,where:'territory',unlocks:'archer',icon:'🎯'},
- stable:{name:'Chuồng ngựa',button:'buildStable',cost:{wood:200,stone:100,gold:100},buildTime:30,hp:460,halfW:46,halfH:34,vision:100,where:'territory',unlocks:'cavalry',icon:'🐎'},
  tower:{name:'Tháp phòng thủ',button:'buildTower',cost:{wood:100,stone:200,gold:50},buildTime:25,hp:520,halfW:22,halfH:24,vision:200,where:'territory',gun:{range:190,damage:17,cooldown:1}}
 };
 const FARM_LEVELS=[null,{food:20},{food:30,cost:{wood:80,stone:40}},{food:45,cost:{wood:120,stone:80}}],FARM_UPGRADE_SECONDS=15;
-const UNIT_REQUIREMENTS={infantry:'barracks',archer:'archery',cavalry:'stable'};
+// The barracks, archery range and stable were removed (2026-10-17). Where infantry, archers and cavalry are recruited
+// is not decided yet, so they stay in specs but cannot be recruited until it is (docs/features/units.md).
+const RECRUIT_SITE_PENDING=new Set(['infantry','archer','cavalry']);
 const HOME_TERRITORY_TILES=14;
 // Territory map: up to REGION_COUNT neutral regions plus the two home regions that contain the fortresses.
 // Each region has exactly one resource. The REGION_TYPES.length regions closest to each fortress (by walking distance)
@@ -482,7 +481,7 @@ function processPendingSpawns(){
 }
 function buy(type,team=localTeam()){
  if(ended||paused||!Object.hasOwn(specs,type))return;const s=specs[type];
- const required=UNIT_REQUIREMENTS[type];if(required&&!hasBuilding(team,required)){if(team===localTeam())addLog(`Cần xây xong ${BUILDING_TYPES[required].name} để tuyển ${s.name}.`);return;}
+ if(RECRUIT_SITE_PENDING.has(type)){if(team===localTeam())addLog(`Chưa tuyển được ${s.name}: nơi tuyển quân thay cho nhà lính đang chờ chốt.`);return;}
  if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length>=2){if(team===localTeam())addLog('Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.');return;}
  if(!canAfford(team,s.cost)){if(team===localTeam())addLog('Không đủ tài nguyên để tạo '+s.name+': thiếu '+missingText(team,s.cost)+'.');return;}
  spend(team,s.cost);const unit=spawn(team,type);if(team===localTeam()&&unit)addLog('Đã tạo '+s.name+' gần căn cứ.');updateHUD();
@@ -731,7 +730,7 @@ function startOutpost(team,regionId=null){
 function completeBuilding(b){
  const def=buildingDef(b);if(b.team!==localTeam())return;
  if(b.kind==='outpost')addLog('Tiền đồn đã hoàn thành: có súng phòng thủ, tầm nhìn rộng, và giữ cờ của vùng không bị chiếm khi còn đứng.');
- else addLog(`${def.name} đã xây xong.`+(def.unlocks?` Có thể tuyển ${specs[def.unlocks].name}.`:''));
+ else addLog(`${def.name} đã xây xong.`);
 }
 function needsBuilder(b){return b.kind==='outpost'&&!buildingDone(b);}
 function hasBuilder(b){const r=BUILDER_RADIUS_TILES*TILE_SIZE;return state.units.some(u=>u.team===b.team&&u.hp>0&&Math.hypot(u.x-b.x,u.y-b.y)<=r);}
@@ -792,7 +791,7 @@ function updateBuildings(dt){
   const def=buildingDef(b);
   if(!buildingDone(b)){
    b.waiting=needsBuilder(b)&&!hasBuilder(b);if(b.waiting)continue;
-   const step=dt/def.buildTime;b.progress=Math.min(1,b.progress+step);b.hp=Math.min(b.max,b.hp+b.max*.8*step);
+   const step=dt/def.buildTime;b.progress=Math.min(1,b.progress+step);if(b.progress>1-1e-6)b.progress=1; // absorb float drift so a 3 s farm finishes at 3 sb.hp=Math.min(b.max,b.hp+b.max*.8*step);
    if(buildingDone(b))completeBuilding(b);
    continue;
   }
@@ -840,7 +839,7 @@ function updateHUD(){
  const home=state.bases.find(b=>b.team===team);$('turret').disabled=paused||ended||activeFortressGuns(home)>=2;
  for(const id of ['scout','infantry','archer','spearman','cavalry','attack','upgradeFarm','upgradeOutpost',...Object.values(BUILDING_TYPES).map(d=>d.button).filter(Boolean)])$(id).disabled=paused||ended;
  // Unit buttons show the missing building; the farm upgrade button shows the next level's price.
- for(const type of Object.keys(specs)){const need=UNIT_REQUIREMENTS[type],locked=need&&!hasBuilding(team,need);setText($(type).querySelector('span'),costText(specs[type].cost)+' · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút'+(locked?' · cần '+BUILDING_TYPES[need].name:''));$(type).classList.toggle('locked',!!locked);}
+ for(const type of Object.keys(specs)){const locked=RECRUIT_SITE_PENDING.has(type);setText($(type).querySelector('span'),costText(specs[type].cost)+' · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút'+(locked?' · chờ chốt nơi tuyển':''));$(type).classList.toggle('locked',!!locked);}
  const farmTarget=upgradeTarget(team,'farm',selectedBuilding?.kind==='farm'&&selectedBuilding.team===team?selectedBuilding.id:null)||upgradeTarget(team,'farm',null);
  setText($('upgradeFarm').querySelector('span'),farmTarget?`lên cấp ${farmTarget.level+1}: ${costText(upgradeCost(farmTarget))} · ${FARM_LEVELS[farmTarget.level+1].food} lúa/phút`:'cấp 2: 80 gỗ · 40 đá · cấp 3: 120 gỗ · 80 đá');
  const owned=state.regions.filter(r=>r.owner===team),income={};
@@ -863,7 +862,7 @@ function nearestEnemy(u){
  }
  const base=state.bases[1-u.team];
  if((mode==='ai'&&u.team===0)||teamCanSee(u.team,base.x,base.y)){let db=Math.hypot(base.x-u.x,base.y-u.y);if(!best||db<bd-20){best=base;bd=db;}}
- // Enemy buildings (farms, flags, barracks, towers…) are targets for both sides when seen.
+ // Enemy buildings (farms, outposts, towers) are targets for both sides when seen.
  for(const b of state.buildings){if(b.team===u.team||b.hp<=0)continue;if(!((mode==='ai'&&u.team===0)||teamCanSee(u.team,b.x,b.y)))continue;let d=dist(u,b);if(d<bd-15){best=b;bd=d;}}
  return best;
 }
@@ -895,14 +894,9 @@ function runEnemyAI(){
  const farmsUnderway=own.filter(b=>b.kind==='farm'&&!buildingDone(b)).length;
  const net=foodPerMinute(team)+farmsUnderway*FARM_LEVELS[1].food-upkeepPerMinute(team);
  if((count('farm')<2||net<10)&&count('farm')<10&&farmsUnderway<2)build('farm',base.x,base.y,T*3,T*10);
- // Saving: with two regions held and the next military building missing, stop spending elsewhere until it is up,
- // but only if every missing resource has an income; otherwise expand toward regions that produce it.
- const militaryNext=!count('barracks')?'barracks':!count('archery')?'archery':!count('stable')?'stable':null;
- const nextCost=militaryNext?BUILDING_TYPES[militaryNext].cost:{};
- const missing=Object.keys(nextCost).filter(k=>res[k]<nextCost[k]);
+ // Resource types the AI has no mine for yet; flags of those regions come first.
  const earning=k=>state.mines.some(m=>m.owner===team&&m.resource===k);
- const saving=!!militaryNext&&!underway(militaryNext)&&gameTime>45&&state.regions.filter(r=>r.owner===team).length>=2&&missing.every(earning);
- const wanted=missing.filter(k=>!earning(k));
+ const wanted=REGION_TYPES.filter(k=>!earning(k));
  // 3. Territory: send small squads to stand at flags the AI has seen and does not own (neutral first, regions with a
  // missing resource first, then nearest), more flags at once as the match goes on.
  const squad=r=>state.units.filter(u=>u.team===team&&u.hp>0&&u.captureTarget===r.id);
@@ -923,20 +917,16 @@ function runEnemyAI(){
   const free=state.units.filter(u=>u.team===team&&u.hp>0&&!u.buildTarget).sort((p,q)=>Math.hypot(p.x-b.x,p.y-b.y)-Math.hypot(q.x-b.x,q.y-b.y));
   if(free[0]){free[0].buildTarget=b.id;free[0].dest={x:b.x,y:b.y+30};free[0].order='explore';}
  }
- // Wood kept back from unit purchases for the next military building.
- const woodReserve=saving?(nextCost.wood||0):0;
- // 4. Military buildings in order: barracks, archery, stable.
- if(militaryNext&&gameTime>45&&!underway(militaryNext))build(militaryNext,base.x,base.y,T*4,T*12);
- // 5. Upgrades and defence when stone and gold allow.
- if(count('barracks')&&res.stone>=120)startUpgrade(team,'farm');
+ // 4. Upgrades and defence when stone and gold allow.
+ if(gameTime>45&&res.stone>=120)startUpgrade(team,'farm');
  if(res.stone>=180&&res.wood>=260&&outpostRegions(team).length)startOutpost(team);
  if(count('tower')<2&&canAfford(team,BUILDING_TYPES.tower.cost)&&Math.random()<.35){
   const anchors=[base,...state.regions.filter(r=>r.cp&&r.owner===team).map(r=>r.cp)];const a=anchors[Math.floor(Math.random()*anchors.length)];
   build('tower',a.x,a.y,a===base?T*5:50,a===base?T*12:180);
  }
- // 6. Units, never past what the farms can feed and only with the required building.
+ // 5. Units, never past what the farms can feed; infantry, archers and cavalry wait for a recruiting site (RECRUIT_SITE_PENDING).
  const aiScouts=state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length;
- const aiBuy=type=>{const need=UNIT_REQUIREMENTS[type];if(need&&!hasBuilding(team,need))return false;if(saving&&type!=='scout'&&state.units.filter(u=>u.team===team).length>=4)return false;if((specs[type].cost.wood||0)>0&&res.wood-specs[type].cost.wood<woodReserve)return false;if(!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-specs[type].upkeep<0)return false;spend(team,specs[type].cost);const unit=spawn(team,type,undefined,undefined,true,type==='scout'?'explore':'hold');if(unit&&type==='scout')unit.order='explore';return true;};
+ const aiBuy=type=>{if(RECRUIT_SITE_PENDING.has(type))return false;if(!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-specs[type].upkeep<0)return false;spend(team,specs[type].cost);const unit=spawn(team,type,undefined,undefined,true,type==='scout'?'explore':'hold');if(unit&&type==='scout')unit.order='explore';return true;};
  if(aiScouts<2&&aiBuy('scout')){}
  else if(Math.random()<.14&&aiBuy('cavalry')){}
  else if(Math.random()<.42&&aiBuy('spearman')){}
@@ -1590,7 +1580,7 @@ const roomFromUrl=new URLSearchParams(window.location.search).get('room');if(roo
 
 // Button price labels come from the same cost tables the simulation charges.
 for(const type of Object.keys(specs))$(type).querySelector('span').textContent=costText(specs[type].cost)+' · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút';
-for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).querySelector('span').textContent=costText(def.cost)+' · '+def.buildTime+'s'+(kind==='farm'?' · +'+FARM_LEVELS[1].food+' lúa/phút':def.unlocks?' · mở '+specs[def.unlocks].name.toLowerCase():kind==='tower'?' · trong lãnh thổ':'');
+for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).querySelector('span').textContent=costText(def.cost)+' · '+def.buildTime+'s'+(kind==='farm'?' · +'+FARM_LEVELS[1].food+' lúa/phút':kind==='tower'?' · trong lãnh thổ':'');
 $('upgradeOutpost').querySelector('span').textContent=costText(BUILDING_TYPES.outpost.cost)+' · '+BUILDING_TYPES.outpost.buildTime+'s · cạnh cờ đã chiếm, có súng';
 $('turret').querySelector('span').textContent=costText(FORTRESS_GUN_COST)+' · tích hợp pháo thứ hai';
 $('scout').onclick=()=>requestAction('buy',{unit:'scout'});$('infantry').onclick=()=>requestAction('buy',{unit:'infantry'});$('archer').onclick=()=>requestAction('buy',{unit:'archer'});$('spearman').onclick=()=>requestAction('buy',{unit:'spearman'});$('cavalry').onclick=()=>requestAction('buy',{unit:'cavalry'});for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).onclick=()=>beginPlacement(kind);$('toggleTerritory').onclick=()=>setShowTerritory(!showTerritory);$('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('upgradeOutpost').onclick=()=>requestAction('outpost',{regionId:selectedFlag});$('turret').onclick=()=>requestAction('turret');$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});

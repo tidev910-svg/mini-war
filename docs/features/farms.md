@@ -9,7 +9,7 @@ Nông trại là công trình sinh **lúa** — nguồn lúa chính để tuyể
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
 | Giá | 100 gỗ | `BUILDING_TYPES.farm.cost` |
-| Thời gian xây | 5 giây (đổi từ 20 giây ngày 2026-10-17) | `BUILDING_TYPES.farm.buildTime` |
+| Thời gian mở khoá (xây) | 3 giây, tính từ lúc thả nông trại vào chỗ hợp lệ (20 giây → 5 giây → 3 giây, cùng ngày 2026-10-17) | `BUILDING_TYPES.farm.buildTime` |
 | Máu | 180 | `BUILDING_TYPES.farm.hp` |
 | Footprint logic | 62 × 68 (nửa: 31 × 34) | `halfW`, `halfH` |
 | Sản lượng | cấp 1: 20 · cấp 2: 30 · cấp 3: 45 lúa/phút (chỉ khi đã xây xong) | `FARM_LEVELS` |
@@ -41,7 +41,7 @@ Nút "Nâng cấp nông trại": nếu đang chọn một nông trại của mì
 
 ## Kiểm thử thủ công
 - [ ] Đặt trên vùng sương mù / nước / đá / sân tập kết / đè quân → bị chặn, có lý do, không trừ gỗ.
-- [ ] Đặt hợp lệ → −100 gỗ; 5 giây sau lúa ròng tăng 20/phút.
+- [ ] Đặt hợp lệ → −100 gỗ; đúng 3 giây sau lúa ròng tăng 20/phút.
 - [ ] Nông trại không đặt được sát cột cờ (< 2,5 ô) — "Quá sát cột cờ."
 - [ ] Nâng cấp 2 lần → 45 lúa/phút; nút nâng cấp báo hết khi đã cấp 3.
 - [ ] Kéo nông trại sang chỗ hợp lệ / không hợp lệ.

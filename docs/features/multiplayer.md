@@ -47,7 +47,7 @@ Mọi tính năng thay đổi `state` đều phải đi qua action để chạy 
 ## Kiểm thử thủ công
 - [ ] Mở 2 tab (hoặc 2 máy) từ cùng URL `pnpm dev`; tab A tạo phòng, tab B nhập mã → trận bắt đầu, A xanh, B đỏ; camera của B đặt ở pháo đài đỏ.
 - [ ] Mở link mời → ô mã tự điền.
-- [ ] B mua quân, đặt nông trại/nhà lính, đưa quân chiếm cờ, chọn cờ rồi xây tiền đồn, nâng cấp, di chuyển, tấn công → A thấy đúng; HUD của B hiện lãnh thổ và mở khoá quân.
+- [ ] B mua quân, đặt nông trại/tháp, đưa quân chiếm cờ, chọn cờ rồi xây tiền đồn, nâng cấp, di chuyển, tấn công → A thấy đúng; HUD của B hiện lãnh thổ và mở khoá quân.
 - Đã chạy thử 2026-10-17 (2 Chrome headless): cờ trùng vị trí ở hai bên; 5 quân đỏ ở cờ → guest thấy tiến độ 35% sau 8 giây, rồi vùng đổi chủ, HUD guest hiện 2 vùng; guest bấm "Xây tiền đồn" → host tạo tiền đồn; lần thứ hai bị từ chối. Không lỗi JavaScript.
 - Đã chạy thử 2026-10-16 bằng 2 trình duyệt Chrome headless trên cùng máy, qua máy chủ PeerJS thật: tạo/vào phòng, guest xây cột cờ + nông trại + nhà lính, chiếm vùng, tuyển lính giáo và lính bộ; host và guest thấy cùng tiến độ và tài nguyên; không lỗi JavaScript. Chưa thử giữa 2 mạng khác nhau và ngắt/vào lại.
 - [ ] Đóng tab B → A tạm dừng; B vào lại bằng mã cũ → trận tiếp tục.

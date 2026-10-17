@@ -1,12 +1,12 @@
-# Công trình (xây dựng, nâng cấp, nhà lính, tháp)
+# Công trình (xây dựng, nâng cấp, tiền đồn, tháp)
 
 > Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
-Mọi công trình người chơi xây (nông trại, tiền đồn, nhà lính bộ, nhà lính cung, chuồng ngựa, tháp phòng thủ) dùng chung một hệ thống:
+Mọi công trình người chơi xây (nông trại, tiền đồn, tháp phòng thủ) dùng chung một hệ thống. Nhà lính bộ, nhà lính cung và chuồng ngựa **đã bỏ** ngày 2026-10-17 ("Yêu cầu sửa game RTS 1vs1 — 17/10/2026"):
 - Bấm nút xây → rê chuột chọn chỗ (riêng tiền đồn: chọn cờ rồi bấm "Xây tiền đồn", chỗ đặt tự tìm) (khung xanh = hợp lệ, đỏ = bị chặn, thanh dưới màn hình ghi lý do) → nhấp trái để đặt; nhấp phải hoặc Escape để huỷ.
 - Trả tiền ngay khi đặt; công trình **mất thời gian xây**, mờ đi và có thanh tiến độ vàng; đang xây vẫn có thể bị đánh phá.
-- Xây xong mới có tác dụng (sinh lúa, mở khoá quân, bắn).
+- Xây xong mới có tác dụng (sinh lúa, bắn).
 - Nhấp vào công trình của mình để chọn (vòng nét đứt) và xem thông tin trong nhật ký; nút nâng cấp dùng công trình đang chọn.
 - Công trình bị phá thì mất hẳn. Quân hai phe tự tấn công công trình địch khi nhìn thấy.
 
@@ -16,11 +16,8 @@ Cột cờ (có sẵn, không phải công trình) và vùng lãnh thổ: xem [t
 **Các loại công trình** (`BUILDING_TYPES`):
 | `kind` | Tên | Giá | Thời gian xây | Máu | Nửa kích thước (`halfW×halfH`) | Tầm nhìn | Được đặt ở (`where`) | Tác dụng |
 |---|---|---|---:|---:|---|---:|---|---|
-| `farm` | Nông trại | 100 gỗ | 5s | 180 | 31×34 | 90 | `explored` | +20/30/45 lúa/phút theo cấp |
+| `farm` | Nông trại | 100 gỗ | 3s | 180 | 31×34 | 90 | `explored` | +20/30/45 lúa/phút theo cấp |
 | `outpost` | Tiền đồn | 200 gỗ, 100 đá | 40s, **cần quân đứng cạnh** | 1.500 | 26×24 | 14 ô (`visionTiles`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 10, 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
-| `barracks` | Nhà lính bộ | 150 gỗ, 50 đá | 30s | 420 | 40×32 | 100 | `territory` | Mở khoá lính bộ |
-| `archery` | Nhà lính cung | 150 gỗ, 50 vàng | 30s | 380 | 40×32 | 100 | `territory` | Mở khoá cung thủ |
-| `stable` | Chuồng ngựa | 200 gỗ, 100 đá, 100 vàng | 30s | 460 | 46×34 | 100 | `territory` | Mở khoá kỵ binh |
 | `tower` | Tháp phòng thủ | 100 gỗ, 200 đá, 50 vàng | 25s | 520 | 22×24 | 200 | `territory` | Súng: tầm 190, ST 17, 1 phát/giây |
 
 **Nâng cấp**
@@ -30,10 +27,10 @@ Cột cờ (có sẵn, không phải công trình) và vùng lãnh thổ: xem [t
 | Nông trại cấp 3 | 120 gỗ, 80 đá | 15s | 45 lúa/phút |
 Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh tiến độ màu xanh nhạt.
 
-**Mở khoá quân** (`UNIT_REQUIREMENTS`): lính bộ ← nhà lính bộ, cung thủ ← nhà lính cung, kỵ binh ← chuồng ngựa (phải **xây xong**). Trinh sát và lính giáo tuyển ngay tại pháo đài. Quân vẫn xuất hiện ở sân tập kết cạnh pháo đài.
+**Tuyển quân:** không còn công trình mở khoá quân. Trinh sát và lính giáo tuyển tại pháo đài. Lính bộ, cung thủ, kỵ binh **tạm chưa tuyển được** vì nơi tuyển thay thế chưa chốt (`RECRUIT_SITE_PENDING`, xem [units.md](units.md)).
 
 **Xây dựng**
-- Lúc đặt: máu = 20% tối đa, `progress = 0`. Mỗi giây `progress += 1/buildTime`, máu tăng thêm 80% tối đa chia đều theo thời gian xây.
+- Lúc đặt: máu = 20% tối đa, `progress = 0`. Mỗi giây `progress += 1/buildTime` (sai số số thực < 1e-6 được làm tròn lên 1, để nông trại 3 giây xong đúng giây thứ 3), máu tăng thêm 80% tối đa chia đều theo thời gian xây.
 - Đặt hợp lệ khi (`buildingPlacementProblem()` trả về chuỗi rỗng):
   1. Nằm trong bản đồ.
   2. Mọi điểm lấy mẫu (bước 8) trên footprint đã được phe đó khám phá và không phải nước/đá.
@@ -48,7 +45,7 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 
 ## Code liên quan
 - [src/main.ts](../../src/main.ts), khối "Buildings & territory":
-  - Hằng số `BUILDING_TYPES` (gồm `outpost`), `FARM_LEVELS`, `FARM_UPGRADE_SECONDS`, `UNIT_REQUIREMENTS`, `HOME_TERRITORY_TILES`.
+  - Hằng số `BUILDING_TYPES` (`farm`, `outpost`, `tower`), `FARM_LEVELS`, `FARM_UPGRADE_SECONDS`, `HOME_TERRITORY_TILES`.
   - `buildingDef()`, `buildingDone()`, `buildingName()`, `buildingVision()`, `buildingGun()`, `hasBuilding(team, kind)`.
   - `buildingPlacementProblem(team, kind, x, y, ignore)`, `findBuildSpot(team, kind, ax, ay, minR, maxR)` (AI dùng), `placeBuilding(team, kind, x, y)`.
   - `upgradeCost()`, `upgradeTarget(team, kind, id)`, `startUpgrade(team, 'farm', id)` (chỉ nông trại); `outpostRegions(team)`, `startOutpost(team, regionId)`.
@@ -56,12 +53,12 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
   - UI: `beginPlacement(kind)`, `endPlacement()`, biến `placement {kind, x, y, valid, problem}`, `selectedBuilding`.
   - Vẽ: `drawBuilding(b, preview)`, `drawFarm()`, `drawBuildingOverlay()` (thanh tiến độ/máu, vòng chọn, nhãn).
 - Dữ liệu: `state.buildings[] = {id, kind, team, x, y, hp, max, level, progress (0..1), upgrade: null|{progress, time}, cool, regionId (tiền đồn), waiting}`. Tầm nhìn khai báo bằng `vision` (đơn vị thế giới) hoặc `visionTiles` (ô) — đọc qua `visionOf()`. Công trình dùng trường `kind` (quân dùng `type`).
-- Nút trong [index.html](../../index.html): `#farm`, `#upgradeFarm`, `#upgradeOutpost` ("Xây tiền đồn"), `#buildBarracks`, `#buildArchery`, `#buildStable`, `#buildTower`. Nhãn giá sinh từ `BUILDING_TYPES` lúc tải trang (loại không có `button` — tiền đồn — được bỏ qua trong vòng gán nút).
+- Nút trong [index.html](../../index.html): `#farm`, `#upgradeFarm`, `#upgradeOutpost` ("Xây tiền đồn"), `#buildTower`. Nhãn giá sinh từ `BUILDING_TYPES` lúc tải trang (loại không có `button` — tiền đồn — được bỏ qua trong vòng gán nút).
 
 ## Tương tác
-- [territory.md](territory.md): tiền đồn giữ cờ; lãnh thổ quyết định chỗ xây nhà lính và tháp.
+- [territory.md](territory.md): tiền đồn giữ cờ; lãnh thổ quyết định chỗ xây tháp.
 - [farms.md](farms.md): nông trại là một loại công trình; kéo nông trại.
-- [units.md](units.md): nhà lính mở khoá quân.
+- [units.md](units.md): tuyển quân (không còn nhà lính).
 - [combat.md](combat.md): quân nhắm công trình địch; tháp và tiền đồn bắn.
 - [fog-of-war.md](fog-of-war.md): công trình cho tầm nhìn (đang xây: 60).
 - [economy.md](economy.md): giá công trình, lúa từ nông trại.
@@ -77,18 +74,18 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 
 ## Kiểm thử thủ công
 - [ ] Đặt mỗi loại công trình; chỗ không hợp lệ hiện lý do trên thanh dưới màn hình.
-- [ ] Nhà lính/tháp ngoài lãnh thổ → bị chặn "Phải xây trong lãnh thổ…".
-- [ ] Trước khi có nhà lính bộ, nút lính bộ mờ và ghi "cần Nhà lính bộ"; xây xong thì tuyển được.
+- [ ] Tháp ngoài lãnh thổ → bị chặn "Phải xây trong lãnh thổ…".
+- [ ] Không còn nút nhà lính bộ, nhà lính cung, chuồng ngựa; gọi `placeBuilding(…,'barracks',…)` bị từ chối.
 - [ ] Chọn nông trại → "Nâng cấp nông trại" hiện giá cấp kế; nâng xong lúa/phút tăng.
 - [ ] Chọn cờ vùng đã chiếm → "Xây tiền đồn" → tiền đồn hiện cạnh cờ, "CHỜ QUÂN XÂY" khi không có quân; xong thì máu 1.500, bắn quân địch đến gần. Lần thứ hai cho cùng vùng bị từ chối.
-- [ ] Nông trại xây xong sau 5 giây.
+- [ ] Thả nông trại vào chỗ hợp lệ → đúng 3 giây sau xong (lúa bắt đầu sinh).
 - [ ] Để quân địch phá một công trình → công trình biến mất, log báo.
-- Đã chạy thử 2026-10-17: nông trại 5 giây; tiền đồn cạnh cờ (cách 2–3,5 ô, chờ thợ xây), không xây được tiền đồn thứ hai trong cùng vùng; nông trại đặt sát cờ bị chặn; PvP guest xây tiền đồn.
+- Đã chạy thử 2026-10-17 (yêu cầu 17/10): đặt nông trại qua `requestAction('build')` → −100 gỗ, giây 2,9 chưa xong, giây 3,0 xong, sinh 20 lúa/phút; `BUILDING_TYPES` chỉ còn farm/outpost/tower, 3 nút nhà lính không còn trong trang.
+- Đã chạy thử 2026-10-17: nông trại 5 giây (trước khi đổi 3 giây); tiền đồn cạnh cờ (cách 2–3,5 ô, chờ thợ xây), không xây được tiền đồn thứ hai trong cùng vùng; nông trại đặt sát cờ bị chặn; PvP guest xây tiền đồn.
 - Đã chạy thử 2026-10-16 (Chrome headless + debugger): đặt nông trại bằng chuột, cột cờ (cơ chế cũ), nhà lính; khoá/mở lính bộ; nâng cấp nông trại cấp 2 và tiền đồn; phá tiền đồn; PvP 2 trình duyệt (guest xây 3 công trình và tuyển lính bộ). Không lỗi JavaScript.
 
 ## Giới hạn / việc tồn đọng
-- 17 nút nên bảng điều khiển phải cuộn trên màn hình thấp.
+- 14 nút; trên màn hình thấp bảng điều khiển vẫn có thể phải cuộn.
 - Công trình nhỏ ở mức zoom mặc định; nhãn khó đọc.
 - Không huỷ được công trình đang xây để lấy lại tài nguyên.
-- Quân tuyển từ nhà lính vẫn xuất hiện ở sân tập kết pháo đài, không ở nhà lính.
 - Hình công trình (trừ nông trại) vẽ bằng Canvas, chưa có sprite.
