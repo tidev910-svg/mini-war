@@ -157,13 +157,16 @@ const REGION_TYPES=['food','wood','stone','gold'],REGION_COUNT=20,REGION_MIN_BAS
 const BUILDER_RADIUS_TILES=4;
 // Every neutral region has a flag near its centre (never this close to a fortress). Units within FLAG_CAPTURE_RADIUS_TILES capture it:
 // seconds = FLAG_CAPTURE_BASE_SECONDS / min(units, FLAG_CAPTURE_MAX_UNITS)^FLAG_CAPTURE_EXPONENT (1 unit 60 s, 5 ≈ 23 s, 10+ ≈ 15 s).
-// TRIAL VALUES, not final (territory.md): the formula, the cap, scouts counting and kept progress when units leave.
-const FLAG_ENEMY_BASE_MIN_TILES=20,FLAG_CAPTURE_RADIUS_TILES=4,FLAG_CAPTURE_BASE_SECONDS=60,FLAG_CAPTURE_EXPONENT=.6,FLAG_CAPTURE_MAX_UNITS=10,FLAG_SCOUTS_CAPTURE=true;
+// Scouts neither capture nor contest (FLAG_SCOUTS_CAPTURE). With nobody in range for FLAG_DECAY_DELAY_SECONDS, progress falls
+// back toward 0 (a full bar empties in FLAG_DECAY_SECONDS) and never changes the owner. Decided 2026-10-17 (territory.md).
+const FLAG_ENEMY_BASE_MIN_TILES=20,FLAG_CAPTURE_RADIUS_TILES=4,FLAG_CAPTURE_BASE_SECONDS=60,FLAG_CAPTURE_EXPONENT=.6,FLAG_CAPTURE_MAX_UNITS=10,FLAG_SCOUTS_CAPTURE=false;
+const FLAG_DECAY_DELAY_SECONDS=5,FLAG_DECAY_SECONDS=60;
 // AI capture squads: units per flag (doubled for enemy or contested flags), flags at once grows every interval up to the max.
 const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTERVAL=120;
 const FORTRESS_GUN_COST={stone:100};
-// Food mine output equals the wood mine (trial value: whether food regions feed farms instead is not decided).
-const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:30/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:30/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:20/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:15/60,crystal:'#ffca5e'}};
+// Food regions: the mine gives 15 lúa/phút and farms standing in a food region their owner holds produce FOOD_REGION_FARM_BONUS more.
+const FOOD_REGION_FARM_BONUS=.25;
+const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:15/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:30/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:20/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:15/60,crystal:'#ffca5e'}};
 const RICH_MINE_MULTIPLIER=1.5;
 // Shared atlas: blue/red idle and walk clips occupy dedicated rows; later actions can add rows without changing simulation data.
 const infantrySpriteSheet=new Image();infantrySpriteSheet.src='/assets/units/infantry/infantry-sheet.png';
@@ -192,7 +195,9 @@ function spend(team,cost){const res=teamResources(team);for(const [key,amount] o
 function costText(cost){return Object.entries(cost).map(([key,amount])=>amount+' '+RESOURCE_NAMES[key]).join(' · ');}
 function formatAmount(value){return String(Math.round(value*10)/10).replace('.',',');}
 // Food produced per minute: finished farms plus food mines in owned regions.
-function foodPerMinute(team){let total=0;for(const b of state.buildings)if(b.team===team&&b.kind==='farm'&&b.progress>=1)total+=FARM_LEVELS[b.level].food;for(const m of state.mines)if(m.resource==='food'&&state.regions[m.regionId]?.owner===team)total+=m.income*60;return total;}
+// A finished farm's output per minute, +FOOD_REGION_FARM_BONUS when it stands in a food region its team owns.
+function farmFoodPerMinute(b){if(b.progress<1)return 0;const r=regionAt(b.x,b.y),bonus=r&&r.resource==='food'&&r.owner===b.team;return FARM_LEVELS[b.level].food*(bonus?1+FOOD_REGION_FARM_BONUS:1);}
+function foodPerMinute(team){let total=0;for(const b of state.buildings)if(b.team===team&&b.kind==='farm')total+=farmFoodPerMinute(b);for(const m of state.mines)if(m.resource==='food'&&state.regions[m.regionId]?.owner===team)total+=m.income*60;return total;}
 function upkeepPerMinute(team){let total=0;for(const u of state.units)if(u.team===team&&u.hp>0)total+=specs[u.type].upkeep;return total;}
 function supplyFactor(team,kind){return state?.supply?.[team]?.status==='starving'?(kind==='speed'?SUPPLY_SPEED_FACTOR:SUPPLY_ATTACK_SPEED_FACTOR):1;}
 // Called once per second per team. Shortage starts only when stored food cannot pay upkeep, and ends only
@@ -551,7 +556,7 @@ function landPatchSizes(){
 function generateRegions(blueBase,redBase){
  const T=TILE_SIZE,regions=[],mines=[],bases=[blueBase,redBase];
  const tileOf=v=>Math.max(1,Math.min(MAP_TILES-2,Math.floor(v/T)));
- const add=(sgx,sgy,home=null)=>regions.push({id:regions.length,resource:home===null?null:'wood',sgx,sgy,home,owner:home===null?-1:home,cp:null,cap:0,capTeam:-1,contested:false});
+ const add=(sgx,sgy,home=null)=>regions.push({id:regions.length,resource:home===null?null:'wood',sgx,sgy,home,owner:home===null?-1:home,cp:null,cap:0,capTeam:-1,contested:false,idle:0,stage2:-1});
  // Seeds: the fortresses (home regions, wood) and the centres of the forest/rock/field biomes away from them.
  for(const b of bases)add(tileOf(b.x),tileOf(b.y),b.team);
  const seeds=[...forestRegions,...rockRegions,...goldRegions].map(([cx,cy])=>({sgx:tileOf(cx*W),sgy:tileOf(cy*H)}))
@@ -734,9 +739,11 @@ function hasBuilder(b){const r=BUILDER_RADIUS_TILES*TILE_SIZE;return state.units
 function captureSeconds(units){return FLAG_CAPTURE_BASE_SECONDS/Math.pow(Math.min(Math.max(1,units),FLAG_CAPTURE_MAX_UNITS),FLAG_CAPTURE_EXPONENT);}
 function flagCapturers(r,team){const rad=FLAG_CAPTURE_RADIUS_TILES*TILE_SIZE;let n=0;for(const u of state.units)if(u.team===team&&u.hp>0&&(FLAG_SCOUTS_CAPTURE||u.type!=='scout')&&Math.hypot(u.x-r.cp.x,u.y-r.cp.y)<=rad)n++;return n;}
 function regionOutpost(r){return state.buildings.find(b=>b.kind==='outpost'&&b.regionId===r.id&&b.team===r.owner)||null;}
-// One side alone in range moves the flag: an enemy flag goes back to neutral first, then becomes theirs.
-// Both sides in range (or the owner's outpost still standing) pauses progress; with nobody in range progress is kept.
-// The owner standing at its own flag erases the attacker's partial progress at the same speed.
+// One side alone in range moves the flag. An enemy flag takes two stages: stage 1 lowers it to neutral, stage 2 captures it
+// (r.stage2 remembers who lowered it, for the label). Both sides in range, or the owner's outpost still standing, pauses progress.
+// The owner standing at its own flag erases the attacker's progress at the same speed. With nobody in range for
+// FLAG_DECAY_DELAY_SECONDS the progress decays to 0; decay never changes the owner.
+function captureStage(r){return r.capTeam<0||r.cap<=0?0:r.owner>=0?1:r.stage2===r.capTeam?2:0;}
 function updateCaptures(dt){
  const me=localTeam();
  for(const r of state.regions){
@@ -746,23 +753,29 @@ function updateCaptures(dt){
   const contested=(n[0]>0&&n[1]>0)||guarded;
   if(contested&&!r.contested&&(n[me]>0||r.owner===me))addLog(guarded?(r.owner===me?`Tiền đồn của bạn đang giữ cờ ${regionLabel(r)}: đối phương chưa chiếm được.`:`Cờ ${regionLabel(r)} có tiền đồn địch giữ: phải phá tiền đồn trước.`):`Cột cờ ${regionLabel(r)} đang bị tranh chấp: tiến độ chiếm tạm dừng.`);
   r.contested=contested;
+  if(!n[0]&&!n[1]){
+   r.idle=(r.idle||0)+dt;
+   if(r.idle>=FLAG_DECAY_DELAY_SECONDS&&r.cap>0){r.cap=Math.max(0,r.cap-dt/FLAG_DECAY_SECONDS);if(r.cap===0){r.capTeam=-1;r.stage2=-1;}}
+   continue;
+  }
+  r.idle=0;
   if(contested||team<0)continue;
   const step=dt/captureSeconds(n[team]);
   if(team===r.owner||(r.capTeam!==team&&r.cap>0)){
-   if(r.cap>0){r.cap=Math.max(0,r.cap-step);if(r.cap===0)r.capTeam=-1;}
+   if(r.cap>0){r.cap=Math.max(0,r.cap-step);if(r.cap===0){r.capTeam=-1;r.stage2=-1;}}
    continue;
   }
-  if(r.capTeam!==team){r.capTeam=team;if(team===me)addLog(`Đang ${r.owner>=0?'hạ cờ địch ở':'chiếm cờ'} ${regionLabel(r)}: ${n[team]} quân, khoảng ${Math.round(captureSeconds(n[team]))} giây.`);}
+  if(r.capTeam!==team){r.capTeam=team;if(team===me)addLog(r.owner>=0?`Giai đoạn 1/2 · hạ cờ địch ở ${regionLabel(r)}: ${n[team]} quân, khoảng ${Math.round(captureSeconds(n[team]))} giây.`:`Đang chiếm cờ ${regionLabel(r)}: ${n[team]} quân, khoảng ${Math.round(captureSeconds(n[team]))} giây.`);}
   r.cap=Math.min(1,r.cap+step);if(r.cap<1)continue;
   r.cap=0;
   if(r.owner<0){
-   r.owner=team;r.capTeam=-1;
+   r.owner=team;r.capTeam=-1;r.stage2=-1;
    if(team===me)addLog(`Đã chiếm ${regionLabel(r)}: mỏ trong vùng bắt đầu sinh ${RESOURCE_NAMES[r.resource]}.`);
    else if(teamCanSee(me,r.cp.x,r.cp.y))addLog(`Đối phương đã chiếm ${regionLabel(r)}.`);
   }else{
-   const lost=r.owner;r.owner=-1;
+   const lost=r.owner;r.owner=-1;r.stage2=team;
    if(lost===me)addLog(`Mất ${regionLabel(r)}: cờ đã bị hạ về trung lập.`);
-   else if(team===me)addLog(`Đã hạ cờ địch ở ${regionLabel(r)}: vùng trở về trung lập, tiếp tục đứng để chiếm.`);
+   else if(team===me)addLog(`Giai đoạn 2/2 · đã hạ cờ địch ở ${regionLabel(r)}: vùng về trung lập, tiếp tục đứng để chiếm.`);
   }
  }
 }
@@ -899,8 +912,8 @@ function runEnemyAI(){
  for(const r of flags){
   const have=squad(r).length;if(!have&&active>=limit)continue;
   const need=(r.owner>=0||r.contested?AI_CAPTURE_SQUAD*2:AI_CAPTURE_SQUAD)-have;if(need<=0)continue;
-  // Fighters first; scouts only when nothing else is free.
-  const free=state.units.filter(u=>u.team===team&&u.hp>0&&!u.buildTarget&&u.captureTarget==null).sort((p,q)=>(p.type==='scout')-(q.type==='scout')||Math.hypot(p.x-r.cp.x,p.y-r.cp.y)-Math.hypot(q.x-r.cp.x,q.y-r.cp.y));
+  // Nearest free fighters (scouts cannot capture).
+  const free=state.units.filter(u=>u.team===team&&u.hp>0&&u.type!=='scout'&&!u.buildTarget&&u.captureTarget==null).sort((p,q)=>Math.hypot(p.x-r.cp.x,p.y-r.cp.y)-Math.hypot(q.x-r.cp.x,q.y-r.cp.y));
   for(const u of free.slice(0,need)){u.captureTarget=r.id;u.dest=flagStandSpot(r);u.order='explore';}
   if(!have&&free.length)break;
  }
@@ -939,7 +952,7 @@ function update(dt){
  // income, with a bonus for controlling the mine
  // No base income: food comes from farms, wood/stone/gold from captured mines.
  while(incomeTimer>=1){incomeTimer-=1;
-  for(const b of state.buildings)if(b.kind==='farm'&&buildingDone(b))teamResources(b.team).food+=FARM_LEVELS[b.level].food/60;
+  for(const b of state.buildings)if(b.kind==='farm'&&buildingDone(b))teamResources(b.team).food+=farmFoodPerMinute(b)/60;
   // Mines pay whoever owns their region (a finished flag or outpost).
   for(const mine of state.mines){const r=state.regions[mine.regionId];mine.owner=r?r.owner:-1;if(mine.owner>=0)teamResources(mine.owner)[mine.resource]+=mine.income;}
   updateSupply(0);updateSupply(1);
@@ -1422,9 +1435,12 @@ function drawFlag(r){
   banner();ctx.strokeStyle=c.trim;ctx.lineWidth=3;ctx.stroke();
   ctx.font='26px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(RESOURCE_ICONS[r.resource]||'',52,-144);
   // Progress bar and label.
-  if(r.cap>0||r.contested){ctx.fillStyle='#111827';ctx.fillRect(-56,26,112,10);ctx.fillStyle=r.contested?'#ff9f43':FLAG_COLORS[r.capTeam]?.main||'#ccc';ctx.fillRect(-55,27,110*r.cap,8);}
+  // Two-stage bar for enemy flags: left half = stage 1 (lower), right half = stage 2 (capture), with a divider.
+  const stage=captureStage(r),overall=stage===1?r.cap/2:stage===2?.5+r.cap/2:r.cap;
+  if(r.cap>0||r.contested){ctx.fillStyle='#111827';ctx.fillRect(-56,26,112,10);ctx.fillStyle=r.contested?'#ff9f43':r.idle>=FLAG_DECAY_DELAY_SECONDS?'#9aa3ad':FLAG_COLORS[r.capTeam]?.main||'#ccc';ctx.fillRect(-55,27,110*overall,8);if(stage){ctx.fillStyle='#fff';ctx.fillRect(-1,24,2,14);}}
   // Two short lines: owner and region, then the capture status.
-  const owner=r.owner===0?'XANH':r.owner===1?'ĐỎ':'TRUNG LẬP',status=r.contested?'TRANH CHẤP':r.cap>0?(r.owner>=0?'ĐANG HẠ CỜ ':'ĐANG CHIẾM ')+Math.round(r.cap*100)+'%':'';
+  const owner=r.owner===0?'XANH':r.owner===1?'ĐỎ':'TRUNG LẬP',pct=Math.round(r.cap*100)+'%';
+  const status=r.contested?'TRANH CHẤP':r.cap<=0?'':(stage===1?'GĐ 1/2 · HẠ CỜ '+pct:stage===2?'GĐ 2/2 · CHIẾM '+pct:'ĐANG CHIẾM '+pct)+(r.idle>=FLAG_DECAY_DELAY_SECONDS?' · ĐANG GIẢM':'');
   // Text keeps at least FLAG_LABEL_MIN_PX on screen.
   const fs=Math.max(13,FLAG_LABEL_MIN_PX/(s*zoom));
   ctx.font=`900 ${fs}px system-ui`;ctx.textBaseline='alphabetic';ctx.lineWidth=fs*.3;ctx.strokeStyle='#1c2a22';ctx.fillStyle=r.owner===0?'#bfe2ff':r.owner===1?'#ffd0cc':'#fff8e0';
@@ -1653,14 +1669,14 @@ canvas.addEventListener('click',e=>{
  if(flag){
   for(const u of state.units)u.selected=false;localSelectedIds.clear();selectedBuilding=null;selectedFlag=flag.id;
   const who=flag.owner===localTeam()?'của bạn':flag.owner>=0?'của địch':'trung lập';
-  addLog(`Đã chọn cờ ${regionLabel(flag)} (${who}): đưa quân vào vòng nét đứt để chiếm; 1 quân ~${Math.round(captureSeconds(1))} giây, ${FLAG_CAPTURE_MAX_UNITS}+ quân ~${Math.round(captureSeconds(FLAG_CAPTURE_MAX_UNITS))} giây.`+(flag.owner===localTeam()&&!state.buildings.some(b=>b.kind==='outpost'&&b.regionId===flag.id)?' Bấm "Xây tiền đồn" để giữ cờ.':''));
+  addLog(`Đã chọn cờ ${regionLabel(flag)} (${who}): đưa quân chiến đấu vào vòng nét đứt để chiếm (trinh sát không tính); 1 quân ~${Math.round(captureSeconds(1))} giây, ${FLAG_CAPTURE_MAX_UNITS}+ quân ~${Math.round(captureSeconds(FLAG_CAPTURE_MAX_UNITS))} giây; bỏ trống ${FLAG_DECAY_DELAY_SECONDS} giây thì tiến độ giảm dần.`+(flag.resource==='food'?` Nông trại trong vùng lúa của mình được +${Math.round(FOOD_REGION_FARM_BONUS*100)}% lúa.`:'')+(flag.owner===localTeam()&&!state.buildings.some(b=>b.kind==='outpost'&&b.regionId===flag.id)?' Bấm "Xây tiền đồn" để giữ cờ.':''));
   updateHUD();return;
  }
  selectedFlag=null;
  const building=state.buildings.find(b=>b.team===localTeam()&&Math.abs(x-b.x)<=BUILDING_TYPES[b.kind].halfW&&Math.abs(y-b.y)<=BUILDING_TYPES[b.kind].halfH+10);
  if(building){
   for(const u of state.units)u.selected=false;localSelectedIds.clear();selected=null;selectedBuilding=building;
-  const info=!buildingDone(building)?`đang xây ${Math.round(building.progress*100)}%`:building.kind==='farm'?`cấp ${building.level}, ${FARM_LEVELS[building.level].food} lúa/phút`+(building.level<3?' · bấm "Nâng cấp nông trại"':''):building.kind==='outpost'?`giữ cờ ${regionLabel(state.regions[building.regionId])}, máu ${Math.ceil(building.hp)}/${building.max}`:`máu ${Math.ceil(building.hp)}/${building.max}`;
+  const info=!buildingDone(building)?`đang xây ${Math.round(building.progress*100)}%`:building.kind==='farm'?`cấp ${building.level}, ${formatAmount(farmFoodPerMinute(building))} lúa/phút`+(farmFoodPerMinute(building)>FARM_LEVELS[building.level].food?' (có thưởng vùng lúa)':'')+(building.level<3?' · bấm "Nâng cấp nông trại"':''):building.kind==='outpost'?`giữ cờ ${regionLabel(state.regions[building.regionId])}, máu ${Math.ceil(building.hp)}/${building.max}`:`máu ${Math.ceil(building.hp)}/${building.max}`;
   addLog(`Đã chọn ${buildingName(building).toLowerCase()}: ${info}.`);updateHUD();return;
  }
  selectedBuilding=null;

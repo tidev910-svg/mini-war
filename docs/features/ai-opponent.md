@@ -13,7 +13,7 @@
 4. **Chiếm cờ:**
    - **Cờ nhắm tới:** cờ không thuộc AI mà AI đã khám phá. Thứ tự ưu tiên: cờ trung lập trước, rồi vùng có loại tài nguyên đang thiếu mà chưa có thu nhập, rồi cờ gần pháo đài nhất.
    - **Số cờ cùng lúc:** 1 + ⌊giây/120⌋, tối đa 4 (`AI_CAPTURE_TARGET_INTERVAL`, `AI_MAX_CAPTURE_TARGETS`).
-   - **Nhóm quân:** mỗi cờ được `AI_CAPTURE_SQUAD` = 2 quân, gấp đôi nếu là cờ của địch hoặc đang tranh chấp. Chọn quân chiến đấu rảnh gần nhất; trinh sát chỉ được chọn khi không còn quân nào khác.
+   - **Nhóm quân:** mỗi cờ được `AI_CAPTURE_SQUAD` = 2 quân, gấp đôi nếu là cờ của địch hoặc đang tranh chấp. Chọn quân chiến đấu rảnh gần nhất; không bao giờ chọn trinh sát (trinh sát không chiếm được cờ).
    - **Mỗi lượt** chỉ mở thêm một cờ mới.
    - **Quân được gán** (`u.captureTarget`) đứng rải trong nửa bán kính vòng cờ (`flagStandSpot()`), tới khi vùng thuộc AI và không còn tiến độ dở của địch (gặp địch thì vẫn đánh).
    - **Thợ xây:** mỗi tiền đồn đang xây chưa có thợ thì được gán quân rảnh gần nhất (`u.buildTarget`).

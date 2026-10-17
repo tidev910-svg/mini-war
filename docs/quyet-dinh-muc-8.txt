@@ -1,0 +1,73 @@
+CÁC VẤN ĐỀ MỤC 8 - GAME RTS 1VS1 MINI WAR (ĐÃ CHỐT 17/10/2026, ĐÃ LÀM TRONG GAME)
+Ngày: 17/10/2026
+Nguồn: "Tổng kết yêu cầu sửa game RTS 1vs1" (16/10/2026), mục 8
+
+Mỗi mục ghi cách làm tạm trước đây, phương án khác, và lựa chọn đã chốt (dòng "CHỐT").
+Thông số còn tạm: tốc độ giảm khi bỏ trống cờ (cả thanh hết trong 60 giây);
+thưởng nông trại chỉ áp dụng khi phe của nông trại đang giữ vùng lúa đó.
+
+
+1. CHIẾM CỜ ĐANG THUỘC ĐỐI PHƯƠNG
+   Hỏi: chiếm thẳng, hay phải trả cờ về trung lập trước?
+
+   Trước khi chốt: trả về trung lập trước.
+   - Đứng ở cờ địch thì cờ bị hạ về trung lập, đứng tiếp mới chiếm được.
+   - Tổng thời gian gấp đôi chiếm cờ trung lập (ví dụ 5 quân: khoảng 23 + 23 giây).
+
+   Phương án khác: chiếm thẳng. Nhanh gấp đôi, nhưng vùng đổi chủ liên tục hơn.
+
+   CHỐT: Giữ trả về trung lập trước. 2 giai đoạn: hạ cờ địch về trung lập rồi mới chiếm; hiển thị tiến độ từng giai đoạn.
+
+
+2. TIỀN ĐỒN
+   Hỏi: tiền đồn là công trình phòng thủ riêng, hay nâng cấp từ cột cờ?
+
+   Trước khi chốt: công trình riêng.
+   - Xây cạnh cờ của vùng mình đã chiếm.
+   - Giá 200 gỗ + 100 đá, xây 40 giây, cần quân đứng cạnh.
+   - Có 1.500 máu và súng phòng thủ.
+   - Khi tiền đồn còn đứng, đối phương không chiếm được cờ đó; phải phá tiền đồn trước.
+
+   Phương án khác: cột cờ tự nâng thành tiền đồn. Khi đó cột cờ phải có máu
+   và bị phá được (quay lại kiểu cũ).
+
+   CHỐT: Giữ công trình riêng. 200 gỗ + 100 đá, 40 giây, 1.500 máu, có súng; phải phá tiền đồn trước khi chiếm được cờ.
+
+
+3. LÃNH THỔ LÚA
+   Hỏi: vùng lúa tạo lúa trực tiếp, hay hỗ trợ sản xuất của nông trại?
+
+   Trước khi chốt: tạo lúa trực tiếp.
+   - Mỗi vùng lúa có một mỏ lúa sinh 30 lúa/phút (bằng mỏ gỗ).
+
+   Phương án khác: vùng lúa không sinh lúa mà tăng sản lượng nông trại,
+   ví dụ +X% cho nông trại, hoặc nông trại chỉ xây được trong vùng lúa.
+
+   CHỐT: Vùng lúa tự sinh 15 lúa/phút, đồng thời tăng 25% sản lượng cho nông trại xây trong vùng. Nông trại vẫn xây được nơi khác.
+
+
+4. CÔNG THỨC VÀ LUẬT CHIẾM CỜ
+   Trước khi chốt (theo số thử nghiệm trong tài liệu 16/10):
+   - Thời gian chiếm = 60 / (số quân)^0,6:
+       1 quân: 60 giây
+       2 quân: khoảng 40 giây
+       5 quân: khoảng 23 giây
+       10 quân trở lên: khoảng 15 giây
+   - Tối đa 10 quân được tính.
+   - Quân rời vòng cờ: giữ nguyên tiến độ.
+   - Trinh sát: được tính như quân khác.
+   - Phạm vi chiếm: bán kính 4 ô quanh cờ.
+
+   Có thể đổi:
+   - Tiến độ tự giảm dần khi không có ai đứng ở cờ.
+   - Không cho trinh sát chiếm cờ.
+   - Mỗi loại quân góp một mức khác nhau.
+   - Chỉnh các con số trên.
+
+   CHỐT công thức / số liệu: giữ T = 60 / N^0,6, tối đa 10 quân; mọi quân chiến đấu chiếm như nhau;
+                             hai phe cùng đứng trong vòng cờ thì dừng tiến độ.
+   CHỐT khi quân rời phạm vi: rời cờ 5 giây thì tiến độ giảm dần về 0, không tự đổi chủ.
+   CHỐT trinh sát có được chiếm cờ: không.
+
+
+Chi tiết kỹ thuật: docs/features/territory.md, mục "Quyết định đã chốt".

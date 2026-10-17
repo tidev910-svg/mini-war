@@ -18,7 +18,7 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 **Loại mỏ** (`MINE_TYPES`):
 | `resource` | Sản lượng | Nhãn trên bản đồ |
 |---|---:|---|
-| `food` | 30 lúa/phút (thông số thử, bằng mỏ gỗ) | MỎ LÚA +30/PHÚT |
+| `food` | 15 lúa/phút; nông trại của chủ vùng trong vùng lúa +25% | MỎ LÚA +15/PHÚT |
 | `wood` | 30 gỗ/phút | MỎ GỖ +30/PHÚT |
 | `stone` | 20 đá/phút | MỎ ĐÁ +20/PHÚT |
 | `gold` | 15 vàng/phút | MỎ VÀNG +15/PHÚT |
@@ -28,7 +28,7 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 
 **Lúa duy trì & thiếu tiếp tế** (`updateSupply(team)`, mỗi giây sau khi cộng thu nhập):
 - Mỗi quân còn sống tiêu `specs[type].upkeep` lúa/phút (trinh sát 0,5; lính, lính giáo 1; cung thủ 1,5; kỵ binh 3), kể cả khi đứng yên. Quân trong hàng chờ xuất quân chưa tính.
-- Lúa ròng/phút = `foodPerMinute(team)` (nông trại xong + mỏ lúa của vùng mình) − `upkeepPerMinute(team)`.
+- Lúa ròng/phút = `foodPerMinute(team)` (tổng `farmFoodPerMinute()` của nông trại đã xong — +25% nếu nằm trong vùng lúa mình giữ — cộng mỏ lúa của vùng mình) − `upkeepPerMinute(team)`.
 - Mỗi giây trừ `upkeep/60` khỏi kho; kho không đủ thì về 0.
 - `state.supply[team] = {status, grace}`:
 
@@ -68,7 +68,7 @@ Chỉ host tính thu nhập, lúa duy trì và thiếu tiếp tế; `state.resou
 - [ ] Đầu trận HUD hiện 150 lúa, 400 gỗ, 50 đá, 50 vàng; không làm gì thì chỉ gỗ tăng (~30/phút từ vùng gần nhà).
 - [ ] Xây 1 nông trại → lúa tăng ~20 mỗi phút.
 - [ ] Đứng 1 quân ở cờ một vùng gỗ trung lập → ~60 giây sau nhãn mỏ đổi "XANH", gỗ tăng thêm ~30/phút.
-- [ ] Chiếm vùng lúa → `#foodRate` tăng thêm 30/phút.
+- [ ] Chiếm vùng lúa → `#foodRate` tăng thêm 15/phút; nông trại đặt trong vùng đó sinh 25 thay vì 20 lúa/phút.
 - [ ] Địch hạ cờ vùng mình → mỏ về "TRUNG LẬP", ngừng thu.
 - [ ] Mỏ vàng giàu hiện "+23/PHÚT" (15 × 1,5 làm tròn) và có vòng vàng.
 - [ ] Tuyển quân vượt sức nuôi của nông trại → HUD lúa hiện số ròng âm (màu cam); khi kho về 0 → log "Kho lúa đã cạn", HUD đếm ngược 30s; hết giờ → log thiếu tiếp tế, quân chậm rõ rệt.
