@@ -7,13 +7,13 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 ## Đề xuất làm tiếp
 1. **Tìm đường cho quân (A\*)** — quân đang đi xuyên nước và đá. → [rendering.md](features/rendering.md), [controls.md](features/controls.md)
 2. **AI tổ chức tấn công** — AI chỉ đánh khi gặp địch; `enemyMemory` đã ghi nhưng chưa dùng. → [ai-opponent.md](features/ai-opponent.md)
-3. **Cân bằng nhịp game** — gỗ là nút thắt; chạy nhiều trận, đo thời điểm chiếm mỏ/giao tranh đầu tiên, chỉnh `STARTING_RESOURCES` và sản lượng mỏ. → [economy.md](features/economy.md), [resource-system.md](features/resource-system.md)
+3. **Playtest bản cân bằng v1** (17/10: thu nhập pháo đài 25/20/8/8, mỏ lúa 25, mỏ vàng 20, giá quân mới, hàng đợi huấn luyện) — chơi 5–10 trận ở nhiều vị trí nhà, đo số quân phút 5/10/15, thời điểm chiếm cờ đầu tiên, thời gian phản công sau khi mất đất; chốt thời lượng trận mong muốn (15/20/30 phút). Chưa có nút huỷ quân trong hàng đợi. → [economy.md](features/economy.md), [resource-system.md](features/resource-system.md)
 
 ## Lối chơi
 - [ ] Quân đi xuyên nước/đá (cần tìm đường). → [units.md](features/units.md)
 - [ ] Chế độ AI: quân xanh nhắm được địch trong sương mù (không đối xứng). Cần quyết nút "Tấn công" làm gì khi chưa thấy địch. → [combat.md](features/combat.md), [fog-of-war.md](features/fog-of-war.md)
 - [ ] AI chưa tổ chức tấn công; mở rộng chậm nếu trinh sát chết sớm; nhóm chiếm cờ và thợ xây bị rút khỏi đội hình. → [ai-opponent.md](features/ai-opponent.md)
-- [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3; nhà vẫn ở hai dải trái/phải). → [territory.md](features/territory.md)
+- [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3). → [territory.md](features/territory.md)
 - [ ] Tốc độ giảm tiến độ khi bỏ trống cờ (60 giây cho cả thanh) là số tạm. → [territory.md](features/territory.md)
 - [ ] **Chưa quyết thiết kế:** mỏ cạn dần hay vô hạn; có điều kiện thắng theo vùng không; thưởng lãnh thổ +10% (hiện: không). → [territory.md](features/territory.md)
 - [ ] Không huỷ được công trình đang xây; kéo được nông trại đang xây. → [buildings.md](features/buildings.md), [farms.md](features/farms.md)

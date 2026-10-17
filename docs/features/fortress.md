@@ -1,6 +1,6 @@
 # Pháo đài & pháo tích hợp
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
 Mỗi phe có một pháo đài, vừa là căn cứ chính vừa là công trình phòng thủ. Pháo đài có sẵn 1 khẩu pháo; người chơi trả 100 đá để mở khẩu thứ hai, đồng thời pháo đài được tăng máu. Nhấp vào pháo đài để chọn nó và xem tầm bắn của pháo. Tính năng này thay cho "tháp canh" trong tài liệu cũ.
@@ -13,7 +13,7 @@ Mỗi phe có một pháo đài, vừa là căn cứ chính vừa là công trì
 | Số pháo | 2 khe; khe 0 bật sẵn | `base.guns` |
 | Giá mở pháo thứ hai | 100 đá | `FORTRESS_GUN_COST` |
 | Thưởng khi mở | +230 HP tối đa và HP hiện tại | `buildTurret()` |
-| Vị trí pháo | `base.x ± 82` theo hướng phe | `fortressGunPosition()` |
+| Vị trí pháo | `base.x ± 82`, pháo 1 ở phía pháo đài địch (`baseDir()`) | `fortressGunPosition()` |
 | Tầm bắn pháo | 190 | `update()` |
 | Sát thương / cooldown / tốc độ đạn | 17 / 1.0 giây / 320 | `update()` |
 | Tầm nhìn pháo đài | 175 (xanh); AI dùng 160 cho căn cứ đỏ | `teamCanSee()`, `update()` |

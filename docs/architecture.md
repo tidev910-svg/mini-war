@@ -29,9 +29,9 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 
 ## Trạng thái toàn cục chính
 - `state`: dữ liệu trận, tạo bởi `fresh()`:
-  `resources[2] ({food, wood, stone, gold} theo team), supply[2], units[], bullets[], effects[], buildings[], regions[], guards[], bases[2], mines[], fogSeen, enemyFogSeen, enemyMemory, aiExploreTarget, pendingSpawns[]`.
+  `resources[2] ({food, wood, stone, gold} theo team), supply[2], units[], bullets[], effects[], buildings[], regions[], guards[], bases[2], mines[], fogSeen, enemyFogSeen, enemyMemory, aiExploreTarget, pendingSpawns[], trainQueue[]`.
 - Ngoài `state`: `gameTime`, `paused`, `ended`, `gameStarted`, `mode` (`'ai'|'pvp'`), `netRole` (`'host'|'guest'|null`), `nextId`, các bộ đếm `aiTimer`, `incomeTimer`, `pendingSpawnRetryTimer`.
-- Dữ liệu dẫn xuất cấp module (không trong `state`, không gửi qua mạng): `regionMap`, `regionEdges`, `regionEdgesByRegion`, `regionTintCanvas` — dựng từ `state.regions` bằng `buildRegionMap()`/`ensureRegionMap()`; `showTerritory` (UI).
+- Dữ liệu dẫn xuất cấp module (không trong `state`, không gửi qua mạng): `regionMap`, `regionEdges`, `regionTintCanvas`, `fogMask`/`fogVisible` — dựng từ `state.regions` bằng `buildRegionMap()`/`ensureRegionMap()`; `showTerritory` (UI).
 - Trạng thái UI cục bộ (không đồng bộ): `camX, camY, zoom`, `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `draggingFarm`, `dragSelect`.
 
 ## Vòng lặp

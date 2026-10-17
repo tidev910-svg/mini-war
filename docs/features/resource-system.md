@@ -100,6 +100,7 @@ Còn để ngỏ (chốt khi chạy thử): máu từng công trình, bán kính
 ## Kế hoạch triển khai
 Mỗi giai đoạn để game chơi được, chạy thử ở cả chế độ AI và PvP, và cập nhật tài liệu trước khi sang giai đoạn sau.
 1. ✅ **Tài nguyên & nông trại** (xong 2026-10-16, chi tiết ở [economy.md](economy.md)): đổi sang 4 tài nguyên (bỏ năng lượng, bỏ thu nhập nền), kho khởi đầu, nông trại trả gỗ và sinh lúa, giá quân mới, HUD 4 tài nguyên. Mỏ: 2 mỏ gỗ gần nhà + mỏ vàng giàu ở giữa + 1 mỏ đá + 1 mỏ gỗ ngẫu nhiên, vẫn chiếm bằng số quân. Pháo thứ hai trả 100 đá. AI tối thiểu: tự xây nông trại.
+   - 2026-10-17: đề xuất cân bằng v1 **thêm lại thu nhập nền** ở pháo đài (25 lúa, 20 gỗ, 8 đá, 8 vàng/phút), bỏ mỏ vùng nhà, mỏ lúa 25 và mỏ vàng 20/phút, giá quân mới, hàng đợi huấn luyện. Số hiện hành xem [economy.md](economy.md) và [units.md](units.md); các bảng bên dưới là thiết kế cũ.
 2. ✅ **Duy trì lúa & thiếu tiếp tế** (xong 2026-10-16, chi tiết ở [economy.md](economy.md)): trừ lúa theo giây, cảnh báo, ân hạn 30s, hệ số −15% di chuyển / −10% tốc độ đánh, HUD sản xuất/tiêu thụ/ròng.
 3. ✅ **Hệ thống công trình chung** (xong 2026-10-16, [buildings.md](buildings.md)): đặt (dùng lại cách đặt nông trại), thời gian xây, máu, bị phá; chuyển nông trại sang hệ thống này, thêm nâng cấp nông trại.
 4. ✅ **Vùng lãnh thổ & cột cờ/tiền đồn** (xong 2026-10-16, [territory.md](territory.md)): sinh vùng từ `forestRegions`/`rockRegions`/`resources`, mỏ thuộc vùng, cột cờ chiếm vùng, tiền đồn, vẽ ranh giới vùng.

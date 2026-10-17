@@ -124,12 +124,14 @@ let placement=null,suppressNextCanvasClick=false,selectedFortress=null,selectedB
 function endPlacement(){placement=null;document.querySelectorAll('.controls .placing').forEach(el=>el.classList.remove('placing'));canvas.style.cursor='';}
 let mode='ai', gameStarted=false, peer=null, conn=null, netRole=null, roomCode='', snapshotClock=0, localSelectedIds=new Set(), connectionIntent='';
 const specs={
- scout:{name:'Trinh sát',hp:60,damage:5,range:18,speed:72,cooldown:1.1,cost:{food:30},upkeep:.5,r:8,color:'#8ce6a0'},
- infantry:{name:'Lính',hp:100,damage:13,range:22,speed:45,cooldown:.8,cost:{food:40,gold:10},upkeep:1,r:10,color:'#58b5ff'},
- archer:{name:'Cung thủ',hp:65,damage:10,range:125,speed:34,cooldown:1.05,cost:{food:55,wood:30,gold:10},upkeep:1.5,r:9,color:'#78d6ff'},
- spearman:{name:'Lính giáo',hp:145,damage:18,range:26,speed:38,cooldown:.82,cost:{food:45,wood:20},upkeep:1,r:11,color:'#d7d6a4'},
- cavalry:{name:'Lính kỵ binh',hp:210,damage:24,range:27,speed:58,cooldown:.9,cost:{food:80,gold:50},upkeep:3,r:13,color:'#f2d5a0'}
+ scout:{name:'Trinh sát',hp:60,damage:5,range:18,speed:72,cooldown:1.1,cost:{food:30},upkeep:.5,train:4,r:8,color:'#8ce6a0'},
+ infantry:{name:'Lính',hp:100,damage:13,range:22,speed:45,cooldown:.8,cost:{food:45},upkeep:1,train:5,r:10,color:'#58b5ff'},
+ archer:{name:'Cung thủ',hp:65,damage:10,range:125,speed:34,cooldown:1.05,cost:{food:55,wood:25,gold:10},upkeep:1.5,train:8,r:9,color:'#78d6ff'},
+ spearman:{name:'Lính giáo',hp:145,damage:18,range:26,speed:38,cooldown:.82,cost:{food:45,wood:15},upkeep:1,train:6,r:11,color:'#d7d6a4'},
+ cavalry:{name:'Lính kỵ binh',hp:210,damage:24,range:27,speed:58,cooldown:.9,cost:{food:80,gold:40},upkeep:3,train:12,r:13,color:'#f2d5a0'}
 };
+// train = seconds in the fortress training queue (one unit at a time per side, paid when queued, TRAIN_QUEUE_MAX waiting).
+const TRAIN_QUEUE_MAX=5;
 // upkeep = food per minute per living unit. Running out of food starts a grace period, then slows the army.
 const SUPPLY_GRACE_SECONDS=30,SUPPLY_SPEED_FACTOR=.85,SUPPLY_ATTACK_SPEED_FACTOR=.9;
 // Four-resource economy (docs/features/resource-system.md). Income rates are per second.
@@ -146,10 +148,10 @@ const BUILDING_TYPES={
 const FARM_LEVELS=[null,{food:20},{food:30,cost:{wood:80,stone:40}},{food:45,cost:{wood:120,stone:80}}],FARM_UPGRADE_SECONDS=15;
 // No military buildings (removed 2026-10-17): every unit type is recruited at the fortress and deploys in its muster yard.
 const HOME_TERRITORY_TILES=14;
-// Territory map: up to REGION_COUNT neutral regions plus the two home regions that contain the fortresses.
+// Territory map: exactly REGION_COUNT flag regions plus the two home regions that contain the fortresses.
 // Each region has exactly one resource. The REGION_TYPES.length regions closest to each fortress (by walking distance)
 // get one of each type; the rest are random. fresh() re-rolls the fortresses until both sides are about as close to each type.
-const REGION_TYPES=['food','wood','stone','gold'],REGION_COUNT=20,REGION_MIN_BASE_TILES=22,MAP_FAIRNESS_TOLERANCE=.3,MAP_GENERATION_TRIES=15;
+const REGION_TYPES=['food','wood','stone','gold'],REGION_COUNT=20,REGION_SEED_SPACING_TILES=20,REGION_MIN_BASE_TILES=22,MAP_FAIRNESS_TOLERANCE=.3,MAP_GENERATION_TRIES=15;
 // Outposts only build while a friendly unit stands within BUILDER_RADIUS_TILES.
 const BUILDER_RADIUS_TILES=4;
 // Every neutral region has a flag near its centre (never this close to a fortress). Units within FLAG_CAPTURE_RADIUS_TILES capture it:
@@ -161,9 +163,11 @@ const FLAG_DECAY_DELAY_SECONDS=5,FLAG_DECAY_SECONDS=60;
 // AI capture squads: units per flag (doubled for enemy or contested flags), flags at once grows every interval up to the max.
 const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTERVAL=120;
 const FORTRESS_GUN_COST={stone:100};
-// Food regions: the mine gives 15 lúa/phút and farms standing in a food region their owner holds produce FOOD_REGION_FARM_BONUS more.
+// Food regions: the mine gives 25 lúa/phút and farms standing in a food region their owner holds produce FOOD_REGION_FARM_BONUS more.
 const FOOD_REGION_FARM_BONUS=.25;
-const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:15/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:30/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:20/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:15/60,crystal:'#ffca5e'}};
+// Every standing fortress pays this much per minute from the first second, with or without territory (no growth over time).
+const FORTRESS_INCOME_PER_MINUTE={food:25,wood:20,stone:8,gold:8};
+const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:25/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:30/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:20/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:20/60,crystal:'#ffca5e'}};
 const RICH_MINE_MULTIPLIER=1.5;
 // Shared atlas: blue/red idle and walk clips occupy dedicated rows; later actions can add rows without changing simulation data.
 const infantrySpriteSheet=new Image();infantrySpriteSheet.src='/assets/units/infantry/infantry-sheet.png';
@@ -194,7 +198,7 @@ function formatAmount(value){return String(Math.round(value*10)/10).replace('.',
 // Food produced per minute: finished farms plus food mines in owned regions.
 // A finished farm's output per minute, +FOOD_REGION_FARM_BONUS when it stands in a food region its team owns.
 function farmFoodPerMinute(b){if(b.progress<1)return 0;const r=regionAt(b.x,b.y),bonus=r&&r.resource==='food'&&r.owner===b.team;return FARM_LEVELS[b.level].food*(bonus?1+FOOD_REGION_FARM_BONUS:1);}
-function foodPerMinute(team){let total=0;for(const b of state.buildings)if(b.team===team&&b.kind==='farm')total+=farmFoodPerMinute(b);for(const m of state.mines)if(m.resource==='food'&&state.regions[m.regionId]?.owner===team)total+=m.income*60;return total;}
+function foodPerMinute(team){let total=state.bases.some(b=>b.team===team&&b.hp>0)?FORTRESS_INCOME_PER_MINUTE.food:0;for(const b of state.buildings)if(b.team===team&&b.kind==='farm')total+=farmFoodPerMinute(b);for(const m of state.mines)if(m.resource==='food'&&state.regions[m.regionId]?.owner===team)total+=m.income*60;return total;}
 function upkeepPerMinute(team){let total=0;for(const u of state.units)if(u.team===team&&u.hp>0)total+=specs[u.type].upkeep;return total;}
 function supplyFactor(team,kind){return state?.supply?.[team]?.status==='starving'?(kind==='speed'?SUPPLY_SPEED_FACTOR:SUPPLY_ATTACK_SPEED_FACTOR):1;}
 // Called once per second per team. Shortage starts only when stored food cannot pay upkeep, and ends only
@@ -405,14 +409,18 @@ function teamCanSee(team,x,y){
  for(const u of state.units){if(u.team!==team||u.hp<=0)continue;const r=unitVisionRadius(u.type),dx=x-u.x,dy=y-u.y;if(dx*dx+dy*dy<=r*r)return true;}
  const base=state.bases.find(b=>b.team===team);if(base){const dx=x-base.x,dy=y-base.y;if(dx*dx+dy*dy<=175*175)return true;}
  for(const b of state.buildings){if(b.team!==team)continue;const r=buildingVision(b),dx=x-b.x,dy=y-b.y;if(dx*dx+dy*dy<=r*r)return true;}
- return state.bases.some(b=>b.team===team&&(b.guns||[]).some((gun,index)=>{if(!gun.active)return false;const pos=fortressGunPosition(b,index),dx=x-pos.x,dy=y-pos.y;return dx*dx+dy*dy<=105*105;}));
+ if(state.bases.some(b=>b.team===team&&(b.guns||[]).some((gun,index)=>{if(!gun.active)return false;const pos=fortressGunPosition(b,index),dx=x-pos.x,dy=y-pos.y;return dx*dx+dy*dy<=105*105;})))return true;
+ // A captured flag gives live vision over its whole region while the team holds it.
+ const r=regionAt(x,y);return !!r&&!!r.cp&&r.owner===team;
 }
 
-function fortressGunPosition(base,index){const forward=base.team===0?1:-1;return {x:base.x+forward*(index===0?82:-82),y:base.y};}
-function musterYard(base){const forward=base.team===0?1:-1;return {x:base.x+forward*((base.w||TILE_SIZE*5.5)/2+72),y:base.y,w:170,h:144};}
+// Fortresses stand anywhere on the map; the muster yard and the forward gun face the enemy fortress (base.dir = ±1).
+function baseDir(base){return base.dir||(base.team===0?1:-1);}
+function fortressGunPosition(base,index){const forward=baseDir(base);return {x:base.x+forward*(index===0?82:-82),y:base.y};}
+function musterYard(base){const forward=baseDir(base);return {x:base.x+forward*((base.w||TILE_SIZE*5.5)/2+72),y:base.y,w:170,h:144};}
 function activeFortressGuns(base){return (base.guns||[]).filter(g=>g.active).length;}
 // True when at least BASE_SITE_MIN_CLEAR of the tiles under the fortress and its muster yard are walkable ground.
-const BASE_SITE_MIN_CLEAR=.85;
+const BASE_SITE_MIN_CLEAR=.85,BASE_MIN_SEPARATION=.55;
 function baseSiteClear(base){
  const yard=musterYard(base),rects=[[base.x,base.y,base.w,base.h],[yard.x,yard.y,yard.w,yard.h]];let total=0,clear=0;
  for(const [cx,cy,w,h] of rects)for(let y=cy-h/2;y<=cy+h/2;y+=TILE_SIZE)for(let x=cx-w/2;x<=cx+w/2;x+=TILE_SIZE){total++;if(tilePassable(x,y))clear++;}
@@ -423,15 +431,18 @@ function stateBaseTooClose(x,y,blueBase,redBase){
 }
 function fresh(){
  endPlacement();suppressNextCanvasClick=false;selectedFortress=null;selectedBuilding=null;selectedFlag=null;
- // Random fortresses (blue in the left strip, red in the right strip) with their regions, mines and flags (generateRegions, territory.md).
- // Re-roll until both sides have every resource type at a similar walking distance; keep the fairest attempt otherwise.
- const marginY=260;
+ // Random fortresses anywhere on the map, at least BASE_MIN_SEPARATION of the map width apart, with their regions, mines
+ // and flags (generateRegions, territory.md). Re-roll until both sides have every resource type at a similar walking
+ // distance; keep the fairest attempt otherwise.
+ const margin=420;
  let best=null;
- for(let attempt=0,rolls=0;attempt<MAP_GENERATION_TRIES&&rolls<500;rolls++){
-  const blueBase={team:0,x:220+Math.random()*W*0.16,y:marginY+Math.random()*(H-2*marginY),hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]};
-  const redBase={team:1,x:W-220-Math.random()*W*0.16,y:marginY+Math.random()*(H-2*marginY),hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]};
+ for(let attempt=0,rolls=0;attempt<MAP_GENERATION_TRIES&&rolls<2000;rolls++){
+  const makeBase=team=>({team,x:margin+Math.random()*(W-2*margin),y:margin+Math.random()*(H-2*margin),hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]});
+  const blueBase=makeBase(0),redBase=makeBase(1);
+  if(Math.hypot(blueBase.x-redBase.x,blueBase.y-redBase.y)<W*BASE_MIN_SEPARATION&&(best||rolls<1999))continue;
+  blueBase.dir=redBase.x>=blueBase.x?1:-1;redBase.dir=-blueBase.dir;
   // A fortress or muster yard standing mostly on rock or water cannot deploy units; re-roll (cheap, no region map needed).
-  if(![blueBase,redBase].every(baseSiteClear)&&(best||rolls<499))continue;
+  if(![blueBase,redBase].every(baseSiteClear)&&(best||rolls<1999))continue;
   attempt++;
   const gen=generateRegions(blueBase,redBase);
   if(!best||gen.unfairness<best.unfairness)best={...gen,blueBase,redBase};
@@ -439,7 +450,7 @@ function fresh(){
  }
  const {regions,mines,blueBase,redBase}=best;
  buildRegionMap(regions);
- state={resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[]};
+ state={resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[]};
  buildWorldDecor();revealHomeTerritory();
  gameTime=0;aiTimer=5;incomeTimer=0;nextId=1;lastHudSecond=-1;pendingSpawnRetryTimer=0;selected=null;paused=false;ended=false;camX=0;camY=0;zoom=DEFAULT_ZOOM;
  centerCameraOnHome();
@@ -448,12 +459,12 @@ function fresh(){
  updateHUD();
 }
 // Frame the local side's fortress (blue for AI mode and the host, red for the guest).
-function centerCameraOnHome(){const base=state.bases[localTeam()]||state.bases[0],p=worldToScreenPlane(base.x,base.y);camX=p.x-VIEW_W/zoom*(localTeam()===0?.30:.70);camY=p.y-VIEW_H/zoom*.58;clampCamera();}
+function centerCameraOnHome(){const base=state.bases[localTeam()]||state.bases[0],p=worldToScreenPlane(base.x,base.y);camX=p.x-VIEW_W/zoom*(baseDir(base)>0?.30:.70);camY=p.y-VIEW_H/zoom*.58;clampCamera();}
 function addLog(msg){const el=document.createElement('div');el.textContent=msg;$('feed').prepend(el);while($('feed').children.length>12)$('feed').lastChild.remove();}
 function spawn(team,type,x,y,queueIfBlocked=true,pendingOrder='hold'){
  const spec=specs[type],left=team===0;
  const base=state.bases.find(b=>b.team===team)||{team,x:left?75:W-75,y:H/2,w:TILE_SIZE*5.5,h:TILE_SIZE*5};
- const yard=musterYard(base),radius=spec.r||9,forward=left?1:-1,spacing=radius*2+5;
+ const yard=musterYard(base),radius=spec.r||9,forward=baseDir(base),spacing=radius*2+5;
  const terrainBlocked=(ax,ay)=>{if(ax<radius||ay<radius||ax>=W-radius||ay>=H-radius)return true;const gx=Math.floor(ax/TILE_SIZE),gy=Math.floor(ay/TILE_SIZE),terrain=terrainType[gy*MAP_TILES+gx];return terrain===2||terrain===3;};
  const inYard=(ax,ay)=>Math.abs(ax-yard.x)<=yard.w/2-radius&&Math.abs(ay-yard.y)<=yard.h/2-radius;
  const occupied=(ax,ay)=>(!inYard(ax,ay)||terrainBlocked(ax,ay)||state.units.some(u=>Math.hypot(u.x-ax,u.y-ay)<radius+(specs[u.type]?.r||9)+3)||state.buildings.some(b=>Math.abs(b.x-ax)<BUILDING_TYPES[b.kind].halfW+radius&&Math.abs(b.y-ay)<BUILDING_TYPES[b.kind].halfH+radius)||state.bases.some(b=>Math.hypot(b.x-ax,b.y-ay)<radius+Math.max(b.w||74,b.h||92)*.42));
@@ -479,19 +490,35 @@ function processPendingSpawns(){
 }
 // Why `team` cannot recruit `type` right now ('' when it can). The host runs it inside buy(); the guest runs it on its
 // snapshot before sending, so a refused purchase is explained on the guest's screen too (host logs only reach the host).
+function trainQueueOf(team){return (state.trainQueue||[]).filter(q=>q.team===team);}
 function buyProblem(type,team){
  if(!Object.hasOwn(specs,type))return 'Loại quân không hợp lệ.';
  if(ended)return 'Trận đấu đã kết thúc.';
  if(paused)return 'Trận đấu đang tạm dừng.';
  const s=specs[type];
- if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length>=2)return 'Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.';
+ if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length+trainQueueOf(team).filter(q=>q.type==='scout').length>=2)return 'Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.';
+ if(trainQueueOf(team).length>=TRAIN_QUEUE_MAX)return `Hàng đợi huấn luyện đã đầy (${TRAIN_QUEUE_MAX} quân).`;
  if(!canAfford(team,s.cost))return 'Không đủ tài nguyên để tạo '+s.name+': thiếu '+missingText(team,s.cost)+'.';
  return '';
 }
 function buy(type,team=localTeam()){
  const problem=buyProblem(type,team);
  if(problem){if(team===localTeam()&&Object.hasOwn(specs,type))addLog(problem);return;}
- const s=specs[type];spend(team,s.cost);const unit=spawn(team,type);if(team===localTeam()&&unit)addLog('Đã tạo '+s.name+' gần căn cứ.');updateHUD();
+ const s=specs[type];spend(team,s.cost);queueTraining(team,type);
+ if(team===localTeam())addLog(`Đã xếp ${s.name} vào hàng huấn luyện (${s.train} giây).`);updateHUD();
+}
+// Paid units wait in the side's training queue; only the first one per side trains, then deploys in the muster yard.
+function queueTraining(team,type,order='hold'){state.trainQueue??=[];state.trainQueue.push({id:nextId++,team,type,order,left:specs[type].train,total:specs[type].train});}
+function updateTraining(dt){
+ if(!state.trainQueue?.length)return;
+ for(const team of [0,1]){
+  const q=state.trainQueue.find(e=>e.team===team);if(!q)continue;
+  q.left-=dt;if(q.left>1e-6)continue;
+  state.trainQueue.splice(state.trainQueue.indexOf(q),1);
+  const unit=spawn(team,q.type,undefined,undefined,true,q.order);
+  if(unit){unit.order=q.order;if(team===localTeam())addLog(specs[q.type].name+' đã huấn luyện xong.');}
+  updateHUD();
+ }
 }
 // Unit buttons: the guest checks locally first so it sees the reason; the host re-validates every purchase.
 function requestBuy(type){if(mode==='pvp'&&netRole==='guest'){const problem=buyProblem(type,localTeam());if(problem){addLog(problem);return;}}requestAction('buy',{unit:type});}
@@ -506,8 +533,10 @@ function isTeamAreaExplored(team,x,y){
 // regionMap[tile] = region id. Built by a multi-source Dijkstra from each region's seed tile; water and rock cost more
 // to cross, so borders follow rivers and rocky ground. Deterministic from the seeds, so a guest rebuilds the same map.
 // Border colours (neutral is a pale cream) and widths in screen pixels.
-const TERRITORY_COLORS={neutral:'#fff4c8d9',0:'#4aaaffee',1:'#ff626bee'},TERRITORY_BORDER_PX={neutral:3,owned:5};
-let regionMap=null,regionMapKey='',regionEdges=[],regionEdgesByRegion=[],regionTintKey='',showTerritory=true;
+const TERRITORY_COLORS={neutral:'#fff4c8e6',0:'#4aaaff',1:'#ff626b'},TERRITORY_BORDER_PX={neutral:3,owned:4};
+// Soft glow around each border line: TERRITORY_GLOW_PX screen pixels on each side, in a faint version of the line colour.
+const TERRITORY_GLOW={neutral:'#fff4c833',0:'#4aaaff4d',1:'#ff626b4d'},TERRITORY_GLOW_PX=3;
+let regionMap=null,regionMapKey='',regionEdges=[],regionTintKey='',showTerritory=true;
 const regionTintCanvas=document.createElement('canvas');regionTintCanvas.width=MAP_TILES;regionTintCanvas.height=MAP_TILES;
 const regionTintCtx=regionTintCanvas.getContext('2d');
 function regionSeedKey(regions){return regions.map(r=>r.sgx+','+r.sgy).join(';');}
@@ -525,11 +554,11 @@ function buildRegionMap(regions){
  }
  regionMap=owner;regionMapKey=regionSeedKey(regions);regionTintKey='';
  // Border edges in tile units: [x1,y1,x2,y2,regionA,regionB,tileA,tileB].
- regionEdges=[];regionEdgesByRegion=regions.map(()=>[]);
+ regionEdges=[];
  for(let y=0;y<MAP_TILES;y++)for(let x=0;x<MAP_TILES;x++){
   const i=y*MAP_TILES+x,a=owner[i];
-  if(x<MAP_TILES-1&&owner[i+1]!==a){const e=[x+1,y,x+1,y+1,a,owner[i+1],i,i+1];regionEdges.push(e);regionEdgesByRegion[a]?.push(e);regionEdgesByRegion[owner[i+1]]?.push(e);}
-  if(y<MAP_TILES-1&&owner[i+MAP_TILES]!==a){const e=[x,y+1,x+1,y+1,a,owner[i+MAP_TILES],i,i+MAP_TILES];regionEdges.push(e);regionEdgesByRegion[a]?.push(e);regionEdgesByRegion[owner[i+MAP_TILES]]?.push(e);}
+  if(x<MAP_TILES-1&&owner[i+1]!==a){const e=[x+1,y,x+1,y+1,a,owner[i+1],i,i+1];regionEdges.push(e);}
+  if(y<MAP_TILES-1&&owner[i+MAP_TILES]!==a){const e=[x,y+1,x+1,y+1,a,owner[i+MAP_TILES],i,i+MAP_TILES];regionEdges.push(e);}
  }
 }
 // Guests (and any state from a snapshot) rebuild the tile map when the region seeds differ from the cached one.
@@ -562,40 +591,50 @@ function landPatchSizes(){
  return landPatchSize=size;
 }
 function generateRegions(blueBase,redBase){
- const T=TILE_SIZE,regions=[],mines=[],bases=[blueBase,redBase];
+ const T=TILE_SIZE,bases=[blueBase,redBase];let regions=[],mines=[];
  const tileOf=v=>Math.max(1,Math.min(MAP_TILES-2,Math.floor(v/T)));
  const add=(sgx,sgy,home=null)=>regions.push({id:regions.length,resource:home===null?null:'wood',sgx,sgy,home,owner:home===null?-1:home,cp:null,cap:0,capTeam:-1,contested:false,idle:0,stage2:-1});
- // Seeds: the fortresses (home regions, wood) and the centres of the forest/rock/field biomes away from them.
- for(const b of bases)add(tileOf(b.x),tileOf(b.y),b.team);
- const seeds=[...forestRegions,...rockRegions,...goldRegions].map(([cx,cy])=>({sgx:tileOf(cx*W),sgy:tileOf(cy*H)}))
-  .filter(c=>bases.every(b=>Math.hypot(c.sgx*T-b.x,c.sgy*T-b.y)>T*REGION_MIN_BASE_TILES))
-  .sort(()=>Math.random()-.5).slice(0,REGION_COUNT);
- for(const c of seeds)add(c.sgx,c.sgy);
- buildRegionMap(regions);
  const walk=bases.map(walkDistances),patch=landPatchSizes(),reachable=i=>patch[i]>=MIN_LAND_PATCH_TILES;
- const tiles=regions.map(()=>[]);for(let i=0;i<regionMap.length;i++)if(regionMap[i]>=0)tiles[regionMap[i]].push(i);
+ // Seed pool: the centres of the forest/rock/field biomes first (shuffled), then random land tiles, all away from the
+ // fortresses and REGION_SEED_SPACING_TILES apart. Exactly REGION_COUNT seeds are used; seeds whose region gets no flag
+ // or mine spot are swapped for the next ones in the pool and the map is split again.
+ const farFromBases=(x,y)=>bases.every(b=>Math.hypot(x*T-b.x,y*T-b.y)>T*REGION_MIN_BASE_TILES);
+ const pool=[],spaced=(x,y)=>pool.every(c=>Math.hypot(c.sgx-x,c.sgy-y)>=REGION_SEED_SPACING_TILES);
+ for(const [cx,cy] of [...forestRegions,...rockRegions,...goldRegions].sort(()=>Math.random()-.5)){const x=tileOf(cx*W),y=tileOf(cy*H);if(farFromBases(x,y)&&spaced(x,y))pool.push({sgx:x,sgy:y});}
+ for(let tries=0;pool.length<REGION_COUNT*2&&tries<4000;tries++){const x=2+Math.floor(Math.random()*(MAP_TILES-4)),y=2+Math.floor(Math.random()*(MAP_TILES-4)),i=y*MAP_TILES+x;if(reachable(i)&&farFromBases(x,y)&&spaced(x,y))pool.push({sgx:x,sgy:y});}
+ let tiles,spots;
  const at=i=>({x:(i%MAP_TILES+.5)*T,y:((i-i%MAP_TILES)/MAP_TILES+.5)*T});
  // A spot is usable when its 3×3 tiles are passable, inside the same region and on a large land patch (not an islet).
  const clear=(i,id)=>{const x=i%MAP_TILES,y=(i-x)/MAP_TILES;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const j=(y+dy)*MAP_TILES+x+dx;if(regionMap[j]!==id||terrainType[j]===2||terrainType[j]===3)return false;}return reachable(i);};
  const nearestTo=(r,cx,cy,ok)=>{let best=null,bd=Infinity;for(const i of tiles[r.id]){const x=i%MAP_TILES,y=(i-x)/MAP_TILES,d=(x-cx)**2+(y-cy)**2;if(d>=bd||!clear(i,r.id))continue;const p=at(i);if(ok(p)){best=p;bd=d;}}return best;};
  const awayFromBases=p=>bases.every(b=>Math.hypot(p.x-b.x,p.y-b.y)>T*(FLAG_ENEMY_BASE_MIN_TILES+1));
- // Flag: the usable tile nearest the region's centre of mass.
- for(const r of regions){
-  if(r.home!==null)continue;
-  let sx=0,sy=0;for(const i of tiles[r.id]){sx+=i%MAP_TILES;sy+=(i-i%MAP_TILES)/MAP_TILES;}
-  const n=Math.max(1,tiles[r.id].length);r.cp=nearestTo(r,sx/n,sy/n,awayFromBases);
- }
- // One mine spot per region (independent of its type): home mines 9–16 tiles from the fortress, neutral mines at least
- // 6 tiles from the flag so their labels do not overlap. Regions without a spot are dropped before types are handed out.
- const spots=new Map(),farFromMines=p=>![...spots.values()].some(m=>Math.hypot(p.x-m.x,p.y-m.y)<260);
- for(const r of regions){
-  if(r.home===null&&!r.cp)continue;
-  const home=r.home!==null?bases[r.home]:null;
-  const ok=home?p=>farFromMines(p)&&Math.hypot(p.x-home.x,p.y-home.y)>=T*9&&Math.hypot(p.x-home.x,p.y-home.y)<=T*16
-   :p=>farFromMines(p)&&Math.hypot(p.x-r.cp.x,p.y-r.cp.y)>=T*6&&!stateBaseTooClose(p.x,p.y,blueBase,redBase);
-  // Neutral: the usable tile nearest the flag that is 6+ tiles out; home: nearest usable tile to a point 12 tiles toward the centre.
-  const spot=home?nearestTo(r,home.x/T+(r.home===0?12:-12),home.y/T,ok):nearestTo(r,r.cp.x/T,r.cp.y/T,ok);
-  if(spot)spots.set(r.id,spot);
+ for(let pass=0;;pass++){
+  regions=[];for(const b of bases)add(tileOf(b.x),tileOf(b.y),b.team);
+  for(const c of pool.slice(0,REGION_COUNT))add(c.sgx,c.sgy);
+  buildRegionMap(regions);
+  tiles=regions.map(()=>[]);for(let i=0;i<regionMap.length;i++)if(regionMap[i]>=0)tiles[regionMap[i]].push(i);
+  // Flag: the usable tile nearest the region's centre of mass.
+  for(const r of regions){
+   if(r.home!==null)continue;
+   let sx=0,sy=0;for(const i of tiles[r.id]){sx+=i%MAP_TILES;sy+=(i-i%MAP_TILES)/MAP_TILES;}
+   const n=Math.max(1,tiles[r.id].length);r.cp=nearestTo(r,sx/n,sy/n,awayFromBases);
+  }
+  // One mine spot per flag region (independent of its type), at least 6 tiles from the flag so labels do not overlap.
+  // Home regions have no mine: the fortress income (FORTRESS_INCOME_PER_MINUTE) replaces it.
+  spots=new Map();const farFromMines=p=>![...spots.values()].some(m=>Math.hypot(p.x-m.x,p.y-m.y)<260);
+  for(const r of regions){
+   if(r.home!==null||!r.cp)continue;
+   const home=null;
+   const ok=home?p=>farFromMines(p)&&Math.hypot(p.x-home.x,p.y-home.y)>=T*9&&Math.hypot(p.x-home.x,p.y-home.y)<=T*16
+    :p=>farFromMines(p)&&Math.hypot(p.x-r.cp.x,p.y-r.cp.y)>=T*6&&!stateBaseTooClose(p.x,p.y,blueBase,redBase);
+   // Neutral: the usable tile nearest the flag that is 6+ tiles out; home: nearest usable tile to a point 12 tiles toward the enemy.
+   const spot=home?nearestTo(r,home.x/T+baseDir(home)*12,home.y/T,ok):nearestTo(r,r.cp.x/T,r.cp.y/T,ok);
+   if(spot)spots.set(r.id,spot);
+  }
+  const bad=new Set(regions.filter(r=>r.home===null&&(!r.cp||!spots.has(r.id))).map(r=>r.id-bases.length));
+  if(!bad.size)break;
+  if(pass>=5||pool.length-bad.size<REGION_COUNT)return {regions,mines:[],unfairness:Infinity};
+  for(const k of [...bad].sort((a,b)=>b-a))pool.splice(k,1);
  }
  // Resource types: the types missing among each fortress's REGION_TYPES.length nearest regions (walking cost to the flag)
  // go, in random order, to its nearest regions without a type, so both sides have every type close by.
@@ -612,19 +651,14 @@ function generateRegions(blueBase,redBase){
   const rich=r.home===null&&Math.abs(r.sgx/MAP_TILES-.5)<.15&&Math.abs(r.sgy/MAP_TILES-.5)<.15;
   mines.push({...spot,resource:r.resource,rich,regionId:r.id,income:MINE_TYPES[r.resource].perSecond*(rich?RICH_MINE_MULTIPLIER:1),owner:r.owner});
  }
- // Drop regions with no mine or no flag and renumber; the caller rebuilds the tile map from the kept seeds.
- const keep=regions.filter(r=>mines.some(m=>m.regionId===r.id)&&(r.home!==null||r.cp));
- const newId=new Map(keep.map((r,i)=>[r.id,i]));
- const keptMines=mines.filter(m=>newId.has(m.regionId)).map(m=>({...m,regionId:newId.get(m.regionId)}));
- keep.forEach((r,i)=>{r.id=i;});
  // Fairness: for every type, compare each side's walking distance to its nearest flag of that type.
  let diff=0,total=0;
  for(const type of REGION_TYPES){
-  const d=[0,1].map(team=>Math.min(...keep.filter(r=>r.home===null&&r.resource===type).map(r=>flagWalk(r,team))));
-  if(!d.every(Number.isFinite))return {regions:keep,mines:keptMines,unfairness:Infinity};
+  const d=[0,1].map(team=>Math.min(...regions.filter(r=>r.home===null&&r.resource===type).map(r=>flagWalk(r,team))));
+  if(!d.every(Number.isFinite))return {regions,mines,unfairness:Infinity};
   diff+=Math.abs(d[0]-d[1]);total+=Math.max(d[0],d[1]);
  }
- return {regions:keep,mines:keptMines,unfairness:total?diff/total:0};
+ return {regions,mines,unfairness:total?diff/total:0};
 }
 // Translucent owner colours per tile, redrawn only when ownership changes.
 function refreshRegionTint(){
@@ -634,18 +668,31 @@ function refreshRegionTint(){
  regionTintCtx.putImageData(img,0,0);
 }
 // layer 'under' (before units): tint plus the borders away from the fog edge, so borders never cover units.
-// layer 'over' (after drawFog): only border segments that touch the fog's soft edge (fogMask), which the veil would hide.
+// layer 'over' (after drawFog): border segments that touch the fog's soft edge (fogMask) or ground not seen right now
+// (fogVisible), which the veil would hide or dim. Nothing hidden is drawn there, so these never cover visible units.
 function drawTerritory(viewLeft,viewTop,viewRight,viewBottom,layer='under'){
  const T=TILE_SIZE,fog=localTeam()===0?state.fogSeen:state.enemyFogSeen,over=layer==='over';
  if(!regionMap||!showTerritory)return;
  ctx.save();if(!over){refreshRegionTint();ctx.drawImage(regionTintCanvas,0,0,W,H);}
  const x1=viewLeft/T-1,x2=viewRight/T+1,y1=viewTop/T-1,y2=viewBottom/T+1;
  // Widths are in screen pixels (divided by zoom) so borders stay equally thick at every zoom level.
- // A dark under-stroke keeps them readable on light grass and fields; neutral borders first, owned borders on top.
- const stroke=(edges,color,px)=>{ctx.beginPath();for(const e of edges){if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;if((fogMask[e[6]]||fogMask[e[7]])!==(over?1:0))continue;ctx.moveTo(e[0]*T,e[1]*T);ctx.lineTo(e[2]*T,e[3]*T);}
-  ctx.strokeStyle='#0f1a1466';ctx.lineWidth=(px+2.5)/zoom;ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=px/zoom;ctx.stroke();};
- ctx.lineCap='round';ctx.lineJoin='round';stroke(regionEdges,TERRITORY_COLORS.neutral,TERRITORY_BORDER_PX.neutral);
- for(const r of state.regions)if(r.owner>=0)stroke(regionEdgesByRegion[r.id]||[],TERRITORY_COLORS[r.owner],TERRITORY_BORDER_PX.owned);
+ // Every boundary is drawn once: a solid line in the colour of the side that owns either region (neutral if neither,
+ // the local side's colour between a blue and a red region), over a faint glow and a thin dark edge for light ground.
+ const buckets={neutral:[],0:[],1:[]},me=localTeam();
+ for(const e of regionEdges){
+  if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;if((fogMask[e[6]]||fogMask[e[7]]||!fogVisible[e[6]]||!fogVisible[e[7]]?1:0)!==(over?1:0))continue;
+  const a=state.regions[e[4]]?.owner??-1,b=state.regions[e[5]]?.owner??-1;
+  buckets[a<0&&b<0?'neutral':a>=0&&b>=0&&a!==b?me:a>=0?a:b].push(e);
+ }
+ ctx.lineCap='round';ctx.lineJoin='round';
+ for(const key of ['neutral',0,1]){
+  const edges=buckets[key];if(!edges.length)continue;
+  const px=key==='neutral'?TERRITORY_BORDER_PX.neutral:TERRITORY_BORDER_PX.owned;
+  ctx.beginPath();for(const e of edges){ctx.moveTo(e[0]*T,e[1]*T);ctx.lineTo(e[2]*T,e[3]*T);}
+  ctx.strokeStyle=TERRITORY_GLOW[key];ctx.lineWidth=(px+2*TERRITORY_GLOW_PX)/zoom;ctx.stroke();
+  ctx.strokeStyle='#0f1a1459';ctx.lineWidth=(px+1.5)/zoom;ctx.stroke();
+  ctx.strokeStyle=TERRITORY_COLORS[key];ctx.lineWidth=px/zoom;ctx.stroke();
+ }
  ctx.restore();
 }
 function setShowTerritory(on){showTerritory=on;const el=$('toggleTerritory');if(el){el.querySelector('span').textContent=(on?'Đang hiện':'Đang ẩn')+' · phím T';el.classList.toggle('placing',!on);}}
@@ -849,12 +896,12 @@ function updateHUD(){
  updateMatchClockHUD();
  const ours=state.units.filter(u=>u.team===team);
  const infantry=ours.filter(u=>u.type==='infantry').length,archers=ours.filter(u=>u.type==='archer').length,scouts=ours.filter(u=>u.type==='scout').length,spearmen=ours.filter(u=>u.type==='spearman').length,cavalry=ours.filter(u=>u.type==='cavalry').length;
- const queued=state.pendingSpawns.filter(u=>u.team===team);$('unitCount').textContent=ours.length+queued.length;$('unitBreakdown').textContent=`Lính ${infantry} · Cung ${archers} · Lính giáo ${spearmen} · Kỵ binh ${cavalry}${queued.length?` · Chờ ${queued.length}`:''}`;const spearmanCounter=$('spearmanCount');if(spearmanCounter)spearmanCounter.textContent=spearmen;
+ const queued=state.pendingSpawns.filter(u=>u.team===team);updateTrainQueueHUD(team);$('unitCount').textContent=ours.length+queued.length;$('unitBreakdown').textContent=`Lính ${infantry} · Cung ${archers} · Lính giáo ${spearmen} · Kỵ binh ${cavalry}${queued.length?` · Chờ ${queued.length}`:''}`;const spearmanCounter=$('spearmanCount');if(spearmanCounter)spearmanCounter.textContent=spearmen;
  $('unitCount').parentElement.querySelector('small').textContent=team===0?'🪖 Quân xanh':'🪖 Quân đỏ';if(spearmanCounter)spearmanCounter.parentElement.querySelector('small').textContent=team===0?'🗡️ Lính giáo xanh':'🗡️ Lính giáo đỏ';
  const home=state.bases.find(b=>b.team===team);$('turret').disabled=paused||ended||activeFortressGuns(home)>=2;
  for(const id of ['scout','infantry','archer','spearman','cavalry','attack','upgradeFarm','upgradeOutpost',...Object.values(BUILDING_TYPES).map(d=>d.button).filter(Boolean)])$(id).disabled=paused||ended;
  // The farm upgrade button shows the next level's price.
- for(const type of Object.keys(specs))setText($(type).querySelector('span'),costText(specs[type].cost)+' · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút');
+ for(const type of Object.keys(specs))setText($(type).querySelector('span'),costText(specs[type].cost)+' · '+specs[type].train+'s · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút');
  const farmTarget=upgradeTarget(team,'farm',selectedBuilding?.kind==='farm'&&selectedBuilding.team===team?selectedBuilding.id:null)||upgradeTarget(team,'farm',null);
  setText($('upgradeFarm').querySelector('span'),farmTarget?`lên cấp ${farmTarget.level+1}: ${costText(upgradeCost(farmTarget))} · ${FARM_LEVELS[farmTarget.level+1].food} lúa/phút`:'cấp 2: 80 gỗ · 40 đá · cấp 3: 120 gỗ · 80 đá');
  const owned=state.regions.filter(r=>r.owner===team),income={};
@@ -863,6 +910,14 @@ function updateHUD(){
  setText($('territoryIncome'),Object.keys(income).length?Object.entries(income).map(([k,v])=>`+${Math.round(v)} ${RESOURCE_NAMES[k]}`).join(' · ')+'/phút':'Chưa có mỏ');
  $('pause').disabled=ended;
  $('pause').innerHTML=paused?'▶ Tiếp tục<span>Tiếp tục trận đấu</span>':'Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';
+}
+// Training line under the unit buttons: the unit in training with a progress fill, then the units waiting.
+function updateTrainQueueHUD(team){
+ const el=$('trainQueue');if(!el)return;const list=trainQueueOf(team);
+ if(!list.length){setText(el,'');el.style.backgroundImage='';return;}
+ const head=list[0],pct=Math.round((1-head.left/head.total)*100),rest=list.slice(1).map(q=>specs[q.type].name);
+ setText(el,`⏳ Đang huấn luyện: ${specs[head.type].name} ${Math.max(0,Math.ceil(head.left))}s${rest.length?` · chờ (${rest.length}/${TRAIN_QUEUE_MAX-1}): ${rest.join(', ')}`:''}`);
+ el.style.backgroundImage=`linear-gradient(90deg,#4f9a5a ${pct}%,transparent ${pct}%)`;
 }
 function setText(el,text){if(el&&el.textContent!==text)el.textContent=text;}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
@@ -904,7 +959,7 @@ function runEnemyAI(){
  const underway=kind=>own.some(b=>b.kind===kind&&!buildingDone(b));
  const build=(kind,ax,ay,minR,maxR)=>{if(!canAfford(team,BUILDING_TYPES[kind].cost))return false;const spot=findBuildSpot(team,kind,ax,ay,minR,maxR);return !!(spot&&placeBuilding(team,kind,spot.x,spot.y));};
  const regionHas=(r,k)=>r.resource===k;
- // 1. The home wood region is owned from the start (territory.md), so the AI begins with food.
+ // 1. The fortress income (FORTRESS_INCOME_PER_MINUTE) gives the AI food and some of every resource from the start.
  // 2. Food: two farms to start, then only as many as the army needs (+10 lúa/phút of slack).
  const farmsUnderway=own.filter(b=>b.kind==='farm'&&!buildingDone(b)).length;
  const net=foodPerMinute(team)+farmsUnderway*FARM_LEVELS[1].food-upkeepPerMinute(team);
@@ -940,10 +995,11 @@ function runEnemyAI(){
   build('tower',a.x,a.y,a===base?T*5:50,a===base?T*12:180);
  }
  // 5. Units, recruited at the fortress, never past what the farms can feed.
- const aiScouts=state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length;
- // Queued units are already paid for and will eat once they deploy, so their upkeep counts against the food margin.
- const queuedUpkeep=state.pendingSpawns.filter(p=>p.team===team).reduce((t,p)=>t+specs[p.type].upkeep,0);
- const aiBuy=type=>{if(!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-queuedUpkeep-specs[type].upkeep<0)return false;spend(team,specs[type].cost);const unit=spawn(team,type,undefined,undefined,true,type==='scout'?'explore':'hold');if(unit&&type==='scout')unit.order='explore';return true;};
+ const training=trainQueueOf(team),aiScouts=state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length+training.filter(q=>q.type==='scout').length;
+ // Queued and training units are already paid for and will eat once they deploy, so their upkeep counts against the food margin.
+ // The AI keeps at most 2 units in training so it does not hoard paid units in the queue.
+ const queuedUpkeep=[...state.pendingSpawns.filter(p=>p.team===team),...training].reduce((t,p)=>t+specs[p.type].upkeep,0);
+ const aiBuy=type=>{if(training.length>=2||!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-queuedUpkeep-specs[type].upkeep<0)return false;spend(team,specs[type].cost);queueTraining(team,type,type==='scout'?'explore':'hold');return true;};
  if(aiScouts<2&&aiBuy('scout')){}
  else if(Math.random()<.14&&aiBuy('cavalry')){}
  else if(Math.random()<.42&&aiBuy('spearman')){}
@@ -954,11 +1010,12 @@ function runEnemyAI(){
 }
 function update(dt){
  if(!gameStarted|| (mode==='pvp'&&netRole==='guest') || paused||ended)return;const before=gameTime;gameTime+=dt;incomeTimer+=dt;aiTimer+=dt;
- const shownSecond=Math.floor(gameTime);if(shownSecond!==lastHudSecond){lastHudSecond=shownSecond;updateMatchClockHUD();}
+ const shownSecond=Math.floor(gameTime);if(shownSecond!==lastHudSecond){lastHudSecond=shownSecond;updateMatchClockHUD();updateTrainQueueHUD(localTeam());}
+ updateTraining(dt);
  pendingSpawnRetryTimer+=dt;if(pendingSpawnRetryTimer>=.35){pendingSpawnRetryTimer=0;processPendingSpawns();}
- // income, with a bonus for controlling the mine
- // No base income: food comes from farms, wood/stone/gold from captured mines.
+ // Income once a second: fortress base income, farms, and the mines of held regions.
  while(incomeTimer>=1){incomeTimer-=1;
+  for(const b of state.bases)if(b.hp>0){const res=teamResources(b.team);for(const [k,v] of Object.entries(FORTRESS_INCOME_PER_MINUTE))res[k]+=v/60;}
   for(const b of state.buildings)if(b.kind==='farm'&&buildingDone(b))teamResources(b.team).food+=farmFoodPerMinute(b)/60;
   // Mines pay whoever owns their region (a finished flag or outpost).
   for(const mine of state.mines){const r=state.regions[mine.regionId];mine.owner=r?r.owner:-1;if(mine.owner>=0)teamResources(mine.owner)[mine.resource]+=mine.income;}
@@ -1413,7 +1470,7 @@ function drawBuilding(b,preview=false){
  });
 }
 // Region flags are about as tall as a fortress; below FLAG_MIN_SCREEN_ZOOM they grow so they stay recognisable when zoomed out.
-const FLAG_COLORS={neutral:{main:'#ebe1c3',trim:'#8d8166'},0:{main:'#3f9bf0',trim:'#d4ecff'},1:{main:'#e0484f',trim:'#ffd9d4'}},FLAG_MIN_SCREEN_ZOOM=.3,FLAG_LABEL_MIN_PX=11;
+const FLAG_COLORS={neutral:{main:'#ebe1c3',trim:'#8d8166'},0:{main:'#3f9bf0',trim:'#d4ecff'},1:{main:'#e0484f',trim:'#ffd9d4'}},FLAG_MIN_SCREEN_ZOOM=.3,FLAG_LABEL_MIN_PX=11,FLAG_RING_PX=2.5;
 const RESOURCE_ICONS={food:'🌾',wood:'🪵',stone:'🪨',gold:'🪙'};
 function flagScale(){return Math.max(1,FLAG_MIN_SCREEN_ZOOM/zoom);}
 function flagHit(r,x,y){const s=flagScale();return Math.abs(x-r.cp.x)<=60*s&&y>=r.cp.y-190*s&&y<=r.cp.y+30*s;}
@@ -1421,7 +1478,11 @@ function drawFlag(r){
  const {x,y}=r.cp,s=flagScale(),c=FLAG_COLORS[r.owner]||FLAG_COLORS.neutral,selectedHere=selectedFlag===r.id;
  drawUprightAt(x,y,()=>{
   ctx.save();
-  // Capture range: shown while the flag is selected or being captured.
+  // Glowing control ring at the capture radius in the holder's colour (always drawn), pulsing gently.
+  {const R=FLAG_CAPTURE_RADIUS_TILES*TILE_SIZE,glow=TERRITORY_GLOW[r.owner>=0?r.owner:'neutral'],line=TERRITORY_COLORS[r.owner>=0?r.owner:'neutral'],pulse=.75+.25*Math.sin(performance.now()/450+r.id);
+   ctx.beginPath();ctx.arc(x,y,R,0,Math.PI*2);ctx.globalAlpha=pulse;ctx.strokeStyle=glow;ctx.lineWidth=(FLAG_RING_PX+2*TERRITORY_GLOW_PX+2)/zoom;ctx.stroke();
+   ctx.globalAlpha=1;ctx.strokeStyle=line;ctx.lineWidth=FLAG_RING_PX/zoom;ctx.globalAlpha=.55+.3*pulse;ctx.stroke();ctx.globalAlpha=1;}
+  // Capture range highlight: shown while the flag is selected or being captured.
   if(selectedHere||r.cap>0||r.contested){
    const ring=r.contested?'#ffb347':r.capTeam>=0?TERRITORY_COLORS[r.capTeam]:'#fff4c8';
    ctx.beginPath();ctx.arc(x,y,FLAG_CAPTURE_RADIUS_TILES*TILE_SIZE,0,Math.PI*2);ctx.fillStyle=selectedHere?'#fff4c814':'#fff4c80a';ctx.fill();
@@ -1459,33 +1520,46 @@ function drawFlag(r){
 /// Unexplored fog is a fully opaque blue-grey veil (nothing of the terrain shows through, and it reads differently from
 // black void, brown rock and teal water). The soft edge lies entirely on the explored side: explored tiles within
 // FOG_EDGE_TILES of unexplored ground are fogged before the blur, so every unexplored tile stays (almost) fully covered.
+// Explored ground the side does not see right now (teamCanSee) keeps its terrain under a thin veil (FOG_MEMORY_ALPHA).
 // The tile mask sits inside an opaque FOG_PAD-tile border so the blur does not thin the veil along the map edge.
-// Rebuilt only when the explored area changes (at most 5 times a second).
-const FOG_RGB=[30,40,60],FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,FOG_PAD=4;
+// Rebuilt at most 5 times a second, or at once when the fog array changes.
+const FOG_RGB=[30,40,60],FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,FOG_PAD=4,FOG_MEMORY_ALPHA=115;
 const fogCanvas=document.createElement('canvas');fogCanvas.width=fogCanvas.height=MAP_TILES+FOG_PAD*2;
-const fogCtx=fogCanvas.getContext('2d'),fogImage=fogCtx.createImageData(MAP_TILES,MAP_TILES),fogMask=new Uint8Array(MAP_TILES*MAP_TILES);
+const fogCtx=fogCanvas.getContext('2d'),fogImage=fogCtx.createImageData(MAP_TILES,MAP_TILES),fogMask=new Uint8Array(MAP_TILES*MAP_TILES),fogVisible=new Uint8Array(MAP_TILES*MAP_TILES);
 const fogSoftCanvas=document.createElement('canvas');fogSoftCanvas.width=fogSoftCanvas.height=fogCanvas.width*FOG_BLUR_SCALE;const fogSoftCtx=fogSoftCanvas.getContext('2d');
 for(let i=0;i<MAP_TILES*MAP_TILES;i++){fogImage.data[i*4]=FOG_RGB[0];fogImage.data[i*4+1]=FOG_RGB[1];fogImage.data[i*4+2]=FOG_RGB[2];}
-let fogKey=-1,fogArray=null,fogBuiltAt=0;
-function drawFog(fog){
- let seen=0;for(let i=0;i<fog.length;i++)seen+=fog[i];
+let fogArray=null,fogBuiltAt=0;
+// Tiles the team sees right now: the same sources as teamCanSee (units, fortress, buildings, fortress guns, held flag regions).
+function teamVisibleTiles(team,out){
+ out.fill(0);if(!state)return out;
+ const sources=[...state.units.filter(u=>u.team===team&&u.hp>0).map(u=>[u.x,u.y,unitVisionRadius(u.type)]),...state.bases.filter(b=>b.team===team).map(b=>[b.x,b.y,175]),...state.buildings.filter(b=>b.team===team).map(b=>[b.x,b.y,buildingVision(b)])];
+ for(const b of state.bases)if(b.team===team)(b.guns||[]).forEach((g,i)=>{if(g.active){const p=fortressGunPosition(b,i);sources.push([p.x,p.y,105]);}});
+ for(const [x,y,r] of sources)revealCircle(out,x,y,r);
+ if(regionMap){const held=new Set(state.regions.filter(r=>r.cp&&r.owner===team).map(r=>r.id));if(held.size)for(let i=0;i<regionMap.length;i++)if(held.has(regionMap[i]))out[i]=1;}
+ return out;
+}
+// Rebuilds the veil; draw() calls it before drawTerritory() so both border passes and drawFog() use the same masks.
+function refreshFog(fog){
  const now=performance.now(),N=MAP_TILES,E=FOG_EDGE_TILES;
- if((seen!==fogKey||fog!==fogArray)&&(now-fogBuiltAt>200||fog!==fogArray)){
-  fogKey=seen;fogArray=fog;fogBuiltAt=now;
-  // fogMask = 1 where the tile is unexplored or within E tiles of an unexplored tile.
+ if(now-fogBuiltAt>200||fog!==fogArray){
+  fogArray=fog;fogBuiltAt=now;
+  teamVisibleTiles(localTeam(),fogVisible);
+  // fogMask = 1 where the tile is unexplored or within E tiles of an unexplored tile (or of the map edge).
   fogMask.fill(0);
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
    if(fog[y*N+x])continue;
    for(let dy=-E;dy<=E;dy++){const yy=y+dy;if(yy<0||yy>=N)continue;for(let dx=-E;dx<=E;dx++){const xx=x+dx;if(xx>=0&&xx<N)fogMask[yy*N+xx]=1;}}
   }
-  for(let i=0;i<fogMask.length;i++)fogImage.data[i*4+3]=fogMask[i]?255:0;
+  for(let i=0;i<fogMask.length;i++)fogImage.data[i*4+3]=fogMask[i]?255:fogVisible[i]?0:FOG_MEMORY_ALPHA;
   fogCtx.fillStyle=`rgb(${FOG_RGB.join(',')})`;fogCtx.fillRect(0,0,fogCanvas.width,fogCanvas.height);
   fogCtx.putImageData(fogImage,FOG_PAD,FOG_PAD);
   const size=fogSoftCanvas.width;
   fogSoftCtx.clearRect(0,0,size,size);fogSoftCtx.imageSmoothingEnabled=true;fogSoftCtx.filter=`blur(${FOG_BLUR_SCALE}px)`;
   fogSoftCtx.drawImage(fogCanvas,0,0,size,size);fogSoftCtx.filter='none';
  }
- const s=FOG_BLUR_SCALE;
+}
+function drawFog(){
+ const s=FOG_BLUR_SCALE,N=MAP_TILES;
  ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(fogSoftCanvas,FOG_PAD*s,FOG_PAD*s,N*s,N*s,0,0,W,H);ctx.restore();
 }
 function drawTerrainDetail(){
@@ -1549,6 +1623,7 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  ctx.strokeStyle='#9a7d59aa';ctx.lineWidth=26;ctx.stroke();ctx.strokeStyle='#f0d9a3cc';ctx.lineWidth=18;ctx.stroke();ctx.restore(); // Once a mine is discovered, keep its location visible on explored terrain.
  // Unexplored mines remain hidden by fog; current vision is not required after discovery.
  // Territory layer: owner tint and borders (only where explored); toggled with T. Flags are drawn with the scene (drawFlag).
+ refreshFog(localTeam()===0?state.fogSeen:state.enemyFogSeen);
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  for(const m of state.mines){
   if(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y))continue;
@@ -1587,7 +1662,7 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const b of state.bullets){drawUprightAt(b.x,b.y,()=>{ctx.strokeStyle=b.team===0?'#a8e2ff':'#ffadb0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-5,b.y+3);ctx.stroke();});}
  for(const e of state.effects){drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
- drawFog(localTeam()===0?state.fogSeen:state.enemyFogSeen);
+ drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');
  // Keep placement feedback readable even when the cursor crosses unexplored fog.
  if(placement)drawBuilding({kind:placement.kind,x:placement.x,y:placement.y,team:localTeam(),previewValid:placement.valid},true);

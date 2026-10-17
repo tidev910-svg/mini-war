@@ -433,3 +433,7 @@ canvas{touch-action:none}
 .stat small.supply-warn{color:#f0b35a}
 .stat small.supply-bad{color:#ff6b6b;font-weight:700}
 /* Unit buttons whose required building is not finished yet (resource-system.md, phase 5). */
+
+/* Training queue line under the unit buttons (updateTrainQueueHUD); hidden while empty. */
+.trainQueue{grid-column:1/-1;font:800 11px system-ui,sans-serif;color:#eef6ff;background-color:#13243a;border:1px solid #3f6a8f;border-radius:8px;padding:5px 8px;text-shadow:0 1px 1px #0008}
+.trainQueue:empty{display:none}

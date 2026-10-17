@@ -14,8 +14,9 @@
 9. `src/main.ts` có `// @ts-nocheck`: `tsc` **không** bắt lỗi kiểu trong file này, nên build qua chưa có nghĩa là logic đúng.
 
 ## Quy ước dữ liệu
-- **Team 0 = phe xanh**: người chơi ở chế độ AI, chủ phòng (host) ở PvP. Căn cứ bên trái bản đồ.
-- **Team 1 = phe đỏ**: máy ở chế độ AI, khách (guest) ở PvP. Căn cứ bên phải.
+- **Team 0 = phe xanh**: người chơi ở chế độ AI, chủ phòng (host) ở PvP.
+- **Team 1 = phe đỏ**: máy ở chế độ AI, khách (guest) ở PvP.
+- Vị trí hai căn cứ ngẫu nhiên mỗi trận (không cố định trái/phải); hướng "phía trước" của căn cứ là `baseDir(base)`, đừng suy từ số team.
 - `localTeam()` trả về team của trình duyệt hiện tại; dùng nó cho mọi thứ "của mình" trên UI.
 - Tài nguyên: `state.resources[team] = {food, wood, stone, gold}`. Giá viết dạng object chỉ gồm khoá cần (ví dụ `{food:45, wood:20}`). Kiểm tra/trừ qua `canAfford()`, `spend()`; hiển thị bằng `costText()`, `missingText()`. Không viết số giá cứng trong log hay HTML.
 - Toạ độ thế giới: hình vuông cố định `W = H = WORLD_SIZE = 9600`, chia lưới `MAP_TILES = 256` ô; `TILE_SIZE = 37,5`. Không suy `W` từ kích thước canvas — mọi trình duyệt phải có cùng toạ độ.
@@ -29,7 +30,8 @@
 |---|---|
 | Pháo đài (fortress / base) | Căn cứ chính của mỗi phe, có pháo tích hợp. Mất pháo đài = thua. |
 | Sân tập kết (muster yard) | Khu đất cạnh pháo đài nơi quân mới xuất hiện. |
-| Hàng chờ xuất quân | `state.pendingSpawns`: quân đã trả tiền nhưng sân tập kết đang kín. |
+| Hàng đợi huấn luyện | `state.trainQueue`: quân đã trả tiền, đang huấn luyện lần lượt tại pháo đài. |
+| Hàng chờ xuất quân | `state.pendingSpawns`: quân đã huấn luyện xong nhưng sân tập kết đang kín. |
 | Snapshot | Gói toàn bộ trạng thái trận host gửi cho guest. |
 | Vùng (region) | Phần bản đồ có ranh giới tự nhiên, đúng một loại tài nguyên và một mỏ, một cột cờ có sẵn; chiếm bằng cách đứng quân trong vòng cờ. Vùng chứa pháo đài là vùng nhà (không có cờ). |
 | Lãnh thổ | 14 ô quanh pháo đài + các vùng mình sở hữu; nơi được xây tháp. |

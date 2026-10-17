@@ -18,7 +18,7 @@
    - **Quân được gán** (`u.captureTarget`) đứng rải trong nửa bán kính vòng cờ (`flagStandSpot()`), tới khi vùng thuộc AI và không còn tiến độ dở của địch (gặp địch thì vẫn đánh).
    - **Thợ xây:** mỗi tiền đồn đang xây chưa có thợ thì được gán quân rảnh gần nhất (`u.buildTarget`).
 5. **Nâng cấp & phòng thủ:** sau 45 giây và ≥ 120 đá → nâng nông trại; ≥ 180 đá, ≥ 260 gỗ và còn vùng chưa có tiền đồn → `startOutpost()`; dưới 2 tháp và đủ giá → 35% cơ hội xây tháp cạnh pháo đài hoặc cạnh cờ của một vùng mình giữ.
-6. **Tuyển quân** (`aiBuy(type)`): cần đủ giá và lúa ròng sau khi thêm quân vẫn ≥ 0 — tính cả lúa nuôi của quân **đang trong hàng chờ xuất quân** (`queuedUpkeep`), vì chúng đã trả tiền và sẽ ăn khi ra sân. Thứ tự thử: trinh sát (khi < 2), kỵ binh 14%, lính giáo 42%, cung thủ 60%, lính bộ, cuối cùng lính giáo.
+6. **Tuyển quân** (`aiBuy(type)`): dùng cùng hàng đợi huấn luyện với người chơi (`queueTraining()`, cùng thời gian). Chỉ mua khi đang có < 2 quân trong hàng huấn luyện, đủ giá, và lúa ròng sau khi thêm quân vẫn ≥ 0 — tính cả lúa nuôi của quân **đang huấn luyện và trong hàng chờ xuất quân** (`queuedUpkeep`), vì chúng đã trả tiền và sẽ ăn khi ra sân. Thứ tự thử: trinh sát (khi < 2), kỵ binh 14%, lính giáo 42%, cung thủ 60%, lính bộ, cuối cùng lính giáo.
 7. Chưa đủ 2 pháo và đủ 100 đá → 25% cơ hội mở pháo thứ hai.
 
 AI không qua `buy()`/`applyAction()` nên không có log.
@@ -38,7 +38,7 @@ AI không qua `buy()`/`applyAction()` nên không có log.
 
 ## Code liên quan
 - [src/main.ts](../../src/main.ts): `runEnemyAI()` (gọi trong `update()` khi `mode==='ai'&&aiTimer>=5`), các hàm cục bộ `build()`, `regionHas()`, `squad()`, `aiBuy()`; `flagStandSpot()`; hằng số `AI_CAPTURE_SQUAD`, `AI_MAX_CAPTURE_TARGETS`, `AI_CAPTURE_TARGET_INTERVAL`; nhánh `mode==='ai'&&u.team===1&&!target` trong vòng quân; khối "AI has its own independent vision map".
-- Dùng lại: `findBuildSpot()`, `placeBuilding()`, `startUpgrade()`, `startOutpost()`, `outpostRegions()`, `hasBuilding()`, `foodPerMinute()`, `upkeepPerMinute()`, `spawn()`, `buildTurret()`, `aiCanSee()`, `nearestEnemy()`.
+- Dùng lại: `findBuildSpot()`, `placeBuilding()`, `startUpgrade()`, `startOutpost()`, `outpostRegions()`, `hasBuilding()`, `foodPerMinute()`, `upkeepPerMinute()`, `queueTraining()`, `trainQueueOf()`, `buildTurret()`, `aiCanSee()`, `nearestEnemy()`.
 - Dữ liệu: `state.enemyMemory`, `state.enemyFogSeen`, `state.aiExploreTarget` (khai báo nhưng chưa dùng).
 
 ## Tương tác
@@ -52,6 +52,7 @@ Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 - [ ] AI không xây nhà lính; vẫn tuyển đủ các loại quân.
 - Đã chạy thử 2026-10-17 (sau khi mở tuyển tại pháo đài): 8 phút AI một mình → 9 vùng, 2 trinh sát, 9 lính bộ, 1 cung thủ, lúa ròng +66/phút.
 - Đã chạy thử 2026-10-17 (yêu cầu 17/10): AI một mình ~6 phút: 6 vùng, 2 nông trại, 2 trinh sát + 8 lính giáo, không thiếu tiếp tế, không lỗi.
+- Đã chạy thử 2026-10-17 (sau thu nhập pháo đài + hàng đợi huấn luyện): 3 bản đồ ngẫu nhiên × 10 phút, AI giữ 9–12 vùng, 19–20 quân, 2 nông trại, hàng đợi 0–1, không lỗi.
 - [ ] AI không rơi vào thiếu tiếp tế, kể cả khi sân tập kết kín và quân dồn vào hàng chờ.
 - Đã chạy thử 2026-10-17: 3 nông trại (biên lúa 60/phút), hàng chờ 60 lính giáo → 5 lượt AI không mua thêm; xoá hàng chờ → mua lại 5 quân.
 - [ ] AI không nhắm quân xanh đang trong sương mù của nó.

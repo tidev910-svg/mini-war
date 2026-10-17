@@ -23,7 +23,7 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions` và m�
 3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô dày theo pixel màn hình; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
 4. Danh sách `sceneActors` sắp theo Y: cây, đá, pháo đài (+ sân tập kết), cột cờ (`drawFlag()`, chỗ đã khám phá), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân.
 5. Thanh máu quân, vòng chọn, đạn, hiệu ứng.
-6. Sương mù `drawFog()` (một ảnh phủ toàn bản đồ, đục hoàn toàn ở vùng chưa khám phá, mép mềm), bản xem trước công trình đang đặt.
+6. Sương mù `drawFog()` (một ảnh phủ toàn bản đồ do `refreshFog()` dựng: đục hoàn toàn ở vùng chưa khám phá, mờ ở chỗ đã khám phá nhưng không đang nhìn thấy, mép mềm), rồi lượt viền `drawTerritory(…, 'over')`, bản xem trước công trình đang đặt.
 7. Lớp màn hình: khung chọn, thanh trạng thái đặt công trình, nhãn "CHIẾN TRƯỜNG 01".
 
 **Sprite** (`public/assets/units/<quân>/`, đường dẫn `/assets/units/<quân>/...`; quy ước thư mục và tên: [assets.md](../assets.md)):

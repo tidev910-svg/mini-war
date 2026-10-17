@@ -11,8 +11,7 @@ Nhịp độ dự kiến (định hướng, không phải luật): 0–5 phút p
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
 | Bước mô phỏng tối đa | 0.05 giây | `loop()` |
-| Vị trí pháo đài xanh | x ∈ [220, 220+0.16·W], y ngẫu nhiên, cách mép ≥ 260 | `fresh()` |
-| Vị trí pháo đài đỏ | đối xứng bên phải | `fresh()` |
+| Vị trí pháo đài | Cả hai ngẫu nhiên ở bất kỳ đâu, cách mép bản đồ ≥ 420, cách nhau ≥ 55% bề ngang bản đồ (`BASE_MIN_SEPARATION`). `base.dir` = ±1 hướng về pháo đài địch theo trục ngang (sân tập kết, pháo phía trước, khung camera ban đầu) | `fresh()`, `baseDir()` |
 | Chọn lại vị trí | Bỏ vị trí mà pháo đài/sân tập kết < 85% ô đi được; chọn lại tới khi bản đồ đủ công bằng (≤ 15 bản đồ) | `fresh()`, `baseSiteClear()`, [territory.md](territory.md) |
 | Nhãn giai đoạn | < 5 phút "phát triển kinh tế", < 10 phút "mở rộng", sau đó "giao tranh" | `updateMatchClockHUD()` → `#phaseHint` |
 | Tài nguyên ban đầu | 150 lúa, 400 gỗ, 50 đá, 50 vàng mỗi phe | `STARTING_RESOURCES` |

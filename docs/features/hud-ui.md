@@ -11,9 +11,10 @@ Giao diện quanh canvas: thanh trên (tiêu đề, chế độ, chỉ số), b�
 |---|---|
 | `#food`, `#wood`, `#stone`, `#gold` | 4 tài nguyên của `localTeam()` (lúa, gỗ, đá, vàng), làm tròn xuống; id trùng khoá trong `RESOURCE_NAMES` |
 | `#foodRate` | Dưới ô lúa: "+sản xuất −tiêu thụ = ròng/phút"; class `supply-warn` (cam) khi ròng âm. Khi thiếu tiếp tế: "Thiếu lúa · chậm sau Ns" hoặc "Thiếu tiếp tế · quân chậm", class `supply-bad` (đỏ). Màu định nghĩa cuối [src/style.css](../../src/style.css) |
-| `#territory`, `#territoryIncome` | Ô "🚩 Lãnh thổ": số vùng đang giữ (từ 1 vì vùng gần nhà sở hữu sẵn); dòng dưới là tổng thu từ mỏ theo chủ vùng ("+30 gỗ · +30 lúa/phút" hoặc "Chưa có mỏ"). Lúa từ mỏ lúa cũng được cộng vào `#foodRate` |
+| `#territory`, `#territoryIncome` | Ô "🚩 Lãnh thổ": số vùng đang giữ (từ 1 vì vùng nhà sở hữu sẵn); dòng dưới là tổng thu từ mỏ theo chủ vùng ("+30 gỗ · +25 lúa/phút" hoặc "Chưa có mỏ"; không gồm thu nhập pháo đài). Lúa từ pháo đài (25/phút) và mỏ lúa được cộng vào `#foodRate` |
 | `#time`, `#phaseHint` | Đồng hồ trận `mm:ss`; dòng dưới là giai đoạn định hướng: "Giai đoạn phát triển kinh tế" (< 5 phút), "mở rộng" (< 10 phút), "giao tranh" (`updateMatchClockHUD()`) |
 | `#unitCount`, `#unitBreakdown` | Tổng quân + hàng chờ; chi tiết "Lính · Cung · Lính giáo · Kỵ binh · Chờ" |
+| `#trainQueue` | Dòng dưới các nút quân (`updateTrainQueueHUD()`, gọi trong `updateHUD()` và mỗi giây): "⏳ Đang huấn luyện: <quân> Ns · chờ (n/4): …", nền xanh lá tô dần theo tiến độ; ẩn khi hàng trống (`:empty`) |
 | `#spearmanCount` | Số lính giáo |
 | `#modeStatus` | Dòng chế độ (`setGameModeLabel()`) |
 
