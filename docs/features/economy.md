@@ -1,9 +1,9 @@
 # Kinh tế & tài nguyên
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
-Bốn tài nguyên: **lúa, gỗ, đá, vàng**. **Không có thu nhập nền**: lúa chỉ đến từ nông trại, gỗ/đá/vàng chỉ đến từ mỏ trong các **vùng đã cắm cờ** (xem [territory.md](territory.md)). Mỗi phe sở hữu sẵn vùng nhà (vùng chứa pháo đài, có một mỏ gỗ) nên có +30 gỗ/phút ngay từ đầu trận.
+Bốn tài nguyên: **lúa, gỗ, đá, vàng**. **Không có thu nhập nền**: lúa đến từ nông trại và mỏ lúa, gỗ/đá/vàng đến từ mỏ; mỏ chỉ sinh cho phe giữ **vùng đã chiếm cờ** (xem [territory.md](territory.md)). Mỗi phe sở hữu sẵn vùng nhà (vùng chứa pháo đài, có một mỏ gỗ) nên có +30 gỗ/phút ngay từ đầu trận.
 
 Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **thiếu tiếp tế**. Thiết kế đầy đủ: [resource-system.md](resource-system.md).
 
@@ -18,16 +18,17 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 **Loại mỏ** (`MINE_TYPES`):
 | `resource` | Sản lượng | Nhãn trên bản đồ |
 |---|---:|---|
+| `food` | 30 lúa/phút (thông số thử, bằng mỏ gỗ) | MỎ LÚA +30/PHÚT |
 | `wood` | 30 gỗ/phút | MỎ GỖ +30/PHÚT |
 | `stone` | 20 đá/phút | MỎ ĐÁ +20/PHÚT |
 | `gold` | 15 vàng/phút | MỎ VÀNG +15/PHÚT |
 | mỏ giàu (`rich`) | × 1,5 (`RICH_MINE_MULTIPLIER`), có vòng vàng quanh mỏ | thêm chữ "GIÀU" |
 
-**Mỏ**: mỗi vùng lãnh thổ có 1–2 mỏ (mỏ chính cùng loại vùng; 40% vùng có thêm mỏ phụ khác loại); vùng gần giữa bản đồ có mỏ chính giàu. Khi chạy thử: 32 mỏ trên 21 vùng. Cách sinh vùng và mỏ: [territory.md](territory.md).
+**Mỏ**: mỗi vùng lãnh thổ có **đúng 1 mỏ**, cùng loại tài nguyên với vùng (lúa, gỗ, đá hoặc vàng); vùng gần giữa bản đồ có mỏ giàu. Gần mỗi nhà luôn có đủ 4 loại vùng. Cách sinh vùng và mỏ: [territory.md](territory.md).
 
 **Lúa duy trì & thiếu tiếp tế** (`updateSupply(team)`, mỗi giây sau khi cộng thu nhập):
 - Mỗi quân còn sống tiêu `specs[type].upkeep` lúa/phút (trinh sát 0,5; lính, lính giáo 1; cung thủ 1,5; kỵ binh 3), kể cả khi đứng yên. Quân trong hàng chờ xuất quân chưa tính.
-- Lúa ròng/phút = `foodPerMinute(team)` − `upkeepPerMinute(team)`.
+- Lúa ròng/phút = `foodPerMinute(team)` (nông trại xong + mỏ lúa của vùng mình) − `upkeepPerMinute(team)`.
 - Mỗi giây trừ `upkeep/60` khỏi kho; kho không đủ thì về 0.
 - `state.supply[team] = {status, grace}`:
 
@@ -39,7 +40,7 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 
 Chỉ thoát khi **nông trại đủ nuôi quân** (lúa ròng ≥ 0), không phải khi kho tạm có lúa, nên trạng thái không bật tắt liên tục. Pháo pháo đài không bị ảnh hưởng.
 
-**Thu từ mỏ** (mỗi giây, `update()`): `mine.owner = region.owner`; mỏ có chủ cộng `income` (mỗi giây) loại tài nguyên của mỏ cho chủ. Chủ vùng do cột cờ/tiền đồn quyết định.
+**Thu từ mỏ** (mỗi giây, `update()`): `mine.owner = region.owner`; mỏ có chủ cộng `income` (mỗi giây) loại tài nguyên của mỏ cho chủ. Chủ vùng do việc chiếm cờ quyết định. Mỏ lúa cũng được cộng vào `foodPerMinute()`, nên tính vào lúa ròng, HUD `#foodRate`, điều kiện thoát thiếu tiếp tế và tính toán lúa của AI.
 
 ## Code liên quan
 - [src/main.ts](../../src/main.ts): hằng số `RESOURCE_NAMES`, `STARTING_RESOURCES`, `FORTRESS_GUN_COST`, `MINE_TYPES`, `RICH_MINE_MULTIPLIER` (ngay sau `specs`).
@@ -66,8 +67,9 @@ Chỉ host tính thu nhập, lúa duy trì và thiếu tiếp tế; `state.resou
 ## Kiểm thử thủ công
 - [ ] Đầu trận HUD hiện 150 lúa, 400 gỗ, 50 đá, 50 vàng; không làm gì thì chỉ gỗ tăng (~30/phút từ vùng gần nhà).
 - [ ] Xây 1 nông trại → lúa tăng ~20 mỗi phút.
-- [ ] Cắm cờ ở một vùng gỗ trung lập → 20 giây xây + 10 giây chiếm, nhãn mỏ đổi "XANH", gỗ tăng thêm ~30/phút.
-- [ ] Cột cờ bị phá → mỏ về "TRUNG LẬP", ngừng thu.
+- [ ] Đứng 1 quân ở cờ một vùng gỗ trung lập → ~60 giây sau nhãn mỏ đổi "XANH", gỗ tăng thêm ~30/phút.
+- [ ] Chiếm vùng lúa → `#foodRate` tăng thêm 30/phút.
+- [ ] Địch hạ cờ vùng mình → mỏ về "TRUNG LẬP", ngừng thu.
 - [ ] Mỏ vàng giàu hiện "+23/PHÚT" (15 × 1,5 làm tròn) và có vòng vàng.
 - [ ] Tuyển quân vượt sức nuôi của nông trại → HUD lúa hiện số ròng âm (màu cam); khi kho về 0 → log "Kho lúa đã cạn", HUD đếm ngược 30s; hết giờ → log thiếu tiếp tế, quân chậm rõ rệt.
 - [ ] Xây thêm nông trại cho lúa ròng ≥ 0 → log "hết thiếu tiếp tế", tốc độ trở lại bình thường.

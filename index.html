@@ -52,7 +52,7 @@
       <div class="stat"><small>🪨 Đá</small><b id="stone">50</b></div>
       <div class="stat"><small>🪙 Vàng</small><b id="gold">50</b></div>
       <div class="stat"><small>🚩 Lãnh thổ</small><b id="territory">0</b><small id="territoryIncome">Chưa có mỏ</small></div>
-      <div class="stat"><small>⏱ Thời gian</small><b id="time">00:00</b><small id="deployTimer">Mở khóa xuất quân sau 02:00</small></div>
+      <div class="stat"><small>⏱ Thời gian</small><b id="time">00:00</b><small id="phaseHint">Giai đoạn phát triển kinh tế</small></div>
       <div class="stat"><small>🪖 Quân xanh</small><b id="unitCount">0</b><small id="unitBreakdown">Lính 0 · Cung 0 · Trinh sát 0 · Kỵ binh 0</small></div>
       <div class="stat"><small>🗡️ Lính giáo</small><b id="spearmanCount">0</b></div>
     </div>
@@ -63,7 +63,7 @@
  
     <div class="sideHud">
 <div class="controls">
-    <button class="btn primary" id="scout">🔭 Trinh sát<span>30 lúa · đi trước 2 phút</span></button>
+    <button class="btn primary" id="scout">🔭 Trinh sát<span>30 lúa</span></button>
     <button class="btn primary" id="infantry">🪖 Tạo lính<span>40 lúa · 10 vàng</span></button>
     <button class="btn primary" id="archer">🏹 Tạo cung thủ<span>55 lúa · 30 gỗ · 10 vàng</span></button>
     <button class="btn primary" id="spearman">🗡️ Tạo lính giáo<span>45 lúa · 20 gỗ</span></button>
@@ -71,8 +71,7 @@
     <button class="btn warn" id="attack">⚔️ Tấn công<span>Ra lệnh tiến quân</span></button>
     <button class="btn" id="farm">🌾 Xây nông trại<span>100 gỗ · +20 lúa/phút</span></button>
     <button class="btn" id="upgradeFarm">⬆️ Nâng cấp nông trại<span>cấp 2: 80 gỗ · 40 đá</span></button>
-    <button class="btn" id="buildFlag">🚩 Cắm cột cờ<span>100 gỗ · chiếm vùng</span></button>
-    <button class="btn" id="upgradeOutpost">🛡️ Nâng thành tiền đồn<span>200 gỗ · 100 đá</span></button>
+    <button class="btn" id="upgradeOutpost">🛡️ Xây tiền đồn<span>200 gỗ · 100 đá</span></button>
     <button class="btn" id="buildBarracks">🏠 Nhà lính bộ<span>150 gỗ · 50 đá</span></button>
     <button class="btn" id="buildArchery">🎯 Nhà lính cung<span>150 gỗ · 50 vàng</span></button>
     <button class="btn" id="buildStable">🐴 Chuồng ngựa<span>200 gỗ · 100 đá · 100 vàng</span></button>
@@ -85,11 +84,11 @@
 <div class="legend">
     <span><i class="dot" style="background:#4aaaff"></i>Quân xanh của bạn</span>
     <span><i class="dot" style="background:#ff626b"></i>Quân đỏ của máy</span>
-    <span>🚩 Cắm cột cờ ở điểm chiếm của vùng (cần quân đứng cạnh) để chiếm mọi mỏ trong vùng; mất cột cờ là mất vùng</span>
+    <span>🚩 Mỗi vùng có sẵn một cột cờ: đưa quân vào vòng quanh cờ để chiếm, càng đông càng nhanh; hai phe cùng đứng thì tạm dừng</span>
   </div>
 <div class="lower">
-    <div class="card"><h3>📜 Nhật ký chiến trường</h3><div class="feed" id="feed"><div>Chào chỉ huy! Hãy tạo quân rồi nhấn Tấn công.</div><div>Vùng gỗ gần nhà đã thuộc về bạn. Xây nông trại bằng gỗ để có lúa, rồi cắm cột cờ ở các vùng trung lập để có thêm tài nguyên.</div></div></div>
-    <div class="card"><h3>🎯 Mục tiêu & hướng dẫn</h3><p>• Phá hủy căn cứ đỏ để chiến thắng; bảo vệ căn cứ xanh.</p><p>• Bốn tài nguyên: lúa (từ nông trại) để tuyển và nuôi quân; gỗ, đá, vàng từ mỏ trong các vùng đã cắm cờ. Không có thu nhập nền. Quân nào cũng ăn lúa mỗi phút; hết lúa quá 30 giây thì quân bị chậm. Công trình cần thời gian xây và có thể bị phá. Vùng gỗ gần nhà thuộc sẵn về mỗi phe. Bản đồ chia thành các vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện). Cột cờ chỉ cắm ở điểm chiếm của vùng trung lập (vòng tròn có lá cờ) và chỉ xây khi có quân của bạn đứng cạnh: xây 20 giây, rồi giữ thêm 10 giây không có quân địch trong vùng; không cắm cờ trong vòng 20 ô quanh pháo đài địch. Nâng cột cờ thành tiền đồn để có súng và nhiều máu hơn. Nhà lính bộ, nhà lính cung, chuồng ngựa mở khoá lính bộ, cung thủ, kỵ binh; trinh sát và lính giáo tuyển ngay tại pháo đài. Nhà lính và tháp chỉ xây trong lãnh thổ của mình. Nhấp vào công trình của mình để chọn rồi bấm nâng cấp. Pháo đài tích hợp tối đa 2 khẩu pháo; mở khẩu thứ hai tốn 100 đá. Quân mới tập kết tại sân riêng cạnh pháo đài. Bấm “Xây nông trại”, chọn vị trí xanh trên vùng đã khám phá rồi nhấp trái để đặt; nhấp phải hoặc Escape để hủy. Không thể xây trên nước, đá hoặc chồng lên công trình/đơn vị; có thể kéo nông trại đã xây bằng chuột trái. Quân hai bên tấn công công trình của nhau khi nhìn thấy. Trinh sát là quân duy nhất được ra ngoài trong 2 phút đầu.</p><p>• Quân sẽ tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> chỉ ra lệnh cho nhóm đang chọn.</p><p>• AI mức vừa: tự tích lũy, tạo quân và định kỳ tổ chức tấn công.</p></div>
+    <div class="card"><h3>📜 Nhật ký chiến trường</h3><div class="feed" id="feed"><div>Chào chỉ huy! Hãy tạo quân rồi nhấn Tấn công.</div><div>Vùng gỗ gần nhà đã thuộc về bạn. Xây nông trại bằng gỗ để có lúa, rồi đưa quân tới cột cờ của các vùng trung lập để chiếm thêm tài nguyên.</div></div></div>
+    <div class="card"><h3>🎯 Mục tiêu & hướng dẫn</h3><p>• Phá hủy căn cứ đỏ để chiến thắng; bảo vệ căn cứ xanh.</p><p>• Bốn tài nguyên: lúa (từ nông trại) để tuyển và nuôi quân; lúa, gỗ, đá, vàng từ mỏ trong các vùng đã chiếm cờ. Không có thu nhập nền. Quân nào cũng ăn lúa mỗi phút; hết lúa quá 30 giây thì quân bị chậm. Công trình cần thời gian xây và có thể bị phá. Vùng gỗ gần nhà thuộc sẵn về mỗi phe. Bản đồ chia thành các vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện). Mỗi vùng trung lập có sẵn một cột cờ lớn ở giữa vùng (gần nhà luôn có đủ vùng lúa, gỗ, đá, vàng). Đưa quân vào vòng quanh cờ để chiếm: 1 quân khoảng 60 giây, càng đông càng nhanh, từ 10 quân trở lên khoảng 15 giây. Hai phe cùng đứng trong vòng thì tiến độ dừng; quân rời đi thì tiến độ được giữ. Cờ của địch phải hạ về trung lập trước rồi mới chiếm được. Nhấp vào cờ để xem vòng chiếm. Xây tiền đồn cạnh cờ đã chiếm để có súng và giữ cờ: còn tiền đồn thì đối phương không chiếm được cờ. Nhà lính bộ, nhà lính cung, chuồng ngựa mở khoá lính bộ, cung thủ, kỵ binh; trinh sát và lính giáo tuyển ngay tại pháo đài. Nhà lính và tháp chỉ xây trong lãnh thổ của mình. Nhấp vào công trình của mình để chọn rồi bấm nâng cấp. Pháo đài tích hợp tối đa 2 khẩu pháo; mở khẩu thứ hai tốn 100 đá. Quân mới tập kết tại sân riêng cạnh pháo đài. Bấm “Xây nông trại”, chọn vị trí xanh trên vùng đã khám phá rồi nhấp trái để đặt; nhấp phải hoặc Escape để hủy. Không thể xây trên nước, đá hoặc chồng lên công trình/đơn vị; có thể kéo nông trại đã xây bằng chuột trái. Quân hai bên tấn công công trình của nhau khi nhìn thấy.</p><p>• Quân sẽ tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> chỉ ra lệnh cho nhóm đang chọn.</p><p>• AI mức vừa: tự tích lũy, tạo quân và định kỳ tổ chức tấn công.</p></div>
   </div>
 <div class="tip">Bản đồ chiến trường rộng gấp đôi phiên bản trước · Lăn con lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ. Mẹo: đừng chỉ tạo một loại quân — phối hợp lính, cung thủ, lính giáo và kỵ binh để vượt qua phòng thủ.</div>
   </div>

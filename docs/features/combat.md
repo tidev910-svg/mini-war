@@ -1,6 +1,6 @@
 # Chiến đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
 Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung thủ và pháo bắn đạn bay đuổi theo mục tiêu; các loại khác gây sát thương ngay. Lính giáo khắc chế kỵ binh.
@@ -23,11 +23,11 @@ Chọn mục tiêu (`nearestEnemy(u)`), chạy mỗi frame cho từng quân:
 2. Pháo đài địch thay thế nếu gần hơn quân tốt nhất ít nhất 20 (hoặc chưa có mục tiêu). Ở AI, quân xanh luôn "biết" pháo đài đỏ; các trường hợp khác phải đang nhìn thấy.
 3. Công trình địch (`state.buildings`) đang thấy — cả hai phe (ở chế độ AI, quân xanh thấy hết) — nếu gần hơn ít nhất 15.
 
-Công trình bị đánh về 0 máu → `destroyBuilding()` (xoá hẳn; cột cờ thì vùng về trung lập). Tháp và tiền đồn bắn quân địch: xem [buildings.md](buildings.md).
+Công trình bị đánh về 0 máu → `destroyBuilding()` (xoá hẳn; phá tiền đồn địch thì cờ vùng đó chiếm được). Cột cờ không phải công trình, không bị đánh; chiếm bằng cách đứng trong vòng cờ ([territory.md](territory.md)). Tháp và tiền đồn bắn quân địch: xem [buildings.md](buildings.md).
 
 Trong vòng quân của `update()`, tốc độ và hồi chiêu dùng biến cục bộ `speed`, `cooldown` (đã nhân hệ số thiếu tiếp tế), không dùng thẳng `s.speed`, `s.cooldown`.
 
-Di chuyển khi có mục tiêu ngoài tầm: chỉ đuổi nếu `order==='attack'` (hoặc là quân AI), và đã hết khoá xuất quân (trừ trinh sát).
+Di chuyển khi có mục tiêu ngoài tầm: chỉ đuổi nếu `order==='attack'` (hoặc là quân AI); không còn khoá xuất quân đầu trận.
 
 Chết: `hurt()` xoá quân khỏi `state.units` khi HP ≤ 0; pháo đài HP ≤ 0 gọi `finish()`.
 

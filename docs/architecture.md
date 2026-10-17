@@ -41,7 +41,7 @@ loop(ts) ─ dt = min(Δt, 0.05s)
   ├─ host PvP: mỗi 0.18s sendSnapshot()
   └─ draw()          luôn chạy (cả guest)
 ```
-`update(dt)` theo thứ tự: đồng hồ & mở khoá xuất quân → hàng chờ xuất quân (mỗi 0.35s) → mỗi 1s: lúa từ nông trại, tài nguyên từ mỏ theo chủ vùng, lúa duy trì/thiếu tiếp tế (`updateSupply()`) → AI (`runEnemyAI()`, mỗi 5s, chỉ chế độ AI) → công trình: xây, nâng cấp, súng tháp/tiền đồn (`updateBuildings()`) → di chuyển & đánh của từng quân → đạn → pháo pháo đài → quái canh mỏ (code chết) → sương mù & trí nhớ AI → hiệu ứng → `updateHUD()`.
+`update(dt)` theo thứ tự: đồng hồ → hàng chờ xuất quân (mỗi 0.35s) → mỗi 1s: lúa từ nông trại, tài nguyên từ mỏ theo chủ vùng, lúa duy trì/thiếu tiếp tế (`updateSupply()`) → AI (`runEnemyAI()`, mỗi 5s, chỉ chế độ AI) → chiếm cờ (`updateCaptures()`) rồi công trình: xây, nâng cấp, súng tháp/tiền đồn (`updateBuildings()`) → di chuyển & đánh của từng quân → đạn → pháo pháo đài → quái canh mỏ (code chết) → sương mù & trí nhớ AI → hiệu ứng → `updateHUD()`.
 
 ## Luồng lệnh
 ```
@@ -49,7 +49,7 @@ Nút / chuột / phím ─► requestAction(action, payload)
    ├─ guest PvP: conn.send({type:'action',...}) ─► host: applyAction(1, ...)
    └─ còn lại:   applyAction(localTeam(), ...)
 ```
-Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm'|'flag', id}`, `moveFarm {id, x, y}`, `turret`, `attack {ids}`, `move {ids, x, y}`, `pause {paused}`. Ngoại lệ: kéo nông trại ở host/AI và chọn quân/công trình sửa trực tiếp ở phía client (xem [controls.md](features/controls.md)).
+Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm', id}`, `outpost {regionId}`, `moveFarm {id, x, y}`, `turret`, `attack {ids}`, `move {ids, x, y}`, `pause {paused}`. Ngoại lệ: kéo nông trại ở host/AI và chọn quân/công trình sửa trực tiếp ở phía client (xem [controls.md](features/controls.md)).
 
 ## Camera & toạ độ
 - `worldToScreenPlane()` / `screenPlaneToWorld()` hiện là hàm đồng nhất (góc nhìn từ trên xuống, chưa phải isometric thật); giữ lại làm điểm mở rộng.

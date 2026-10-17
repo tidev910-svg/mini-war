@@ -15,10 +15,10 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 ## Danh sách tính năng
 | Tính năng | File | Hàm / dữ liệu chính | Trạng thái |
 |---|---|---|---|
-| Luồng trận, khoá xuất quân, thắng/thua | [features/match-flow.md](features/match-flow.md) | `fresh()`, `update()`, `finish()`, `DEPLOYMENT_LOCK_SECONDS` | Đang có |
+| Luồng trận, chọn vị trí nhà, thắng/thua | [features/match-flow.md](features/match-flow.md) | `fresh()`, `update()`, `finish()`, `baseSiteClear()` | Đang có |
 | Kinh tế: 4 tài nguyên, lúa duy trì | [features/economy.md](features/economy.md) | `state.resources`, `canAfford()`, `spend()`, `updateSupply()` | Đang có |
 | Công trình, nâng cấp, nhà lính, tháp | [features/buildings.md](features/buildings.md) | `BUILDING_TYPES`, `placeBuilding()`, `updateBuildings()` | Đang có |
-| Vùng lãnh thổ & cột cờ | [features/territory.md](features/territory.md) | `state.regions`, `regionAt()`, `inOwnTerritory()` | Đang có |
+| Vùng lãnh thổ, cột cờ có sẵn, chiếm cờ | [features/territory.md](features/territory.md) | `generateRegions()`, `updateCaptures()`, `drawFlag()`, `state.regions` | Đang có |
 | Quân lính & xuất quân | [features/units.md](features/units.md) | `specs`, `buy()`, `spawn()`, `state.pendingSpawns` | Đang có |
 | Pháo đài & pháo tích hợp | [features/fortress.md](features/fortress.md) | `buildTurret()`, `fortressGunPosition()`, `state.bases` | Đang có |
 | Nông trại | [features/farms.md](features/farms.md) | `BUILDING_TYPES.farm`, `FARM_LEVELS`, kéo nông trại | Đang có |

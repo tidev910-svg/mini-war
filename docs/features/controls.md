@@ -1,6 +1,6 @@
 # Điều khiển, chọn quân & camera
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
 Điều khiển bằng chuột (có hỗ trợ cảm ứng để kéo bản đồ) và phím. Người chơi chọn một hoặc nhiều quân, ra lệnh di chuyển theo đội hình hoặc tấn công; kéo/zoom bản đồ.
@@ -16,7 +16,8 @@
 | Trái vào pháo đài mình | Chọn pháo đài (bỏ chọn quân), hiện vòng tầm pháo |
 | Trái giữ trên nông trại mình | Kéo nông trại ([farms.md](farms.md)) |
 | Trái vào công trình mình (không phải nông trại thì chỉ chọn) | Chọn công trình: vòng nét đứt, log thông tin; nút nâng cấp dùng công trình đang chọn |
-| Bấm nút xây rồi trái trên bản đồ | Đặt công trình ([buildings.md](buildings.md)); phải hoặc Escape để huỷ. Cột cờ tự hút vào điểm chiếm trong 3 ô; nếu đang chọn quân, quân đó được gửi tới làm thợ xây |
+| Trái vào cột cờ (đã khám phá; khi **không** đang chọn một quân bằng nhấp) | Chọn cờ (`selectedFlag`, vùng nhấp `flagHit()`): hiện vòng phạm vi chiếm, log chủ cờ và thời gian chiếm; nút "Xây tiền đồn" dùng cờ này |
+| Bấm nút xây rồi trái trên bản đồ | Đặt công trình ([buildings.md](buildings.md)); phải hoặc Escape để huỷ |
 | Phải nhấp (không kéo) | Ra lệnh `move` cho cả nhóm đang chọn |
 | Giữ phải / giữa rồi kéo; kéo bằng cảm ứng | Di chuyển camera (ngưỡng 4 px mới tính là kéo) |
 | Lăn chuột | Zoom ×1.15 quanh con trỏ |
@@ -44,7 +45,7 @@
 - Vẽ: `drawUnitSelection()`, khung chọn trong `draw()`.
 
 ## Tương tác
-- [match-flow.md](match-flow.md): khoá 120 giây giới hạn lệnh di chuyển.
+- [territory.md](territory.md): nhấp chọn cờ, phạm vi chiếm.
 - [combat.md](combat.md): lệnh `attack`.
 - [buildings.md](buildings.md): chế độ đặt công trình chặn các thao tác khác.
 

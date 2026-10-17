@@ -1,15 +1,15 @@
 # Nông trại
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
-Nông trại là công trình sinh **lúa** — nguồn lúa duy nhất để tuyển và nuôi quân. Nông trại là một loại công trình (`kind: 'farm'`) trong hệ thống chung ở [buildings.md](buildings.md): đặt bằng nút "Xây nông trại", có thời gian xây, có thể bị phá, có thể nâng cấp. Riêng nông trại còn **kéo được** sang chỗ khác bằng chuột trái.
+Nông trại là công trình sinh **lúa** — nguồn lúa chính để tuyển và nuôi quân (nguồn còn lại là mỏ lúa trong vùng lúa đã chiếm, xem [territory.md](territory.md)). Nông trại là một loại công trình (`kind: 'farm'`) trong hệ thống chung ở [buildings.md](buildings.md): đặt bằng nút "Xây nông trại", có thời gian xây, có thể bị phá, có thể nâng cấp. Riêng nông trại còn **kéo được** sang chỗ khác bằng chuột trái.
 
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
 | Giá | 100 gỗ | `BUILDING_TYPES.farm.cost` |
-| Thời gian xây | 20 giây | `BUILDING_TYPES.farm.buildTime` |
+| Thời gian xây | 5 giây (đổi từ 20 giây ngày 2026-10-17) | `BUILDING_TYPES.farm.buildTime` |
 | Máu | 180 | `BUILDING_TYPES.farm.hp` |
 | Footprint logic | 62 × 68 (nửa: 31 × 34) | `halfW`, `halfH` |
 | Sản lượng | cấp 1: 20 · cấp 2: 30 · cấp 3: 45 lúa/phút (chỉ khi đã xây xong) | `FARM_LEVELS` |
@@ -40,7 +40,8 @@ Nút "Nâng cấp nông trại": nếu đang chọn một nông trại của mì
 
 ## Kiểm thử thủ công
 - [ ] Đặt trên vùng sương mù / nước / đá / sân tập kết / đè quân → bị chặn, có lý do, không trừ gỗ.
-- [ ] Đặt hợp lệ → −100 gỗ; 20 giây sau lúa ròng tăng 20/phút.
+- [ ] Đặt hợp lệ → −100 gỗ; 5 giây sau lúa ròng tăng 20/phút.
+- [ ] Nông trại không đặt được sát cột cờ (< 2,5 ô) — "Quá sát cột cờ."
 - [ ] Nâng cấp 2 lần → 45 lúa/phút; nút nâng cấp báo hết khi đã cấp 3.
 - [ ] Kéo nông trại sang chỗ hợp lệ / không hợp lệ.
 - [ ] PvP: guest đặt, nâng cấp và kéo nông trại; host thấy đúng.

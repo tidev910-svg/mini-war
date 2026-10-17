@@ -1,6 +1,6 @@
 # Bản đồ, địa hình & đồ hoạ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
 Bản đồ vuông lớn, nhìn từ trên xuống, phong cách "Storybook": đồng cỏ, rừng, sông/hồ, đá, ruộng tài nguyên, đường đất. Cây và đá được vẽ như sprite đứng và sắp xếp theo chiều sâu cùng quân lính để quân có thể đi trước/sau cây.
@@ -20,11 +20,11 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions` và m�
 **Lớp vẽ trong `draw()`** (theo thứ tự):
 1. Nền tối `#0b1411`, rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
 2. `drawTerrainDetail()`, đường chính (bezier ngang ~y=0.55H) và đường phụ phía trên.
-3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô, điểm chiếm; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
-4. Danh sách `sceneActors` sắp theo Y: cây, đá, pháo đài (+ sân tập kết), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân.
+3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô dày theo pixel màn hình; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
+4. Danh sách `sceneActors` sắp theo Y: cây, đá, pháo đài (+ sân tập kết), cột cờ (`drawFlag()`, chỗ đã khám phá), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân.
 5. Thanh máu quân, vòng chọn, đạn, hiệu ứng.
-6. Sương mù (chỉ ô trong khung nhìn), bản xem trước công trình đang đặt.
-7. Lớp màn hình: khung chọn, thanh trạng thái đặt nông trại, nhãn "CHIẾN TRƯỜNG 01" và giai đoạn trận.
+6. Sương mù `drawFog()` (một ảnh làm mờ phủ toàn bản đồ, mép mềm), bản xem trước công trình đang đặt.
+7. Lớp màn hình: khung chọn, thanh trạng thái đặt công trình, nhãn "CHIẾN TRƯỜNG 01".
 
 **Sprite** (`public/assets/units/<quân>/`, đường dẫn `/assets/units/<quân>/...`; quy ước thư mục và tên: [assets.md](../assets.md)):
 | Đối tượng | File | Ghi chú |
@@ -56,7 +56,7 @@ Vẽ chạy cục bộ ở mọi trình duyệt; địa hình giống nhau vì `
 ## Kiểm thử thủ công
 - [ ] Mở game: không có sprite nào hiện ô vuông dự phòng (kiểm tra tab Network không có 404 ở `/assets/`).
 - [ ] Quân đi sau cây bị tán cây che, đi trước cây thì hiện đè lên cây; thanh máu luôn ở trên.
-- [ ] Zoom tối đa ra/vào vẫn mượt (fog chỉ vẽ trong khung nhìn).
+- [ ] Zoom tối đa ra/vào vẫn mượt (sương mù chỉ dựng lại khi vùng khám phá đổi).
 
 ## Giới hạn / việc tồn đọng
 - Hình ảnh sông/hồ chỉ là địa hình; quân **đi xuyên** nước và đá khi di chuyển.

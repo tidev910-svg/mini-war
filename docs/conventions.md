@@ -29,11 +29,11 @@
 |---|---|
 | Pháo đài (fortress / base) | Căn cứ chính của mỗi phe, có pháo tích hợp. Mất pháo đài = thua. |
 | Sân tập kết (muster yard) | Khu đất cạnh pháo đài nơi quân mới xuất hiện. |
-| Thời gian khoá xuất quân | 120 giây đầu trận, chỉ trinh sát được rời vùng căn cứ. |
 | Hàng chờ xuất quân | `state.pendingSpawns`: quân đã trả tiền nhưng sân tập kết đang kín. |
 | Snapshot | Gói toàn bộ trạng thái trận host gửi cho guest. |
-| Vùng (region) | Phần bản đồ có ranh giới tự nhiên, 1–2 mỏ và một điểm chiếm; chiếm bằng cột cờ. Vùng chứa pháo đài là vùng nhà. |
+| Vùng (region) | Phần bản đồ có ranh giới tự nhiên, đúng một loại tài nguyên và một mỏ, một cột cờ có sẵn; chiếm bằng cách đứng quân trong vòng cờ. Vùng chứa pháo đài là vùng nhà (không có cờ). |
 | Lãnh thổ | 14 ô quanh pháo đài + các vùng mình sở hữu; nơi được xây nhà lính và tháp. |
-| Tiền đồn | Cột cờ đã nâng cấp: máu cao hơn, có súng. |
+| Cột cờ (flag) | Cờ có sẵn ở gần tâm mỗi vùng thường (`region.cp`); không phải công trình, không bị phá. |
+| Tiền đồn | Công trình phòng thủ xây cạnh cờ của vùng mình (`kind: 'outpost'`): có súng, và còn đứng thì đối phương không chiếm được cờ đó. |
 | Action | Lệnh guest gửi cho host (`{type:'action', action, payload}`). |
 | Authoritative host | Host là nguồn trạng thái duy nhất; guest chỉ gửi lệnh và vẽ snapshot. |

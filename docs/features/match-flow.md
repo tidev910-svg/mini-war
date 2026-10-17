@@ -1,26 +1,24 @@
 # Luồng trận đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
-Một trận bắt đầu khi người chơi chọn chế độ. Hai phe xuất phát ở hai đầu bản đồ, mỗi phe có một pháo đài. Trong 120 giây đầu (giai đoạn trinh sát) chỉ trinh sát được rời vùng căn cứ. Phe nào mất pháo đài trước thì thua.
+Một trận bắt đầu khi người chơi chọn chế độ. Hai phe xuất phát ở hai đầu bản đồ, mỗi phe có một pháo đài. **Không có khoá đầu trận**: từ giây 0 có thể tuyển quân (nếu đủ tài nguyên và công trình) và đưa quân đi bất kỳ đâu. Phe nào mất pháo đài trước thì thua.
+
+Nhịp độ dự kiến (định hướng, không phải luật): 0–5 phút phát triển kinh tế, 5–10 phút mở rộng, sau 10 phút giao tranh. HUD ghi giai đoạn dưới đồng hồ.
 
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
-| Thời gian khoá xuất quân | 120 giây | `DEPLOYMENT_LOCK_SECONDS` |
-| Bán kính vùng căn cứ khi khoá | 8 ô (`TILE_SIZE*8`) | `BASE_DEPLOYMENT_RADIUS` |
 | Bước mô phỏng tối đa | 0.05 giây | `loop()` |
 | Vị trí pháo đài xanh | x ∈ [220, 220+0.16·W], y ngẫu nhiên, cách mép ≥ 260 | `fresh()` |
 | Vị trí pháo đài đỏ | đối xứng bên phải | `fresh()` |
+| Chọn lại vị trí | Bỏ vị trí mà pháo đài/sân tập kết < 85% ô đi được; chọn lại tới khi bản đồ đủ công bằng (≤ 15 bản đồ) | `fresh()`, `baseSiteClear()`, [territory.md](territory.md) |
+| Nhãn giai đoạn | < 5 phút "phát triển kinh tế", < 10 phút "mở rộng", sau đó "giao tranh" | `updateMatchClockHUD()` → `#phaseHint` |
 | Tài nguyên ban đầu | 150 lúa, 400 gỗ, 50 đá, 50 vàng mỗi phe | `STARTING_RESOURCES` |
 | Nhật ký giữ tối đa | 12 dòng | `addLog()` |
 
-Quy tắc khoá (áp dụng mọi quân trừ `scout` khi `gameTime < 120`):
-- `isDeploymentLocked(unit)` đúng → `constrainToBaseDeploymentZone()` kéo quân về trong bán kính căn cứ mỗi frame.
-- Lệnh `move` có điểm đến ngoài vùng → quân bị chuyển `order='hold'` và có log cảnh báo.
-- Quân `attack` không đuổi mục tiêu ngoài tầm cho tới khi hết khoá.
-- Khi hết khoá: log "Thời gian khóa đã kết thúc..." và HUD đổi thành "Đã mở khóa xuất quân".
+Khoá xuất quân 120 giây (`DEPLOYMENT_LOCK_SECONDS`, `isDeploymentLocked()`, `constrainToBaseDeploymentZone()`…) **đã bỏ hẳn** ngày 2026-10-17 theo tài liệu "Tổng kết yêu cầu sửa game RTS 1vs1" (16/10/2026).
 
 Kết thúc:
 - `hurt()` làm HP pháo đài ≤ 0 → `finish(win)`; `win` tính theo **team 0** (`bases[1]` chết → thắng).
@@ -30,16 +28,15 @@ Kết thúc:
 Tạm dừng: nút `#pause` hoặc phím Space. Ở guest PvP gửi action `pause`; ở host/AI đổi `paused` trực tiếp.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `fresh()` tạo `state` mới, đặt pháo đài, mỏ, decor, camera về căn cứ xanh.
+- [src/main.ts](../../src/main.ts): `fresh()` chọn vị trí pháo đài (vòng chọn lại), gọi `generateRegions()`, tạo `state` mới, decor, camera về căn cứ của mình.
 - `update(dt)` — bước mô phỏng; dừng khi `!gameStarted`, `paused`, `ended` hoặc là guest.
 - `loop(ts)` — vòng `requestAnimationFrame`.
-- `finish(win)`, `isDeploymentLocked()`, `insideBaseDeploymentZone()`, `constrainToBaseDeploymentZone()`, `updateMatchClockHUD()`, `addLog()`.
+- `finish(win)`, `updateMatchClockHUD()`, `addLog()`.
 - `startAIMode()`, `startHostGame()`, `startGuestFromSnapshot()` — điểm vào trận.
 - Lúc tải trang: `fresh(); gameStarted=false;` nên bản đồ đã có sẵn sau màn hình chọn chế độ.
 
 ## Tương tác
-- [units.md](units.md): vị trí xuất quân bị giới hạn trong vùng căn cứ khi khoá.
-- [controls.md](controls.md): lệnh `move`/`attack` bị khoá ảnh hưởng.
+- [territory.md](territory.md): sinh bản đồ và vùng trong `fresh()`.
 - [multiplayer.md](multiplayer.md): guest không chạy `update()`; kết quả trận đi qua snapshot.
 - [hud-ui.md](hud-ui.md): đồng hồ, overlay kết quả.
 
@@ -48,8 +45,8 @@ Tạm dừng: nút `#pause` hoặc phím Space. Ở guest PvP gửi action `paus
 - Guest đảo nghĩa thắng/thua trong `applySnapshot()` dựa vào `resultTitle` của host (có chứa "CHIẾN THẮNG!" hay không).
 
 ## Kiểm thử thủ công
-- [ ] AI: trước 120s, tạo lính và ra lệnh đi xa → lính không ra khỏi vùng căn cứ; trinh sát thì đi được.
-- [ ] Tới 02:00 log mở khoá xuất hiện, lính đi được.
+- [ ] Giây 0: tuyển lính giáo và ra lệnh đi xa → lính đi ngay. HUD ghi "Giai đoạn phát triển kinh tế", không còn đếm ngược mở khoá.
+- Đã chạy thử 2026-10-17: lính giáo tuyển ở giây 0 nhận lệnh `move` và rời pháo đài; 40 trận mới đều có pháo đài và sân tập kết trên đất, xuất quân được.
 - [ ] Phá pháo đài đỏ → overlay thắng; "Chơi lại" tạo trận mới với vị trí căn cứ khác.
 - [ ] Space tạm dừng/tiếp tục; khi tạm dừng các nút mua bị vô hiệu.
 - [ ] PvP: guest bấm tạm dừng → cả hai bên dừng.

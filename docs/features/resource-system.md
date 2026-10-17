@@ -1,6 +1,6 @@
 # Hệ thống 4 tài nguyên & lãnh thổ
 
-> Trạng thái: Đang có — đủ 6 giai đoạn · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Đang có — đủ 6 giai đoạn · Cập nhật lần cuối: 2026-10-17
 
 Nguồn: tài liệu thiết kế "Thiết kế hệ thống tài nguyên – game RTS 1vs1" (thảo luận ngày 15/10/2026). Khi triển khai, tính năng này sẽ **thay** phần kinh tế trong [economy.md](economy.md) và đổi giá trong [units.md](units.md), [farms.md](farms.md), [fortress.md](fortress.md). Mọi con số dưới đây là **thông số thử nghiệm**, chưa phải số chính thức.
 
@@ -84,12 +84,18 @@ Ví dụ: 6 nông trại cấp 1 = 120; quân 2 trinh sát, 12 bộ, 8 giáo, 6 
 | 4 | Nhà lính | **Bắt buộc, trừ trinh sát và lính giáo** (tuyển tại pháo đài). Nhà lính bộ → lính bộ; nhà lính cung → cung thủ; chuồng ngựa → kỵ binh. |
 | 5 | Năng lượng | **Bỏ hẳn**. Bỏ luôn mỏ "đặc biệt" (thưởng năng lượng). |
 | 6 | Tháp & pháo pháo đài | **Giữ 2 pháo tích hợp**; mở pháo thứ hai trả **100 đá** thay cho 100 vàng. Tháp phòng thủ là công trình riêng, chỉ đặt trong vùng của mình. |
-| 7 | Khoá xuất quân 120 giây | **Giữ nguyên.** |
-| 8 | Thời gian xây | **Có**: nông trại 20s, cột cờ 15s, nâng tiền đồn 30s, nhà lính/chuồng ngựa 30s, tháp 25s. Công trình đang xây có máu và có thể bị phá. |
+| 7 | Khoá xuất quân 120 giây | ~~Giữ nguyên.~~ **Bỏ hẳn** (2026-10-17, tài liệu "Tổng kết yêu cầu sửa game" 16/10). |
+| 8 | Thời gian xây | **Có**: nông trại 20s (đổi thành **5s** ngày 2026-10-17), cột cờ 15s, nâng tiền đồn 30s, nhà lính/chuồng ngựa 30s, tháp 25s. Công trình đang xây có máu và có thể bị phá. |
 | 8b | Cấp nông trại | **Có**: cấp 2 = 80 gỗ + 40 đá (30 lúa/phút), cấp 3 = 120 gỗ + 80 đá (45 lúa/phút). |
 | 9 | Duy trì khi đứng yên | **Có**, quân luôn tiêu lúa. |
 
 Còn để ngỏ (chốt khi chạy thử): máu từng công trình, bán kính/vị trí vùng, sản lượng mỏ giàu, thưởng lãnh thổ (mặc định: không có). Ngưỡng gỡ thiếu tiếp tế đã chốt khi làm giai đoạn 2: lúa ròng ≥ 0.
+
+**Thay đổi 2026-10-17** (tài liệu "Tổng kết yêu cầu sửa game RTS 1vs1", 16/10/2026; chi tiết và các quyết định tạm ở [territory.md](territory.md)):
+- Mỗi vùng có đúng một loại tài nguyên và thêm **vùng lúa** (mỏ lúa). Gần mỗi nhà có đủ 4 loại vùng; bỏ mỏ phụ.
+- Cột cờ **có sẵn** ở mỗi vùng, chiếm bằng số quân đứng trong vòng cờ; không còn xây cột cờ (thay quyết định #1: chủ vùng do chiếm cờ, không do công trình).
+- Tiền đồn là công trình riêng đặt cạnh cờ đã chiếm; còn tiền đồn thì đối phương không chiếm được cờ.
+- Bỏ khoá 120 giây (#7); nông trại xây 5 giây (#8); viền lãnh thổ dày hơn; sương mù có mép mềm.
 
 ## Kế hoạch triển khai
 Mỗi giai đoạn để game chơi được, chạy thử ở cả chế độ AI và PvP, và cập nhật tài liệu trước khi sang giai đoạn sau.

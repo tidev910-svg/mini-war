@@ -1,6 +1,6 @@
 # Chọn chế độ & chơi với bạn bè (P2P)
 
-> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-16
+> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
 Màn hình đầu (`#modeScreen`) có 2 lựa chọn:
@@ -47,7 +47,8 @@ Mọi tính năng thay đổi `state` đều phải đi qua action để chạy 
 ## Kiểm thử thủ công
 - [ ] Mở 2 tab (hoặc 2 máy) từ cùng URL `pnpm dev`; tab A tạo phòng, tab B nhập mã → trận bắt đầu, A xanh, B đỏ; camera của B đặt ở pháo đài đỏ.
 - [ ] Mở link mời → ô mã tự điền.
-- [ ] B mua quân, đặt nông trại/cột cờ/nhà lính, nâng cấp, di chuyển, tấn công → A thấy đúng; HUD của B hiện lãnh thổ và mở khoá quân.
+- [ ] B mua quân, đặt nông trại/nhà lính, đưa quân chiếm cờ, chọn cờ rồi xây tiền đồn, nâng cấp, di chuyển, tấn công → A thấy đúng; HUD của B hiện lãnh thổ và mở khoá quân.
+- Đã chạy thử 2026-10-17 (2 Chrome headless): cờ trùng vị trí ở hai bên; 5 quân đỏ ở cờ → guest thấy tiến độ 35% sau 8 giây, rồi vùng đổi chủ, HUD guest hiện 2 vùng; guest bấm "Xây tiền đồn" → host tạo tiền đồn; lần thứ hai bị từ chối. Không lỗi JavaScript.
 - Đã chạy thử 2026-10-16 bằng 2 trình duyệt Chrome headless trên cùng máy, qua máy chủ PeerJS thật: tạo/vào phòng, guest xây cột cờ + nông trại + nhà lính, chiếm vùng, tuyển lính giáo và lính bộ; host và guest thấy cùng tiến độ và tài nguyên; không lỗi JavaScript. Chưa thử giữa 2 mạng khác nhau và ngắt/vào lại.
 - [ ] Đóng tab B → A tạm dừng; B vào lại bằng mã cũ → trận tiếp tục.
 - [ ] Đóng tab A → B về màn hình phòng, nút "Tham gia phòng" bấm được ngay.
@@ -57,7 +58,7 @@ Mọi tính năng thay đổi `state` đều phải đi qua action để chạy 
 
 ## Giới hạn / việc tồn đọng
 - **Bảo mật lệnh:** host kiểm tra loại quân bằng `Object.hasOwn(specs, type)`; các action khác kẹp toạ độ/kiểm tra team. Chưa giới hạn tần suất lệnh.
-- Snapshot gửi toàn bộ `state` mỗi 0.18 giây (không nén, không delta), nay gồm cả `buildings`, `regions`, ~30 `mines` — tốn băng thông khi nhiều quân/công trình.
+- Snapshot gửi toàn bộ `state` mỗi 0.18 giây (không nén, không delta), nay gồm cả `buildings`, `regions`, ~20 `mines` — tốn băng thông khi nhiều quân/công trình.
 - Log sự kiện (xây xong, chiếm vùng, thiếu tiếp tế…) chỉ hiện ở host; guest chỉ thấy qua bản đồ/HUD.
 - `regionMap` (bản đồ vùng 256×256) không gửi qua mạng; guest tự dựng lại từ hạt giống trong `state.regions` (`ensureRegionMap()`), nên host và guest phải cùng địa hình (`buildTerrain()` tất định).
 - Phòng không có mật khẩu; peer ID đoán được từ mã phòng.
