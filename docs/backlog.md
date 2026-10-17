@@ -16,13 +16,12 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3; nhà vẫn ở hai dải trái/phải). → [territory.md](features/territory.md)
 - [ ] Tốc độ giảm tiến độ khi bỏ trống cờ (60 giây cho cả thanh) là số tạm. → [territory.md](features/territory.md)
 - [ ] **Chưa quyết thiết kế:** mỏ cạn dần hay vô hạn; có điều kiện thắng theo vùng không; thưởng lãnh thổ +10% (hiện: không). → [territory.md](features/territory.md)
-- [ ] **Chờ chốt:** nơi tuyển lính bộ, cung thủ, kỵ binh sau khi bỏ nhà lính (nhà chính hay cơ chế khác). Hiện 3 loại này bị khoá (`RECRUIT_SITE_PENDING`). → [units.md](features/units.md)
 - [ ] Không huỷ được công trình đang xây; kéo được nông trại đang xây. → [buildings.md](features/buildings.md), [farms.md](features/farms.md)
 - [ ] Thợ xây tiền đồn là "bất kỳ quân nào", chưa có loại quân thợ xây riêng. → [territory.md](features/territory.md)
 - [ ] Không có giới hạn trần tài nguyên. → [economy.md](features/economy.md)
 
 ## Chơi với bạn bè (PvP)
-- [ ] Log sự kiện chỉ hiện ở host. → [multiplayer.md](features/multiplayer.md)
+- [ ] Log sự kiện chỉ hiện ở host (mua quân đã có kiểm tra trước ở guest; xây/nâng cấp bị từ chối thì guest chưa thấy lý do). → [multiplayer.md](features/multiplayer.md)
 - [ ] Không có "chơi lại" trong cùng phòng; bên nào cũng bỏ được tạm dừng của bên kia. → [match-flow.md](features/match-flow.md)
 - [ ] Snapshot gửi toàn bộ `state` mỗi 0,18 giây (không nén, không delta). → [multiplayer.md](features/multiplayer.md)
 - [ ] Phòng không mật khẩu; chưa giới hạn tần suất lệnh. → [multiplayer.md](features/multiplayer.md)
@@ -43,7 +42,7 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
-**2026-10-17 (yêu cầu 17/10):** nông trại mở khoá sau 3 giây; bỏ nhà lính bộ, nhà lính cung, chuồng ngựa (3 loại quân giữ trong dữ liệu, tạm khoá tuyển).
+**2026-10-17 (yêu cầu 17/10):** nông trại mở khoá sau 3 giây; bỏ nhà lính bộ, nhà lính cung, chuồng ngựa ; sau đó chốt: mọi loại quân tuyển tại pháo đài.
 
 **2026-10-17 (chốt mục 8):** cờ địch 2 giai đoạn có hiển thị; tiền đồn riêng; vùng lúa 15/phút + nông trại trong vùng +25%; rời cờ 5 giây thì tiến độ giảm về 0; trinh sát không chiếm cờ.
 

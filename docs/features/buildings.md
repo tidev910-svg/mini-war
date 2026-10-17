@@ -27,7 +27,7 @@ Cột cờ (có sẵn, không phải công trình) và vùng lãnh thổ: xem [t
 | Nông trại cấp 3 | 120 gỗ, 80 đá | 15s | 45 lúa/phút |
 Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh tiến độ màu xanh nhạt.
 
-**Tuyển quân:** không còn công trình mở khoá quân. Trinh sát và lính giáo tuyển tại pháo đài. Lính bộ, cung thủ, kỵ binh **tạm chưa tuyển được** vì nơi tuyển thay thế chưa chốt (`RECRUIT_SITE_PENDING`, xem [units.md](units.md)).
+**Tuyển quân:** không còn công trình mở khoá quân; mọi loại quân tuyển tại pháo đài (xem [units.md](units.md)).
 
 **Xây dựng**
 - Lúc đặt: máu = 20% tối đa, `progress = 0`. Mỗi giây `progress += 1/buildTime` (sai số số thực < 1e-6 được làm tròn lên 1, để nông trại 3 giây xong đúng giây thứ 3), máu tăng thêm 80% tối đa chia đều theo thời gian xây.

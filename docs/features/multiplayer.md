@@ -58,6 +58,7 @@ Mọi tính năng thay đổi `state` đều phải đi qua action để chạy 
 
 ## Giới hạn / việc tồn đọng
 - **Bảo mật lệnh:** host kiểm tra loại quân bằng `Object.hasOwn(specs, type)`; các action khác kẹp toạ độ/kiểm tra team. Chưa giới hạn tần suất lệnh.
+- Log của host không tới guest; riêng việc mua quân thì guest tự kiểm tra trước (`requestBuy()`) nên vẫn thấy lý do bị từ chối. Các lệnh khác (xây, nâng cấp) bị từ chối thì guest không thấy lý do.
 - Snapshot gửi toàn bộ `state` mỗi 0.18 giây (không nén, không delta), nay gồm cả `buildings`, `regions`, ~20 `mines` — tốn băng thông khi nhiều quân/công trình.
 - Log sự kiện (xây xong, chiếm vùng, thiếu tiếp tế…) chỉ hiện ở host; guest chỉ thấy qua bản đồ/HUD.
 - `regionMap` (bản đồ vùng 256×256) không gửi qua mạng; guest tự dựng lại từ hạt giống trong `state.regions` (`ensureRegionMap()`), nên host và guest phải cùng địa hình (`buildTerrain()` tất định).

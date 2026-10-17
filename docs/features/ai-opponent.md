@@ -3,7 +3,7 @@
 > Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
 
 ## Mô tả
-Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; hiện chỉ tuyển được trinh sát và lính giáo (nơi tuyển lính bộ/cung/kỵ chưa chốt). AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
+Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; mọi loại quân tuyển tại pháo đài. AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
 
 ## Luật & thông số
 **Kinh tế — `runEnemyAI()` chạy mỗi 5 giây** (`aiTimer`, lượt đầu chạy ngay). Mỗi bước chỉ chi khi đủ tài nguyên; vị trí tìm bằng `findBuildSpot()`:
@@ -18,7 +18,7 @@
    - **Quân được gán** (`u.captureTarget`) đứng rải trong nửa bán kính vòng cờ (`flagStandSpot()`), tới khi vùng thuộc AI và không còn tiến độ dở của địch (gặp địch thì vẫn đánh).
    - **Thợ xây:** mỗi tiền đồn đang xây chưa có thợ thì được gán quân rảnh gần nhất (`u.buildTarget`).
 5. **Nâng cấp & phòng thủ:** sau 45 giây và ≥ 120 đá → nâng nông trại; ≥ 180 đá, ≥ 260 gỗ và còn vùng chưa có tiền đồn → `startOutpost()`; dưới 2 tháp và đủ giá → 35% cơ hội xây tháp cạnh pháo đài hoặc cạnh cờ của một vùng mình giữ.
-6. **Tuyển quân** (`aiBuy(type)`): bỏ qua loại trong `RECRUIT_SITE_PENDING`; cần đủ giá và lúa ròng sau khi thêm quân vẫn ≥ 0. Thứ tự thử: trinh sát (khi < 2), kỵ binh 14%, lính giáo 42%, cung thủ 60%, lính bộ, cuối cùng lính giáo — nên thực tế chỉ ra trinh sát và lính giáo.
+6. **Tuyển quân** (`aiBuy(type)`): cần đủ giá và lúa ròng sau khi thêm quân vẫn ≥ 0 — tính cả lúa nuôi của quân **đang trong hàng chờ xuất quân** (`queuedUpkeep`), vì chúng đã trả tiền và sẽ ăn khi ra sân. Thứ tự thử: trinh sát (khi < 2), kỵ binh 14%, lính giáo 42%, cung thủ 60%, lính bộ, cuối cùng lính giáo.
 7. Chưa đủ 2 pháo và đủ 100 đá → 25% cơ hội mở pháo thứ hai.
 
 AI không qua `buy()`/`applyAction()` nên không có log.
@@ -49,9 +49,11 @@ Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 
 ## Kiểm thử thủ công
 - [ ] Đầu trận AI xây 2 nông trại, ra 2 trinh sát, cử 2 quân tới cờ gần nhất đã khám phá và chiếm được.
-- [ ] AI không xây nhà lính; quân chỉ gồm trinh sát và lính giáo.
+- [ ] AI không xây nhà lính; vẫn tuyển đủ các loại quân.
+- Đã chạy thử 2026-10-17 (sau khi mở tuyển tại pháo đài): 8 phút AI một mình → 9 vùng, 2 trinh sát, 9 lính bộ, 1 cung thủ, lúa ròng +66/phút.
 - Đã chạy thử 2026-10-17 (yêu cầu 17/10): AI một mình ~6 phút: 6 vùng, 2 nông trại, 2 trinh sát + 8 lính giáo, không thiếu tiếp tế, không lỗi.
-- [ ] AI không rơi vào thiếu tiếp tế.
+- [ ] AI không rơi vào thiếu tiếp tế, kể cả khi sân tập kết kín và quân dồn vào hàng chờ.
+- Đã chạy thử 2026-10-17: 3 nông trại (biên lúa 60/phút), hàng chờ 60 lính giáo → 5 lượt AI không mua thêm; xoá hàng chờ → mua lại 5 quân.
 - [ ] AI không nhắm quân xanh đang trong sương mù của nó.
 
 ## Giới hạn / việc tồn đọng

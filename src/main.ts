@@ -144,9 +144,7 @@ const BUILDING_TYPES={
  tower:{name:'Tháp phòng thủ',button:'buildTower',cost:{wood:100,stone:200,gold:50},buildTime:25,hp:520,halfW:22,halfH:24,vision:200,where:'territory',gun:{range:190,damage:17,cooldown:1}}
 };
 const FARM_LEVELS=[null,{food:20},{food:30,cost:{wood:80,stone:40}},{food:45,cost:{wood:120,stone:80}}],FARM_UPGRADE_SECONDS=15;
-// The barracks, archery range and stable were removed (2026-10-17). Where infantry, archers and cavalry are recruited
-// is not decided yet, so they stay in specs but cannot be recruited until it is (docs/features/units.md).
-const RECRUIT_SITE_PENDING=new Set(['infantry','archer','cavalry']);
+// No military buildings (removed 2026-10-17): every unit type is recruited at the fortress and deploys in its muster yard.
 const HOME_TERRITORY_TILES=14;
 // Territory map: up to REGION_COUNT neutral regions plus the two home regions that contain the fortresses.
 // Each region has exactly one resource. The REGION_TYPES.length regions closest to each fortress (by walking distance)
@@ -347,7 +345,7 @@ function applySnapshot(packet){
  if(ended)$('overlay').classList.add('show');else $('overlay').classList.remove('show');
 }
 function revealTeamVision(team){
- if(!state)return;const arr=team===0?state.fogSeen:state.enemyFogSeen;if(!arr)return;
+ if(!state)return;const arr=team===0?state.fogSeen:state.enemyFogSeen;if(!arr)return;revealOwnedRegions(team,arr);
  const cols=MAP_TILES,rows=MAP_TILES,cw=W/cols,ch=H/rows;
  const sources=[...state.units.filter(u=>u.team===team&&u.hp>0).map(u=>({x:u.x,y:u.y,r:unitVisionRadius(u.type)})),...state.bases.filter(b=>b.team===team).map(b=>({x:b.x,y:b.y,r:175})),...state.buildings.filter(b=>b.team===team).map(b=>({x:b.x,y:b.y,r:buildingVision(b)}))];
  for(const source of sources){const x1=Math.max(0,Math.floor((source.x-source.r)/cw)),x2=Math.min(cols-1,Math.ceil((source.x+source.r)/cw)),y1=Math.max(0,Math.floor((source.y-source.r)/ch)),y2=Math.min(rows-1,Math.ceil((source.y+source.r)/ch));for(let gy=y1;gy<=y2;gy++)for(let gx=x1;gx<=x2;gx++){if(Math.hypot((gx+.5)*cw-source.x,(gy+.5)*ch-source.y)<=source.r)arr[gy*cols+gx]=1;}}
@@ -479,13 +477,24 @@ function processPendingSpawns(){
   if(pending.team===localTeam())addLog(`Đã xuất quân ${specs[pending.type].name} từ hàng chờ.`);
  }
 }
-function buy(type,team=localTeam()){
- if(ended||paused||!Object.hasOwn(specs,type))return;const s=specs[type];
- if(RECRUIT_SITE_PENDING.has(type)){if(team===localTeam())addLog(`Chưa tuyển được ${s.name}: nơi tuyển quân thay cho nhà lính đang chờ chốt.`);return;}
- if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length>=2){if(team===localTeam())addLog('Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.');return;}
- if(!canAfford(team,s.cost)){if(team===localTeam())addLog('Không đủ tài nguyên để tạo '+s.name+': thiếu '+missingText(team,s.cost)+'.');return;}
- spend(team,s.cost);const unit=spawn(team,type);if(team===localTeam()&&unit)addLog('Đã tạo '+s.name+' gần căn cứ.');updateHUD();
+// Why `team` cannot recruit `type` right now ('' when it can). The host runs it inside buy(); the guest runs it on its
+// snapshot before sending, so a refused purchase is explained on the guest's screen too (host logs only reach the host).
+function buyProblem(type,team){
+ if(!Object.hasOwn(specs,type))return 'Loại quân không hợp lệ.';
+ if(ended)return 'Trận đấu đã kết thúc.';
+ if(paused)return 'Trận đấu đang tạm dừng.';
+ const s=specs[type];
+ if(type==='scout'&&state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length>=2)return 'Mỗi phe chỉ được có tối đa 2 lính trinh sát cùng lúc.';
+ if(!canAfford(team,s.cost))return 'Không đủ tài nguyên để tạo '+s.name+': thiếu '+missingText(team,s.cost)+'.';
+ return '';
 }
+function buy(type,team=localTeam()){
+ const problem=buyProblem(type,team);
+ if(problem){if(team===localTeam()&&Object.hasOwn(specs,type))addLog(problem);return;}
+ const s=specs[type];spend(team,s.cost);const unit=spawn(team,type);if(team===localTeam()&&unit)addLog('Đã tạo '+s.name+' gần căn cứ.');updateHUD();
+}
+// Unit buttons: the guest checks locally first so it sees the reason; the host re-validates every purchase.
+function requestBuy(type){if(mode==='pvp'&&netRole==='guest'){const problem=buyProblem(type,localTeam());if(problem){addLog(problem);return;}}requestAction('buy',{unit:type});}
 function isTeamAreaExplored(team,x,y){
  const fog=team===0?state.fogSeen:state.enemyFogSeen;
  if(!fog||!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||x>=W||y>=H)return false;
@@ -624,14 +633,16 @@ function refreshRegionTint(){
  for(let i=0;i<regionMap.length;i++){const r=state.regions[regionMap[i]];const c=r&&colors[r.owner];if(!c)continue;img.data[i*4]=c[0];img.data[i*4+1]=c[1];img.data[i*4+2]=c[2];img.data[i*4+3]=34;}
  regionTintCtx.putImageData(img,0,0);
 }
-function drawTerritory(viewLeft,viewTop,viewRight,viewBottom){
- const T=TILE_SIZE,fog=localTeam()===0?state.fogSeen:state.enemyFogSeen;
+// layer 'under' (before units): tint plus the borders away from the fog edge, so borders never cover units.
+// layer 'over' (after drawFog): only border segments that touch the fog's soft edge (fogMask), which the veil would hide.
+function drawTerritory(viewLeft,viewTop,viewRight,viewBottom,layer='under'){
+ const T=TILE_SIZE,fog=localTeam()===0?state.fogSeen:state.enemyFogSeen,over=layer==='over';
  if(!regionMap||!showTerritory)return;
- refreshRegionTint();ctx.save();ctx.drawImage(regionTintCanvas,0,0,W,H);
+ ctx.save();if(!over){refreshRegionTint();ctx.drawImage(regionTintCanvas,0,0,W,H);}
  const x1=viewLeft/T-1,x2=viewRight/T+1,y1=viewTop/T-1,y2=viewBottom/T+1;
  // Widths are in screen pixels (divided by zoom) so borders stay equally thick at every zoom level.
  // A dark under-stroke keeps them readable on light grass and fields; neutral borders first, owned borders on top.
- const stroke=(edges,color,px)=>{ctx.beginPath();for(const e of edges){if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;ctx.moveTo(e[0]*T,e[1]*T);ctx.lineTo(e[2]*T,e[3]*T);}
+ const stroke=(edges,color,px)=>{ctx.beginPath();for(const e of edges){if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;if((fogMask[e[6]]||fogMask[e[7]])!==(over?1:0))continue;ctx.moveTo(e[0]*T,e[1]*T);ctx.lineTo(e[2]*T,e[3]*T);}
   ctx.strokeStyle='#0f1a1466';ctx.lineWidth=(px+2.5)/zoom;ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=px/zoom;ctx.stroke();};
  ctx.lineCap='round';ctx.lineJoin='round';stroke(regionEdges,TERRITORY_COLORS.neutral,TERRITORY_BORDER_PX.neutral);
  for(const r of state.regions)if(r.owner>=0)stroke(regionEdgesByRegion[r.id]||[],TERRITORY_COLORS[r.owner],TERRITORY_BORDER_PX.owned);
@@ -650,6 +661,10 @@ function hasBuilding(team,kind){return state.buildings.some(b=>b.team===team&&b.
 function regionLabel(r){return r.home!==null?'vùng nhà':'vùng '+RESOURCE_NAMES[r.resource];}
 function regionAt(x,y){if(!regionMap||!state?.regions)return null;const gx=Math.floor(x/TILE_SIZE),gy=Math.floor(y/TILE_SIZE);if(gx<0||gy<0||gx>=MAP_TILES||gy>=MAP_TILES)return null;return state.regions[regionMap[gy*MAP_TILES+gx]]||null;}
 function inOwnTerritory(team,x,y){const base=state.bases[team];if(base&&Math.hypot(x-base.x,y-base.y)<=HOME_TERRITORY_TILES*TILE_SIZE)return true;const r=regionAt(x,y);return !!r&&r.owner===team;}
+// A captured flag lights up its whole region: every tile of the region becomes explored for that team.
+function revealRegion(arr,regionId){if(!arr||!regionMap)return;for(let i=0;i<regionMap.length;i++)if(regionMap[i]===regionId)arr[i]=1;}
+// Reveal every flag region the team owns (the guest keeps its own fog, so it re-applies this on each snapshot).
+function revealOwnedRegions(team,arr){if(!arr||!regionMap||!state?.regions)return;const owned=new Set(state.regions.filter(r=>r.cp&&r.owner===team).map(r=>r.id));if(!owned.size)return;for(let i=0;i<regionMap.length;i++)if(owned.has(regionMap[i]))arr[i]=1;}
 function revealCircle(arr,x,y,r){const cell=W/MAP_TILES,x1=Math.max(0,Math.floor((x-r)/cell)),x2=Math.min(MAP_TILES-1,Math.ceil((x+r)/cell)),y1=Math.max(0,Math.floor((y-r)/cell)),y2=Math.min(MAP_TILES-1,Math.ceil((y+r)/cell));for(let gy=y1;gy<=y2;gy++)for(let gx=x1;gx<=x2;gx++){const dx=(gx+.5)*cell-x,dy=(gy+.5)*cell-y;if(dx*dx+dy*dy<=r*r)arr[gy*MAP_TILES+gx]=1;}}
 // Each side knows its own home territory from the start so it has room to build.
 function revealHomeTerritory(){if(!state)return;for(const b of state.bases)revealCircle(b.team===0?state.fogSeen:state.enemyFogSeen,b.x,b.y,HOME_TERRITORY_TILES*TILE_SIZE);}
@@ -768,7 +783,7 @@ function updateCaptures(dt){
   r.cap=Math.min(1,r.cap+step);if(r.cap<1)continue;
   r.cap=0;
   if(r.owner<0){
-   r.owner=team;r.capTeam=-1;r.stage2=-1;
+   r.owner=team;r.capTeam=-1;r.stage2=-1;revealRegion(team===0?state.fogSeen:state.enemyFogSeen,r.id);
    if(team===me)addLog(`Đã chiếm ${regionLabel(r)}: mỏ trong vùng bắt đầu sinh ${RESOURCE_NAMES[r.resource]}.`);
    else if(teamCanSee(me,r.cp.x,r.cp.y))addLog(`Đối phương đã chiếm ${regionLabel(r)}.`);
   }else{
@@ -838,8 +853,8 @@ function updateHUD(){
  $('unitCount').parentElement.querySelector('small').textContent=team===0?'🪖 Quân xanh':'🪖 Quân đỏ';if(spearmanCounter)spearmanCounter.parentElement.querySelector('small').textContent=team===0?'🗡️ Lính giáo xanh':'🗡️ Lính giáo đỏ';
  const home=state.bases.find(b=>b.team===team);$('turret').disabled=paused||ended||activeFortressGuns(home)>=2;
  for(const id of ['scout','infantry','archer','spearman','cavalry','attack','upgradeFarm','upgradeOutpost',...Object.values(BUILDING_TYPES).map(d=>d.button).filter(Boolean)])$(id).disabled=paused||ended;
- // Unit buttons show the missing building; the farm upgrade button shows the next level's price.
- for(const type of Object.keys(specs)){const locked=RECRUIT_SITE_PENDING.has(type);setText($(type).querySelector('span'),costText(specs[type].cost)+' · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút'+(locked?' · chờ chốt nơi tuyển':''));$(type).classList.toggle('locked',!!locked);}
+ // The farm upgrade button shows the next level's price.
+ for(const type of Object.keys(specs))setText($(type).querySelector('span'),costText(specs[type].cost)+' · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút');
  const farmTarget=upgradeTarget(team,'farm',selectedBuilding?.kind==='farm'&&selectedBuilding.team===team?selectedBuilding.id:null)||upgradeTarget(team,'farm',null);
  setText($('upgradeFarm').querySelector('span'),farmTarget?`lên cấp ${farmTarget.level+1}: ${costText(upgradeCost(farmTarget))} · ${FARM_LEVELS[farmTarget.level+1].food} lúa/phút`:'cấp 2: 80 gỗ · 40 đá · cấp 3: 120 gỗ · 80 đá');
  const owned=state.regions.filter(r=>r.owner===team),income={};
@@ -924,9 +939,11 @@ function runEnemyAI(){
   const anchors=[base,...state.regions.filter(r=>r.cp&&r.owner===team).map(r=>r.cp)];const a=anchors[Math.floor(Math.random()*anchors.length)];
   build('tower',a.x,a.y,a===base?T*5:50,a===base?T*12:180);
  }
- // 5. Units, never past what the farms can feed; infantry, archers and cavalry wait for a recruiting site (RECRUIT_SITE_PENDING).
+ // 5. Units, recruited at the fortress, never past what the farms can feed.
  const aiScouts=state.units.filter(u=>u.team===team&&u.type==='scout'&&u.hp>0).length+state.pendingSpawns.filter(u=>u.team===team&&u.type==='scout').length;
- const aiBuy=type=>{if(RECRUIT_SITE_PENDING.has(type))return false;if(!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-specs[type].upkeep<0)return false;spend(team,specs[type].cost);const unit=spawn(team,type,undefined,undefined,true,type==='scout'?'explore':'hold');if(unit&&type==='scout')unit.order='explore';return true;};
+ // Queued units are already paid for and will eat once they deploy, so their upkeep counts against the food margin.
+ const queuedUpkeep=state.pendingSpawns.filter(p=>p.team===team).reduce((t,p)=>t+specs[p.type].upkeep,0);
+ const aiBuy=type=>{if(!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-queuedUpkeep-specs[type].upkeep<0)return false;spend(team,specs[type].cost);const unit=spawn(team,type,undefined,undefined,true,type==='scout'?'explore':'hold');if(unit&&type==='scout')unit.order='explore';return true;};
  if(aiScouts<2&&aiBuy('scout')){}
  else if(Math.random()<.14&&aiBuy('cavalry')){}
  else if(Math.random()<.42&&aiBuy('spearman')){}
@@ -1439,26 +1456,37 @@ function drawFlag(r){
   ctx.restore();
  });
 }
-// Unexplored fog as a soft blue-grey veil (slightly see-through, unlike black void or brown rock): one alpha per tile,
-// blurred into a larger canvas so its edge fades over about two tiles. Rebuilt only when the explored area changes.
-const FOG_RGB=[30,40,60],FOG_ALPHA=212,FOG_BLUR_SCALE=4;
-const fogCanvas=document.createElement('canvas');fogCanvas.width=MAP_TILES;fogCanvas.height=MAP_TILES;
-const fogCtx=fogCanvas.getContext('2d'),fogImage=fogCtx.createImageData(MAP_TILES,MAP_TILES);
-const fogSoftCanvas=document.createElement('canvas');fogSoftCanvas.width=fogSoftCanvas.height=MAP_TILES*FOG_BLUR_SCALE;const fogSoftCtx=fogSoftCanvas.getContext('2d');
+/// Unexplored fog is a fully opaque blue-grey veil (nothing of the terrain shows through, and it reads differently from
+// black void, brown rock and teal water). The soft edge lies entirely on the explored side: explored tiles within
+// FOG_EDGE_TILES of unexplored ground are fogged before the blur, so every unexplored tile stays (almost) fully covered.
+// The tile mask sits inside an opaque FOG_PAD-tile border so the blur does not thin the veil along the map edge.
+// Rebuilt only when the explored area changes (at most 5 times a second).
+const FOG_RGB=[30,40,60],FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,FOG_PAD=4;
+const fogCanvas=document.createElement('canvas');fogCanvas.width=fogCanvas.height=MAP_TILES+FOG_PAD*2;
+const fogCtx=fogCanvas.getContext('2d'),fogImage=fogCtx.createImageData(MAP_TILES,MAP_TILES),fogMask=new Uint8Array(MAP_TILES*MAP_TILES);
+const fogSoftCanvas=document.createElement('canvas');fogSoftCanvas.width=fogSoftCanvas.height=fogCanvas.width*FOG_BLUR_SCALE;const fogSoftCtx=fogSoftCanvas.getContext('2d');
 for(let i=0;i<MAP_TILES*MAP_TILES;i++){fogImage.data[i*4]=FOG_RGB[0];fogImage.data[i*4+1]=FOG_RGB[1];fogImage.data[i*4+2]=FOG_RGB[2];}
 let fogKey=-1,fogArray=null,fogBuiltAt=0;
 function drawFog(fog){
  let seen=0;for(let i=0;i<fog.length;i++)seen+=fog[i];
- const now=performance.now();
+ const now=performance.now(),N=MAP_TILES,E=FOG_EDGE_TILES;
  if((seen!==fogKey||fog!==fogArray)&&(now-fogBuiltAt>200||fog!==fogArray)){
   fogKey=seen;fogArray=fog;fogBuiltAt=now;
-  for(let i=0;i<fog.length;i++)fogImage.data[i*4+3]=fog[i]?0:FOG_ALPHA;
-  fogCtx.putImageData(fogImage,0,0);
+  // fogMask = 1 where the tile is unexplored or within E tiles of an unexplored tile.
+  fogMask.fill(0);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+   if(fog[y*N+x])continue;
+   for(let dy=-E;dy<=E;dy++){const yy=y+dy;if(yy<0||yy>=N)continue;for(let dx=-E;dx<=E;dx++){const xx=x+dx;if(xx>=0&&xx<N)fogMask[yy*N+xx]=1;}}
+  }
+  for(let i=0;i<fogMask.length;i++)fogImage.data[i*4+3]=fogMask[i]?255:0;
+  fogCtx.fillStyle=`rgb(${FOG_RGB.join(',')})`;fogCtx.fillRect(0,0,fogCanvas.width,fogCanvas.height);
+  fogCtx.putImageData(fogImage,FOG_PAD,FOG_PAD);
   const size=fogSoftCanvas.width;
-  fogSoftCtx.clearRect(0,0,size,size);fogSoftCtx.imageSmoothingEnabled=true;fogSoftCtx.filter=`blur(${FOG_BLUR_SCALE*1.5}px)`;
+  fogSoftCtx.clearRect(0,0,size,size);fogSoftCtx.imageSmoothingEnabled=true;fogSoftCtx.filter=`blur(${FOG_BLUR_SCALE}px)`;
   fogSoftCtx.drawImage(fogCanvas,0,0,size,size);fogSoftCtx.filter='none';
  }
- ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(fogSoftCanvas,0,0,W,H);ctx.restore();
+ const s=FOG_BLUR_SCALE;
+ ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(fogSoftCanvas,FOG_PAD*s,FOG_PAD*s,N*s,N*s,0,0,W,H);ctx.restore();
 }
 function drawTerrainDetail(){
  const cols=MAP_TILES,rows=MAP_TILES;
@@ -1511,7 +1539,8 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  ctx.globalAlpha=.08;ctx.drawImage(terrainCanvas,0,0,W,H);ctx.globalAlpha=1;
  drawTerrainDetail();
  // Main road crossing meadow and ford, about 2–3 tiles wide.
- ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+ // Roads start off-map; clip them to the world so their ends do not poke out past the fog into the margin.
+ ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();ctx.lineCap='round';ctx.lineJoin='round';
  ctx.beginPath();ctx.moveTo(-80,H*.57);ctx.bezierCurveTo(W*.12,H*.52,W*.19,H*.67,W*.32,H*.58);ctx.bezierCurveTo(W*.43,H*.50,W*.49,H*.51,W*.57,H*.57);ctx.bezierCurveTo(W*.72,H*.67,W*.83,H*.47,W+80,H*.52);
  ctx.strokeStyle='#765f3d55';ctx.lineWidth=83;ctx.stroke();ctx.strokeStyle='#d3bd82';ctx.lineWidth=100;ctx.stroke();ctx.strokeStyle='#e4d29d';ctx.lineWidth=80;ctx.stroke();
  ctx.globalAlpha=.38;ctx.setLineDash([12,15]);ctx.strokeStyle='#a98d5a';ctx.lineWidth=2.5;ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.restore();
@@ -1559,6 +1588,7 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const e of state.effects){drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
  drawFog(localTeam()===0?state.fogSeen:state.enemyFogSeen);
+ drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');
  // Keep placement feedback readable even when the cursor crosses unexplored fog.
  if(placement)drawBuilding({kind:placement.kind,x:placement.x,y:placement.y,team:localTeam(),previewValid:placement.valid},true);
  // Hide enemy forces and enemy structures when their location is not currently visible.
@@ -1583,7 +1613,7 @@ for(const type of Object.keys(specs))$(type).querySelector('span').textContent=c
 for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).querySelector('span').textContent=costText(def.cost)+' · '+def.buildTime+'s'+(kind==='farm'?' · +'+FARM_LEVELS[1].food+' lúa/phút':kind==='tower'?' · trong lãnh thổ':'');
 $('upgradeOutpost').querySelector('span').textContent=costText(BUILDING_TYPES.outpost.cost)+' · '+BUILDING_TYPES.outpost.buildTime+'s · cạnh cờ đã chiếm, có súng';
 $('turret').querySelector('span').textContent=costText(FORTRESS_GUN_COST)+' · tích hợp pháo thứ hai';
-$('scout').onclick=()=>requestAction('buy',{unit:'scout'});$('infantry').onclick=()=>requestAction('buy',{unit:'infantry'});$('archer').onclick=()=>requestAction('buy',{unit:'archer'});$('spearman').onclick=()=>requestAction('buy',{unit:'spearman'});$('cavalry').onclick=()=>requestAction('buy',{unit:'cavalry'});for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).onclick=()=>beginPlacement(kind);$('toggleTerritory').onclick=()=>setShowTerritory(!showTerritory);$('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('upgradeOutpost').onclick=()=>requestAction('outpost',{regionId:selectedFlag});$('turret').onclick=()=>requestAction('turret');$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
+for(const type of Object.keys(specs))$(type).onclick=()=>requestBuy(type);for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).onclick=()=>beginPlacement(kind);$('toggleTerritory').onclick=()=>setShowTerritory(!showTerritory);$('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});$('upgradeOutpost').onclick=()=>requestAction('outpost',{regionId:selectedFlag});$('turret').onclick=()=>requestAction('turret');$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
 $('fullscreen').onclick=async()=>{const app=$('gameApp');try{if(document.fullscreenElement){await document.exitFullscreen();}else{await app.requestFullscreen();}}catch{addLog('Trình duyệt không cho phép bật toàn màn hình.');}};
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').innerHTML=document.fullscreenElement?'⤢ Thoát toàn màn hình<span>Thu nhỏ game</span>':'⛶ Toàn màn hình<span>Mở rộng game</span>';});
 function setSidebarCollapsed(collapsed){gameApp.classList.toggle('panel-collapsed',collapsed);toggleSideHud.textContent=collapsed?'▢':'▣';toggleSideHud.setAttribute('aria-label',collapsed?'Mở bảng điều khiển':'Thu gọn bảng điều khiển');setTimeout(()=>syncWorldMetrics(),0);}

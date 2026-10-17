@@ -7,7 +7,7 @@ Bản đồ được chia thành khoảng 16–20 **vùng lãnh thổ** trung l�
 
 - **Vùng nhà:** vùng chứa pháo đài. Vùng này thuộc phe đó từ đầu trận, luôn là vùng gỗ, không có cờ và không bị chiếm.
 - **Gần mỗi nhà luôn có đủ 4 loại vùng.** Trong 4 vùng gần mỗi nhà nhất, mỗi loại tài nguyên có ít nhất một vùng; các vùng còn lại được gán loại ngẫu nhiên.
-- **Chiếm cờ:** không tốn tài nguyên; đưa quân **chiến đấu** vào vòng quanh cờ (trinh sát không chiếm được). Càng nhiều quân thì chiếm càng nhanh, nhưng có giới hạn. Nếu hai phe cùng đứng trong vòng, tiến độ tạm dừng. Bỏ trống cờ 5 giây thì tiến độ giảm dần về 0, nhưng cờ không tự đổi chủ. Chiếm xong thì cờ đổi màu, vùng và mỏ trong vùng chuyển sang phe mình.
+- **Chiếm cờ:** không tốn tài nguyên; đưa quân **chiến đấu** vào vòng quanh cờ (trinh sát không chiếm được). Càng nhiều quân thì chiếm càng nhanh, nhưng có giới hạn. Nếu hai phe cùng đứng trong vòng, tiến độ tạm dừng. Bỏ trống cờ 5 giây thì tiến độ giảm dần về 0, nhưng cờ không tự đổi chủ. Chiếm xong thì cờ đổi màu, vùng và mỏ trong vùng chuyển sang phe mình, và **cả vùng sáng lên** (hết sương mù với phe chiếm).
 - **Cờ của địch** chiếm qua 2 giai đoạn: giai đoạn 1 hạ cờ về trung lập, giai đoạn 2 chiếm. Nhãn và thanh tiến độ ghi rõ đang ở giai đoạn nào.
 - **Vùng lúa:** mỏ lúa sinh 15 lúa/phút, và nông trại của chủ vùng xây trong vùng đó sinh thêm 25%.
 - **Tiền đồn** xây cạnh cờ đã chiếm. Khi tiền đồn còn đứng, đối phương không chiếm được cờ đó; xem [buildings.md](buildings.md).
@@ -52,7 +52,7 @@ Kết quả chạy thử 2026-10-17 với 40 bản đồ:
 | Thời gian | 60 s | ~40 s | ~23 s | ~15 s |
 
 - Chỉ một phe trong vòng:
-  - **Cờ trung lập:** `r.cap` tăng tới 1, khi đó `r.owner = phe đó`.
+  - **Cờ trung lập:** `r.cap` tăng tới 1, khi đó `r.owner = phe đó` và `revealRegion()` đánh dấu mọi ô của vùng là đã khám phá cho phe đó. Guest giữ sương mù riêng nên mỗi snapshot gọi `revealOwnedRegions()` (trong `revealTeamVision()`) cho các vùng có cờ mình đang giữ. Chỉ là "đã khám phá": quân địch trong vùng vẫn chỉ hiện khi đang trong tầm nhìn. Mất vùng thì phần đã khám phá vẫn giữ.
   - **Cờ của địch:** giai đoạn 1: `r.cap` tăng tới 1 thì cờ **về trung lập** (`owner = -1`, `r.stage2 = phe đó`). Giai đoạn 2: chiếm tiếp từ 0. Tổng thời gian gấp đôi. `captureStage(r)` trả về 1, 2, hoặc 0 nếu là cờ trung lập thường.
   - **Phe khác đang có tiến độ dở:** tiến độ của họ giảm về 0 trước, rồi mới tới lượt phe đang đứng.
   - **Chủ cờ đứng ở cờ của mình:** xoá tiến độ dở của đối phương với cùng tốc độ.
@@ -74,7 +74,7 @@ Kết quả chạy thử 2026-10-17 với 40 bản đồ:
 - **Lớp lãnh thổ (`drawTerritory()`):**
   - Màu phe tô mờ trên vùng sở hữu (`regionTintCanvas`).
   - Ranh giới có độ dày tính theo **pixel màn hình**, nên không mỏng đi khi thu nhỏ: trung lập 3 px màu kem, vùng có chủ 5 px màu phe (`TERRITORY_BORDER_PX`, `TERRITORY_COLORS`). Bên dưới có nét tối rộng hơn 2,5 px để nổi trên nền sáng.
-  - Chỉ vẽ cạnh mà một trong hai ô kề đã được khám phá. Lớp này vẽ trước quân và công trình nên không che chúng.
+  - Chỉ vẽ cạnh mà một trong hai ô kề đã được khám phá. `drawTerritory(…, 'under')` vẽ trước quân và công trình nên không che chúng; riêng các đoạn viền chạm mép mềm của sương mù (`fogMask`) được vẽ ở lượt `'over'` sau `drawFog()`, để viền vùng vừa chiếm không bị lớp sương mù che mất.
 - **HUD "🚩 Lãnh thổ":** số vùng đang giữ và tổng thu từ mỏ mỗi phút (có cả lúa).
 
 ## Quyết định đã chốt (2026-10-17, trả lời mục 8 của tài liệu 16/10)
@@ -95,6 +95,7 @@ Chưa chốt, đang làm tạm:
 - [src/main.ts](../../src/main.ts):
   - Khối "Territory map": `regionMap` (Int16Array, **biến cấp module, không nằm trong `state`**), `buildRegionMap()`, `ensureRegionMap()`, `regionSeedKey()`, `walkDistances()`, `landPatchSizes()`, `generateRegions()`, `refreshRegionTint()`, `drawTerritory()`, `setShowTerritory()`; `regionEdges`, `regionEdgesByRegion`.
   - Trong `fresh()`: vòng chọn lại vị trí nhà; `baseSiteClear()`.
+- Sáng vùng khi chiếm: `revealRegion()`, `revealOwnedRegions()`.
 - Chiếm cờ: `updateCaptures()`, `captureSeconds()`, `flagCapturers()`, `captureStage()`, `regionOutpost()`. Thưởng vùng lúa: `farmFoodPerMinute()`.
 - Vẽ: `drawFlag()`, `flagScale()`, `flagHit()` (vùng nhấp chọn cờ).
 - Hằng số:
@@ -131,7 +132,8 @@ Chưa chốt, đang làm tạm:
 - [ ] Rút hết quân → 5 giây đầu giữ nguyên, sau đó thanh xám "ĐANG GIẢM" về 0, cờ không đổi chủ.
 - [ ] Chiếm cờ địch → "GĐ 1/2 · HẠ CỜ", về trung lập, rồi "GĐ 2/2 · CHIẾM"; thanh có vạch chia giữa.
 - [ ] Nông trại trong vùng lúa mình giữ → nhấp vào thấy 25 lúa/phút (cấp 1) "có thưởng vùng lúa". Khi địch có tiền đồn ở vùng đó thì không chiếm được, phải phá tiền đồn trước.
-- [ ] Chiếm xong → cờ đổi màu, viền vùng đổi màu, mỏ đổi "XANH", HUD lãnh thổ tăng.
+- [ ] Chiếm xong → cờ đổi màu, viền vùng đổi màu, mỏ đổi "XANH", HUD lãnh thổ tăng, cả vùng hết sương mù và viền hiện rõ.
+- Đã chạy thử 2026-10-17: chiếm vùng lúa 2.257 ô → phe xanh khám phá đủ 2.257 ô (trước đó 0), sương mù phe đỏ không đổi; PvP: guest chiếm vùng 673 ô → sương mù guest mở đủ 673 ô; ảnh chụp thấy cả vùng sáng và viền xanh trên mép sương mù.
 - [ ] Nhấp cờ → vòng nét đứt và log thông tin. Viền vùng dày và rõ ở mọi mức zoom. Phím T ẩn/hiện lớp lãnh thổ.
 - Đã chạy thử lại 2026-10-17 sau khi chốt mục 8: 1/5/10/15 lính giáo mất 60/22,9/15,1/15,1 giây; 5 kỵ binh hoặc 5 cung thủ cũng 22,9 giây; 3 trinh sát trong 20 giây không chiếm được (0%); trinh sát địch không gây tranh chấp; quân thường gây tranh chấp (giữ 33%); rời cờ: sau 4,9 giây vẫn 53%, sau 15 giây còn 36%, về 0 không đổi chủ; cờ địch: hạ cờ ở giây 23, chiếm ở giây 46, nhãn đúng giai đoạn; bỏ dở giai đoạn 2 thì cờ trung lập; mỏ lúa 15/phút; nông trại trong vùng lúa của mình 25, ngoài vùng hoặc vùng chưa chiếm 20; AI không cử trinh sát đi chiếm. Không lỗi JavaScript.
 - Đã chạy thử 2026-10-17 (luật tạm trước khi chốt, Chrome headless + debugger):

@@ -16,14 +16,14 @@ Bảng `specs` (đơn vị: HP, sát thương/đòn, tầm & tốc độ theo đ
 | `spearman` | Lính giáo | 145 | 18 | 26 | 38 | 0.82 | 45 lúa, 20 gỗ | 1 | 11 | 150 |
 | `cavalry` | Lính kỵ binh | 210 | 24 | 27 | 58 | 0.9 | 80 lúa, 50 vàng | 3 | 13 | 105 |
 
-`cost` là object `{food, wood, stone, gold}`; nhãn giá trên nút được sinh từ `specs` bằng `costText()` nên luôn khớp. Nhãn nút có thêm "nuôi X lúa/phút". Hết lúa nuôi quân thì quân bị chậm, xem "Lúa duy trì & thiếu tiếp tế" trong [economy.md](economy.md). Trinh sát và lính giáo tuyển ngay tại pháo đài. **Lính bộ, cung thủ, kỵ binh tạm chưa tuyển được:** ba công trình nhà lính bộ, nhà lính cung, chuồng ngựa đã bỏ ("Yêu cầu sửa game RTS 1vs1 — 17/10/2026") và nơi tuyển thay thế **chưa chốt** (có thể là nhà chính, nhưng chưa được xác nhận nên chưa làm). Ba loại quân vẫn nằm đủ trong `specs` (chỉ số, giá, hình); `RECRUIT_SITE_PENDING` chặn việc tuyển. Nút của chúng mờ đi (class `locked`) và ghi "chờ chốt nơi tuyển".
+`cost` là object `{food, wood, stone, gold}`; nhãn giá trên nút được sinh từ `specs` bằng `costText()` nên luôn khớp. Nhãn nút có thêm "nuôi X lúa/phút". Hết lúa nuôi quân thì quân bị chậm, xem "Lúa duy trì & thiếu tiếp tế" trong [economy.md](economy.md). **Mọi loại quân tuyển tại pháo đài** và xuất hiện ở sân tập kết, chỉ cần đủ tài nguyên (không còn nhà lính, không khoá thời gian). Ba nhà lính đã bỏ ngày 2026-10-17; cùng ngày người dùng chốt cho lính bộ, cung thủ, kỵ binh tuyển thẳng tại nhà chính như trinh sát và lính giáo.
 
 (Tầm nhìn lấy từ `unitVisionRadius()`; AI dùng số khác, xem [fog-of-war.md](fog-of-war.md).)
 
-Quy tắc mua (`buy()`):
+Quy tắc mua: mọi điều kiện nằm trong `buyProblem(type, team)` (trả về lý do, hoặc chuỗi rỗng nếu mua được). `buy()` gọi hàm này rồi mới trừ tiền. Nút quân gọi `requestBuy(type)`: ở guest PvP, hàm này kiểm tra trước bằng `buyProblem()` trên snapshot, báo lý do ngay trên màn hình guest và không gửi lệnh; host vẫn kiểm tra lại mọi lệnh mua.
 - Không mua khi `ended` hoặc `paused`, hoặc `type` không phải khoá riêng của `specs` (`Object.hasOwn`).
 - Tối đa **2 trinh sát** mỗi phe (tính cả quân trong hàng chờ).
-- Loại quân trong `RECRUIT_SITE_PENDING` (lính bộ, cung thủ, kỵ binh) → log "Chưa tuyển được …: nơi tuyển quân thay cho nhà lính đang chờ chốt.", không trừ tài nguyên. Không có khoá thời gian đầu trận.
+- Không có khoá thời gian đầu trận và không cần công trình nào.
 - Không đủ tài nguyên (`canAfford()`) → log "thiếu …" (`missingText()`), không trừ.
 - Trừ tiền **trước**, rồi `spawn()`. Nếu sân kín, quân vào `state.pendingSpawns` (tiền đã trừ).
 
@@ -38,7 +38,7 @@ Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('ho
 Hướng quay `facing` (`'down'|'left'|'up'|'right'`, mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy)` (trục lớn hơn thắng). Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
 
 ## Code liên quan
-- [src/main.ts](../../src/main.ts): `specs`, `buy()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
+- [src/main.ts](../../src/main.ts): `specs`, `buyProblem()`, `buy()`, `requestBuy()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
 - Hình ảnh: `*SpriteSheet` và `*Clips` (hàng 0–1 xanh idle/walk, hàng 2–3 đỏ), `drawUnit()`, `unitTargetHeight()`, `unitHitRadius()`.
 - Nút: `#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry` trong [index.html](../../index.html) → `requestAction('buy',{unit})`.
 
@@ -51,18 +51,19 @@ Hướng quay `facing` (`'down'|'left'|'up'|'right'`, mặc định `down`): tí
 - [rendering.md](rendering.md): spritesheet.
 
 ## Multiplayer
-Guest gửi `buy` với `{unit}`; host gọi `buy(unit, 1)`.
+Guest gửi `buy` với `{unit}` (qua `requestBuy()`, sau khi tự kiểm tra `buyProblem()` để hiện lý do từ chối); host gọi `buy(unit, 1)` và kiểm tra lại. Snapshot có thể trễ tới 0,18 giây, nên hiếm khi guest gửi được một lệnh mà host vẫn từ chối; khi đó guest chỉ thấy là không có quân mới.
 
 ## Kiểm thử thủ công
-- [ ] Mua trinh sát và lính giáo → tiền trừ đúng bảng. Bấm lính bộ/cung thủ/kỵ binh → log "chờ chốt", không ra quân, không trừ tiền.
-- Đã chạy thử 2026-10-17: kho 999 mọi tài nguyên, bấm 3 loại bị khoá → 0 quân, kho không đổi; trinh sát và lính giáo ra quân ở giây 0.
+- [ ] Mua đủ 5 loại ngay giây 0 → tiền trừ đúng bảng.
+- Đã chạy thử 2026-10-17 (sau khi mở tuyển tại pháo đài): bấm cả 5 nút ở giây 0 → ra đủ 5 quân, trừ 250 lúa, 50 gỗ, 70 vàng (khớp bảng); PvP guest mua lính bộ được; AI tự tuyển lính bộ và cung thủ.
+- [ ] PvP: guest bấm trinh sát thứ 3 / lính giáo khi thiếu lúa → log lý do hiện ở guest, host không tạo quân.
+- Đã chạy thử 2026-10-17 (2 Chrome headless): `buyProblem()` trả đúng lý do cho loại quân lạ (`'constructor'`), trinh sát thứ 3 (tính cả 2 trinh sát trong hàng chờ), thiếu lúa; guest thấy lý do trên màn hình, host không tạo quân; đủ tài nguyên thì guest mua lính giáo, trừ 45 lúa.
 - [ ] Mua trinh sát thứ 3 → bị từ chối.
 - [ ] Mua liên tục cho kín sân → quân xuất ra chỗ trống quanh sân; khi cả vùng quanh sân cũng kín → log "Sân tập kết đã kín", HUD hiện "Chờ N"; dời quân đi → quân trong hàng chờ xuất hiện.
 - Đã chạy thử 2026-10-16: chặn toàn bộ sân tập kết bằng đá → lính giáo vẫn xuất hiện cách pháo đài 5,3 ô, không vào hàng chờ.
 - [ ] Lính giáo: ra lệnh đi lên/xuống/trái/phải → hình quay đúng hướng và có hoạt ảnh bước; dừng lại vẫn giữ hướng; đứng cạnh địch thì quay về phía địch. Ở PvP, guest thấy hướng quay giống host.
-- [ ] Thêm loại quân mới: cập nhật `specs`, `RECRUIT_SITE_PENDING` (nếu chưa có nơi tuyển), `unitVisionRadius()`, `unitTargetHeight()`, `drawUnit()`, `updateHUD()`, nút trong `index.html`, AI trong `update()`, và file này.
+- [ ] Thêm loại quân mới: cập nhật `specs`, `unitVisionRadius()`, `unitTargetHeight()`, `drawUnit()`, `updateHUD()`, nút trong `index.html`, AI trong `update()`, và file này.
 
 ## Giới hạn / việc tồn đọng
-- **Chờ chốt:** nơi tuyển lính bộ, cung thủ, kỵ binh sau khi bỏ nhà lính (chuyển về nhà chính hay cơ chế khác). Khi chốt: bỏ loại quân khỏi `RECRUIT_SITE_PENDING` và thêm điều kiện mới trong `buy()` / `aiBuy()`.
 - Quân di chuyển không kiểm tra nước/đá; chỉ lúc xuất quân mới kiểm tra.
 - Lính thường, cung thủ, trinh sát, kỵ binh chưa có sprite 4 hướng (spritesheet chỉ có hướng xuống).

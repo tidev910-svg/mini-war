@@ -433,4 +433,3 @@ canvas{touch-action:none}
 .stat small.supply-warn{color:#f0b35a}
 .stat small.supply-bad{color:#ff6b6b;font-weight:700}
 /* Unit buttons whose required building is not finished yet (resource-system.md, phase 5). */
-.controls .btn.locked{opacity:.62}
