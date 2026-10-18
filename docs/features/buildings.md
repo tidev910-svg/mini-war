@@ -16,15 +16,15 @@ Cột cờ (có sẵn, không phải công trình) và vùng lãnh thổ: xem [t
 **Các loại công trình** (`BUILDING_TYPES`):
 | `kind` | Tên | Giá | Thời gian xây | Máu | Nửa kích thước (`halfW×halfH`) | Tầm nhìn | Được đặt ở (`where`) | Tác dụng |
 |---|---|---|---:|---:|---|---:|---|---|
-| `farm` | Nông trại | 100 gỗ | 3s | 180 | 31×34 | 90 | `explored` | +60/90/135 lúa/phút theo cấp (V2) |
-| `outpost` | Tiền đồn | 200 gỗ, 100 đá | 40s, **cần quân đứng cạnh** | 1.500 | 26×24 | 14 ô (`visionTiles`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 10, 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
-| `tower` | Tháp phòng thủ | 100 gỗ, 200 đá, 50 vàng | 25s | 520 | 22×24 | 200 | `territory` | Súng: tầm 190, ST 17, 1 phát/giây |
+| `farm` | Nông trại | 120 gỗ | 3s | 180 | 31×34 | 90 | `explored` | +35/50/70 lúa/phút theo cấp (V3.1) |
+| `outpost` | Tiền đồn | 150 gỗ, 80 đá | 35s, **cần quân đứng cạnh** | 1.500 | 26×24 | 14 ô (`visionTiles`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 10, 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
+| `tower` | Tháp phòng thủ | 120 gỗ, 120 đá, 30 vàng | 30s | 520 | 22×24 | 200 | `territory` | Súng: tầm 190, ST 17, 1 phát/giây |
 
 **Nâng cấp**
 | Nâng cấp | Giá | Thời gian | Kết quả |
 |---|---|---:|---|
-| Nông trại cấp 2 | 80 gỗ, 40 đá | 15s (`FARM_UPGRADE_SECONDS`) | 30 lúa/phút |
-| Nông trại cấp 3 | 120 gỗ, 80 đá | 15s | 45 lúa/phút |
+| Nông trại cấp 2 | 100 gỗ, 40 đá | 15s (`FARM_UPGRADE_SECONDS`) | 50 lúa/phút |
+| Nông trại cấp 3 | 160 gỗ, 80 đá | 15s | 70 lúa/phút |
 Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh tiến độ màu xanh nhạt.
 
 **Tuyển quân:** không còn công trình mở khoá quân; mọi loại quân tuyển tại pháo đài (xem [units.md](units.md)).

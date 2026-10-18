@@ -14,7 +14,7 @@ Nhịp độ dự kiến (định hướng, không phải luật): 0–5 phút p
 | Vị trí pháo đài | Cả hai ngẫu nhiên ở bất kỳ đâu, cách mép bản đồ ≥ 420, cách nhau ≥ 55% bề ngang bản đồ (`BASE_MIN_SEPARATION`). `base.dir` = ±1 hướng về pháo đài địch theo trục ngang (sân tập kết, pháo phía trước, khung camera ban đầu) | `fresh()`, `baseDir()` |
 | Chọn lại vị trí | Bỏ vị trí mà pháo đài/sân tập kết < 85% ô đi được; chọn lại tới khi bản đồ đủ công bằng (≤ 15 bản đồ) | `fresh()`, `baseSiteClear()`, [territory.md](territory.md) |
 | Nhãn giai đoạn | < 5 phút "phát triển kinh tế", < 10 phút "mở rộng", sau đó "giao tranh" | `updateMatchClockHUD()` → `#phaseHint` |
-| Tài nguyên ban đầu | 150 lúa, 400 gỗ, 50 đá, 50 vàng mỗi phe | `STARTING_RESOURCES` |
+| Tài nguyên ban đầu | 200 lúa, 250 gỗ, 75 đá, 75 vàng mỗi phe (V3.1) | `STARTING_RESOURCES` |
 | Nhật ký giữ tối đa | 12 dòng | `addLog()` |
 
 Khoá xuất quân 120 giây (`DEPLOYMENT_LOCK_SECONDS`, `isDeploymentLocked()`, `constrainToBaseDeploymentZone()`…) **đã bỏ hẳn** ngày 2026-10-17 theo tài liệu "Tổng kết yêu cầu sửa game RTS 1vs1" (16/10/2026).

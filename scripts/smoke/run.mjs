@@ -240,15 +240,15 @@ if (solo.length) {
     }
 
     if (want('economy')) {
-      const t = checker('economy: thu nhập pháo đài và mỏ (V2)');
+      const t = checker('economy: thu nhập pháo đài và mỏ (V3.1)');
       const r = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources=[{food:0,wood:0,stone:0,gold:0},{food:0,wood:0,stone:0,gold:0}];
         const rates={};for(const m of state.mines)(rates[m.resource]??=new Set()).add(Math.round(m.income*60));for(const k in rates)rates[k]=[...rates[k]].join('/');
         for(let i=0;i<120*20;i++)update(.05);
         return {res:state.resources.map(x=>Object.fromEntries(Object.entries(x).map(([k,v])=>[k,Math.round(v*100)/100]))),rates,food:foodPerMinute(0)};`);
-      const want0 = { food: 160, wood: 100, stone: 30, gold: 40 };
-      t.ok(r.res.every(x => Object.entries(want0).every(([k, v]) => Math.abs(x[k] - v) < 0.05)), '120 giây không lãnh thổ → 160 lúa / 100 gỗ / 30 đá / 40 vàng mỗi phe (80/50/15/20 mỗi phút)', r.res);
-      t.ok(r.rates.food === '100' && r.rates.wood === '100' && r.rates.stone === '40' && r.rates.gold === '70', 'mọi vùng cùng loại sinh đúng 100 lúa / 100 gỗ / 40 đá / 70 vàng mỗi phút', r.rates);
-      t.ok(r.food === 80, 'lúa/phút của pháo đài = 80', r.food);
+      const want0 = { food: 80, wood: 60, stone: 20, gold: 20 };
+      t.ok(r.res.every(x => Object.entries(want0).every(([k, v]) => Math.abs(x[k] - v) < 0.05)), '120 giây không lãnh thổ → 80 lúa / 60 gỗ / 20 đá / 20 vàng mỗi phe (40/30/10/10 mỗi phút)', r.res);
+      t.ok(r.rates.food === '45' && r.rates.wood === '45' && r.rates.stone === '35' && r.rates.gold === '35', 'mọi vùng cùng loại sinh đúng 45 lúa / 45 gỗ / 35 đá / 35 vàng mỗi phút', r.rates);
+      t.ok(r.food === 40, 'lúa/phút của pháo đài = 40', r.food);
       results.push(t.report());
     }
 
@@ -264,7 +264,7 @@ if (solo.length) {
         state.trainQueue=[];state.resources[0]={food:0,wood:100,stone:100,gold:0};const poor=buyQueueLane(0),poorRes={...state.resources[0]};
         state.resources[0]={food:0,wood:500,stone:500,gold:0};const ok=buyQueueLane(0),paid={...state.resources[0]};step(14.9);const lanesBefore=lanesOf(0);step(.2);
         return {cost,at49,at50,times,full,msg,scoutMsg,poor,poorRes,ok,paid,lanesBefore,lanesAfter:lanesOf(0)};`);
-      t.ok(r.cost.food === 45 && r.cost.gold === 0, 'lính giá 45 lúa, không vàng', r.cost);
+      t.ok(r.cost.food === 40 && r.cost.gold === 0, 'lính giá 40 lúa, không vàng', r.cost);
       t.ok(r.at49 === 0 && r.at50 === 1, 'lính ra quân đúng giây 5', r);
       t.ok(r.times[0] === 6 && r.times[1] === 8, 'lính giáo + cung thủ luyện song song, ra ở giây 6 và 8', r.times);
       t.ok(r.full === 8 && /đầy/.test(r.msg), '4 hàng đợi + 4 chỗ chờ = tối đa 8', r);

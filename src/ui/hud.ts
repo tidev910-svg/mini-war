@@ -69,7 +69,7 @@ export function updateHUD(){
  updateLaneBar(team);
  setText($('farm').querySelector('span'),`${costText(BUILDING_TYPES.farm.cost)} · +${FARM_LEVELS[1].food} lúa/phút`);
  const farmTarget=upgradeTarget(team,'farm',selectedBuilding?.kind==='farm'&&selectedBuilding.team===team?selectedBuilding.id:null)||upgradeTarget(team,'farm',null);
- setText($('upgradeFarm').querySelector('span'),farmTarget?`lên cấp ${farmTarget.level+1}: ${costText(upgradeCost(farmTarget))} · ${FARM_LEVELS[farmTarget.level+1].food} lúa/phút`:'cấp 2: 80 gỗ · 40 đá · cấp 3: 120 gỗ · 80 đá');
+ setText($('upgradeFarm').querySelector('span'),farmTarget?`lên cấp ${farmTarget.level+1}: ${costText(upgradeCost(farmTarget))} · ${FARM_LEVELS[farmTarget.level+1].food} lúa/phút`:`cấp 2: ${costText(FARM_LEVELS[2].cost)} · cấp 3: ${costText(FARM_LEVELS[3].cost)}`);
  // Territory banner: regions held and how many mines they hold; per-resource income in the tooltip.
  const owned=state.regions.filter(r=>r.owner===team),income={};let mines=0;
  for(const m of state.mines)if(state.regions[m.regionId]?.owner===team){income[m.resource]=(income[m.resource]||0)+m.income*60;mines++;}

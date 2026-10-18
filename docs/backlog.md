@@ -45,9 +45,11 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 
 - [ ] Âm thanh: thêm nhạc nền / tiếng môi trường; nghe duyệt lại các tiếng sự kiện (thua trận đang là saxophone). → [audio.md](features/audio.md)
 
-- [ ] Kinh tế V2: chốt giá/thời gian mở hàng đợi (đang là giá tạm) và sản lượng nông trại cấp 2/3 (đang 90/135). → [units.md](features/units.md), [economy.md](features/economy.md)
+- [ ] Chơi thử cân bằng V3.1 (10–20 trận, mục tiêu 15–20 phút); chốt giá/thời gian mở hàng đợi (đang là giá tạm). → [units.md](features/units.md), [economy.md](features/economy.md)
 
 ## Đã xong gần đây
+**2026-10-19 (cân bằng V3.1, bản thử nghiệm):** khởi đầu 200/250/75/75; nhà chính 40/30/10/10; lãnh thổ 45/45/35/35; nông trại 35/50/70 (120 gỗ, nâng cấp 100+40 / 160+80); quân rẻ hơn và nuôi ít lúa hơn; tháp 120/120/30 xây 30 giây; tiền đồn 150/80 xây 35 giây; pháo thứ hai 150 đá.
+
 **2026-10-18 (sửa lỗi kẹt mép bản đồ):** đường đi không còn dùng vòng ô ngoài cùng, điểm đường đi kẹp vào `MOVE_BOUNDS`; `pnpm smoke path` hết lỗi ngẫu nhiên; thêm unit test.
 
 **2026-10-18 (kinh tế & hàng đợi V2):** nhà chính 80/50/15/20, lãnh thổ 100/100/40/70, nông trại 60 lúa/phút; 4 hàng đợi huấn luyện song song + 4 chỗ chờ, mua thêm từ hàng đợi thứ 5 (giá tạm trong `QUEUE_LANE_UPGRADES`), không giới hạn quân số.
