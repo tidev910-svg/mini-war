@@ -10,6 +10,7 @@ import { revealHomeTerritory } from '../sim/fog';
 import { applyAction } from '../core/actions';
 import { ensureRegionMap } from '../map/regions';
 import { updateHUD } from '../ui/hud';
+import { buildWorldDecor } from '../render/terrain';
 
 export function roomPeerId(code){return 'miniwarr'+code.toLowerCase().replace(/[^a-z0-9]/g,'');}
 export function setNetStatus(msg){const el=$('netStatus');if(el)el.textContent=msg;}
@@ -31,7 +32,8 @@ export function startGuestFromSnapshot(packet){
  setMode('pvp');setNetRole('guest');setGameStarted(true);hideModeScreen();setGameModeLabel();
  // Drop the fog this browser made for its own pre-lobby map, then reveal the host's real home territories.
  if(state){state.fogSeen=new Uint8Array(MAP_TILES*MAP_TILES);state.enemyFogSeen=new Uint8Array(MAP_TILES*MAP_TILES);}
- applySnapshot(packet);ensureRegionMap();revealHomeTerritory();setZoom(DEFAULT_ZOOM);centerCameraOnHome();addLog('Đã vào phòng. Bạn là quân đỏ.');
+ // Scenery is laid out around the host's fortresses, mines and flags, so rebuild it for the host's map.
+ applySnapshot(packet);ensureRegionMap();buildWorldDecor();revealHomeTerritory();setZoom(DEFAULT_ZOOM);centerCameraOnHome();addLog('Đã vào phòng. Bạn là quân đỏ.');
 }
 export function createRoom(){
  if(peer||conn)destroyPeer();setConnectionIntent('host');setNetStatus('Đang khởi tạo phòng...');$('createRoom').disabled=true;$('joinRoom').disabled=true;

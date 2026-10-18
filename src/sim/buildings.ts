@@ -111,7 +111,8 @@ export function updateBuildings(dt){
   const def=buildingDef(b);
   if(!buildingDone(b)){
    b.waiting=needsBuilder(b)&&!hasBuilder(b);if(b.waiting)continue;
-   const step=dt/def.buildTime;b.progress=Math.min(1,b.progress+step);if(b.progress>1-1e-6)b.progress=1; // absorb float drift so a 3 s farm finishes at 3 sb.hp=Math.min(b.max,b.hp+b.max*.8*step);
+   const step=dt/def.buildTime;b.progress=Math.min(1,b.progress+step);if(b.progress>1-1e-6)b.progress=1; // absorb float drift so a 3 s farm finishes at 3 s
+   b.hp=Math.min(b.max,b.hp+b.max*.8*step);
    if(buildingDone(b))completeBuilding(b);
    continue;
   }

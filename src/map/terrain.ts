@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Procedural terrain (grass/water/rock), passability and walking distances (docs/features/rendering.md, territory.md).
-import { MAP_TILES, TILE_SIZE, forestRegions, goldRegions, rockRegions } from '../config/map';
+import { MAP_TILES, TILE_SIZE, forestRegions, goldRegions, lakeRegions, rockRegions } from '../config/map';
+import { nearestWalkable, walkable } from './paths';
 
 export const terrainCanvas=document.createElement('canvas'),terrainCtx=terrainCanvas.getContext('2d'),terrainSmoothCanvas=document.createElement('canvas'),terrainSmoothCtx=terrainSmoothCanvas.getContext('2d'),terrainType=new Uint8Array(MAP_TILES*MAP_TILES),resourceTiles=[];
 terrainCanvas.width=MAP_TILES*8;
@@ -23,7 +24,19 @@ export function buildTerrain(){
   for(let n=0;n<count;n++)terrainType[candidates[n].i]=type;
  }
  // Counts are allocated from the full 65,536-tile grid, so the requested area shares are exact to rounding.
- assign('water',5243,2,true);assign('rock',4588,3);assign('resource',3276,4);assign('forest',13107,1);
+ assign('water',5243,2,true);
+ // Extra lakes: a wobbly ellipse per lakeRegions entry, carved before the other biomes so they never overwrite it.
+ lakeRegions.forEach(([cx,cy,rx,ry],k)=>{
+  const x0=Math.max(1,Math.floor((cx-rx*1.4)*MAP_TILES)),x1=Math.min(MAP_TILES-2,Math.ceil((cx+rx*1.4)*MAP_TILES)),y0=Math.max(1,Math.floor((cy-ry*1.4)*MAP_TILES)),y1=Math.min(MAP_TILES-2,Math.ceil((cy+ry*1.4)*MAP_TILES));
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+   const dx=((x+.5)/MAP_TILES-cx)/rx,dy=((y+.5)/MAP_TILES-cy)/ry,a=Math.atan2(dy,dx);
+   const edge=1+.16*Math.sin(3*a+k*1.7)+.09*Math.sin(5*a+k*2.9)+(rnd(x+k*31,y)-.5)*.08;
+   if(Math.hypot(dx,dy)<edge&&terrainType[y*MAP_TILES+x]===0)terrainType[y*MAP_TILES+x]=2;
+  }
+ });
+ assign('rock',4588,3);assign('resource',3276,4);assign('forest',13107,1);
+ // Grass and forest tiles next to water get a sandy shore colour.
+ const nearWater=i=>{const x=i%MAP_TILES,y=(i-x)/MAP_TILES;for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const tx=x+ox,ty=y+oy;if(tx>=0&&ty>=0&&tx<MAP_TILES&&ty<MAP_TILES&&terrainType[ty*MAP_TILES+tx]===2)return true;}return false;};
  const pxPerTile=terrainCanvas.width/MAP_TILES;
  for(let y=0;y<MAP_TILES;y++)for(let x=0;x<MAP_TILES;x++){
   const i=y*MAP_TILES+x,type=terrainType[i],px=x*pxPerTile,py=y*pxPerTile,n=rnd(x+101,y+53);
@@ -66,6 +79,11 @@ export function buildTerrain(){
    resourceTiles.push(i);terrainCtx.fillStyle='#efdf8c';terrainCtx.fillRect(px+1.5,py+1.5,1.8,2.6);
    if(n>.62){terrainCtx.fillStyle='#f2d373';terrainCtx.fillRect(px+pxPerTile*0.58,py+pxPerTile*0.22,2,2.7);}
   }
+  else if(type===0&&nearWater(i)){
+   const shore=['#c9c58a','#d3cc93','#bfbd82','#b6c07f'];
+   terrainCtx.fillStyle=shore[Math.floor(n*shore.length)];terrainCtx.fillRect(px,py,pxPerTile,pxPerTile);
+   if(n>.55){terrainCtx.fillStyle='#e6dfae';terrainCtx.fillRect(px+1.4,py+2,1.6,1.1);}
+  }
   else{
    const plains=['#7bbd63','#82c66d','#70ad61','#8ec96c'];
    terrainCtx.fillStyle=plains[Math.floor(n*plains.length)];terrainCtx.fillRect(px,py,pxPerTile,pxPerTile);
@@ -83,14 +101,16 @@ export function buildTerrain(){
 }
 
 buildTerrain();
-/// Walking cost from a fortress to every tile. Units have no pathfinding and wade through water, and the river splits the
-// land in two, so this uses the same terrain costs as the region map (land 1, rock 3, water 6) instead of land-only paths.
+/// Walking cost from a fortress to every tile (4 directions, one per tile), the way units really walk: water and rock
+// block, the river is crossed on the bridges (docs/features/pathfinding.md). Unreachable tiles stay Infinity.
 export function walkDistances(base){
  const N=MAP_TILES*MAP_TILES,d=new Float32Array(N).fill(Infinity),heapD=[],heapI=[];
  const push=(v,i)=>{let k=heapD.length;heapD.push(v);heapI.push(i);while(k>0){const p=(k-1)>>1;if(heapD[p]<=v)break;heapD[k]=heapD[p];heapI[k]=heapI[p];k=p;}heapD[k]=v;heapI[k]=i;};
  const pop=()=>{const v=heapD[0],i=heapI[0],lv=heapD.pop(),li=heapI.pop(),n=heapD.length;if(n){let k=0;for(;;){let c=2*k+1;if(c>=n)break;if(c+1<n&&heapD[c+1]<heapD[c])c++;if(heapD[c]>=lv)break;heapD[k]=heapD[c];heapI[k]=heapI[c];k=c;}heapD[k]=lv;heapI[k]=li;}return [v,i];};
- const cost=i=>{const t=terrainType[i];return t===2?6:t===3?3:1;};
- const start=Math.max(1,Math.min(MAP_TILES-2,Math.floor(base.y/TILE_SIZE)))*MAP_TILES+Math.max(1,Math.min(MAP_TILES-2,Math.floor(base.x/TILE_SIZE)));
+ // Real walking: only walkable tiles (water and rock block, bridges cross the river), start from the nearest walkable tile.
+ const cost=i=>walkable[i]?1:Infinity;
+ const from=nearestWalkable(base.x,base.y)||base;
+ const start=Math.max(1,Math.min(MAP_TILES-2,Math.floor(from.y/TILE_SIZE)))*MAP_TILES+Math.max(1,Math.min(MAP_TILES-2,Math.floor(from.x/TILE_SIZE)));
  d[start]=0;push(0,start);
  while(heapD.length){const [v,i]=pop();if(v>d[i])continue;const x=i%MAP_TILES,y=(i-x)/MAP_TILES;
   for(const j of [x>0?i-1:-1,x<MAP_TILES-1?i+1:-1,y>0?i-MAP_TILES:-1,y<MAP_TILES-1?i+MAP_TILES:-1]){if(j<0)continue;const nv=v+cost(j);if(nv<d[j]){d[j]=nv;push(nv,j);}}}

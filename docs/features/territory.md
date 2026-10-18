@@ -1,6 +1,6 @@
 # Vùng lãnh thổ & cột cờ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Bản đồ (256 × 256 ô) được chia thành **đúng 20 vùng lãnh thổ** có cờ, cộng 2 vùng nhà chứa pháo đài. Ranh giới vùng là ranh giới tự nhiên, bám theo sông và vùng đá. Mỗi vùng có **đúng một loại tài nguyên** (lúa, gỗ, đá hoặc vàng), **một mỏ** loại đó, và **một cột cờ có sẵn** ở gần tâm vùng.
@@ -28,7 +28,7 @@ Nguồn thiết kế:
 |---|---|
 | Vị trí pháo đài | Ngẫu nhiên ở bất kỳ đâu (cách mép ≥ 420), hai nhà cách nhau ≥ 55% bề ngang bản đồ (`BASE_MIN_SEPARATION`); `base.dir` hướng về nhà địch. Bỏ vị trí mà pháo đài hoặc sân tập kết có dưới 85% ô đi được (`baseSiteClear()`, `BASE_SITE_MIN_CLEAR`) |
 | Hạt giống | 2 vùng nhà đặt tại ô của pháo đài. Kho hạt giống: tâm các biome rừng/đá/ruộng (`forestRegions`, `rockRegions`, `goldRegions`, xáo ngẫu nhiên) rồi thêm ô đất ngẫu nhiên trên khối đất lớn cho đủ 40; mọi hạt giống cách pháo đài ≥ 22 ô (`REGION_MIN_BASE_TILES`) và cách nhau ≥ 20 ô (`REGION_SEED_SPACING_TILES`). Lấy đúng `REGION_COUNT` = 20 hạt giống đầu kho |
-| Chia ô | **Giữ nguyên**: Dijkstra nhiều nguồn trên lưới 256×256 (4 hướng). Chi phí vào ô: đất 1, đá 3, nước 6, nên ranh giới chạy theo sông và đá (`buildRegionMap()`) |
+| Chia ô | **Giữ nguyên**: Dijkstra nhiều nguồn trên lưới 256×256 (4 hướng). Chi phí vào ô: đất 1, đá 3, nước 6, nên ranh giới chạy theo sông, hồ và đá (`buildRegionMap()`). Từ 2026-10-18 bản đồ có thêm 7 hồ (`lakeRegions`, [rendering.md](rendering.md)); cờ, mỏ và nhà vẫn tránh nước như trước |
 | Cột cờ (`r.cp`) | Ô gần **tâm khối** của vùng nhất thoả các điều kiện: 3×3 ô đi được, cùng vùng, nằm trên khối đất liền ≥ 400 ô (không phải đảo nhỏ: `landPatchSizes()`, `MIN_LAND_PATCH_TILES`), và cách cả hai pháo đài > 21 ô (`FLAG_ENEMY_BASE_MIN_TILES`) |
 | Chỗ đặt mỏ | Chỉ vùng có cờ: ô gần cờ nhất mà cách cờ ≥ 6 ô (để nhãn không đè nhau). Mọi mỏ cách nhau ≥ 260 và ở trên khối đất lớn. Vùng nhà không có mỏ (bỏ ngày 2026-10-17) |
 | Giữ đúng 20 vùng | Vùng nào không đặt được cờ hoặc mỏ thì hạt giống của nó bị bỏ khỏi kho, hạt giống kế tiếp thế chỗ và bản đồ được chia lại (tối đa 6 lượt; nếu vẫn thiếu, lần sinh đó bị coi là không đạt). Việc này làm **trước** khi gán loại tài nguyên |
@@ -36,7 +36,7 @@ Nguồn thiết kế:
 | Mỏ | Một mỏ mỗi vùng (mỏ có sẵn từ trước, không thêm mỏ riêng), cùng loại với vùng. Vùng có hạt giống nằm trong 15% quanh giữa bản đồ có mỏ giàu (× 1,5). Mỏ lúa sinh 25/phút, mỏ vàng 20/phút (`MINE_TYPES`) |
 | Công bằng | Với mỗi loại tài nguyên, lấy chi phí đi bộ từ mỗi nhà tới cờ gần nhất của loại đó. Độ lệch = Σ\|d₀ − d₁\| ÷ Σ max(d₀, d₁). Nếu lớn hơn `MAP_FAIRNESS_TOLERANCE` (0,3) thì chọn lại vị trí nhà, tối đa `MAP_GENERATION_TRIES` = 15 lần; nếu vẫn không đạt thì lấy lần công bằng nhất |
 
-"Đường đi thực tế": con sông chia đôi toàn bộ đất liền (không có ô đất nào đi tới được từ cả hai nhà), còn quân thì chưa có tìm đường và vẫn lội qua nước. Vì thế `walkDistances()` tính chi phí theo địa hình (đất 1, đá 3, nước 6) chứ không chỉ đi trên đất.
+"Đường đi thực tế": từ 2026-10-18 nước và đá chặn đường, sông chỉ qua được bằng 4 cầu ([pathfinding.md](pathfinding.md)). `walkDistances()` là quãng đường đi bộ thật (chỉ qua ô đi được, có cầu). Lần sinh bản đồ bị loại nếu từ sân tập kết xanh không đi bộ tới được sân tập kết đỏ, mọi cột cờ, mọi mỏ (`reachableFrom()`). (Trước đó, khi quân còn lội qua nước, hàm này dùng chi phí địa hình đất 1, đá 3, nước 6.)
 
 Kết quả chạy thử 2026-10-17 (sau bản 20 lãnh thổ) với 40 bản đồ: luôn đúng 20 cờ + 2 vùng nhà; mỗi vùng đúng một mỏ đúng loại; 4 vùng gần mỗi nhà đủ 4 loại; cờ nằm trong vùng và trên khối đất lớn; pháo đài xanh rải khắp bản đồ (x 505–9.136, y 750–8.882; 21/40 lần ở nửa phải), hai nhà cách nhau ≥ 5.345; sân tập kết quay về phía địch; khoảng 70 ms mỗi bản đồ.
 
@@ -80,8 +80,8 @@ Kết quả chạy thử 2026-10-17 trước đó (bản 16–20 vùng) với 40
   - Cờ chỉ vẽ ở chỗ phe mình đã khám phá.
 - **Lớp lãnh thổ (`drawTerritory()`):**
   - Màu phe tô mờ trên vùng sở hữu (`regionTintCanvas`).
-  - Ranh giới là **đường liền phát sáng nhẹ**, độ dày tính theo **pixel màn hình** nên không mỏng đi khi thu nhỏ: trung lập 3 px màu kem, vùng có chủ 4 px màu phe (`TERRITORY_BORDER_PX`, `TERRITORY_COLORS`); quầng sáng mờ cùng màu rộng thêm 3 px mỗi bên (`TERRITORY_GLOW`, `TERRITORY_GLOW_PX`), cộng một nét tối mảnh để nổi trên nền sáng.
-  - Mỗi ranh giới chỉ vẽ **một** đường: màu của phe sở hữu một trong hai vùng kề; trung lập nếu cả hai chưa có chủ; giữa vùng xanh và vùng đỏ thì lấy màu phe của người đang xem. Đổi màu ngay khi vùng đổi chủ.
+  - Ranh giới là **đường liền phát sáng nhẹ**, độ dày tính theo **pixel màn hình** nên không mỏng đi khi thu nhỏ: 4 px màu phe (`TERRITORY_BORDER_PX.owned`, `TERRITORY_COLORS`); quầng sáng mờ cùng màu rộng thêm 3 px mỗi bên (`TERRITORY_GLOW`, `TERRITORY_GLOW_PX`), cộng một nét tối mảnh để nổi trên nền sáng.
+  - **Chỉ vẽ ranh giới của vùng có chủ** (từ 2026-10-18): giữa hai vùng trung lập không vẽ gì; đoạn nằm trên hoặc sát nước (sông, hồ) cũng bỏ vì sông/hồ đã là ranh giới. Mỗi ranh giới vẽ **một** đường: màu của phe sở hữu một trong hai vùng kề; giữa vùng xanh và vùng đỏ thì lấy màu phe của người đang xem. Đổi màu ngay khi vùng đổi chủ. Vùng trung lập vẫn nhận biết qua cột cờ và vòng kiểm soát.
   - Chỉ vẽ cạnh mà một trong hai ô kề đã được khám phá. `drawTerritory(…, 'under')` vẽ các đoạn ở chỗ đang nhìn thấy, trước quân và công trình nên không che chúng; các đoạn chạm mép sương mù (`fogMask`) hoặc nằm ở chỗ không đang nhìn thấy (`fogVisible`) được vẽ ở lượt `'over'` sau `drawFog()`, để không bị lớp sương che hoặc làm tối (ở đó không có quân đang hiện nên không che gì).
 - **HUD "🚩 Lãnh thổ":** số vùng đang giữ và tổng thu từ mỏ mỗi phút (có cả lúa).
 

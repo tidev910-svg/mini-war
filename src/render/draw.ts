@@ -11,9 +11,11 @@ import { fortressGunPosition } from '../map/bases';
 import { drawTerritory } from './territory';
 import { drawUnit, drawUnitHealthBar, drawUnitSelection, teamPalette, unitTargetHeight } from './units';
 import { drawBase, drawBuilding, drawMusterYard } from './buildings';
-import { drawRock, drawTerrainDetail, drawTree, rockDecor, treeDecor } from './terrain';
+import { DECOR_LAYER_SCALE, decorLayerCanvas, drawDecor, drawTerrainDetail, rockDecor, shoreDecor, treeDecor, waterDecor } from './terrain';
 import { drawFlag } from './flags';
 import { drawFog, refreshFog } from './fog';
+import { drawMinimap } from './minimap';
+import { drawBridges, drawUnitPaths } from './paths';
 
 export function draw(){
  const viewScale=zoom;
@@ -44,6 +46,7 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Unexplored mines remain hidden by fog; current vision is not required after discovery.
  // Territory layer: owner tint and borders (only where explored); toggled with T. Flags are drawn with the scene (drawFlag).
  refreshFog(localTeam()===0?state.fogSeen:state.enemyFogSeen);
+ drawBridges(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  for(const m of state.mines){
   if(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y))continue;
@@ -66,8 +69,16 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  }}
  // Depth-sort decorative scenery and game actors on world Y so units can pass in front of or behind trees.
  const sceneActors=[],enqueue=(y,draw)=>sceneActors.push({y,draw}),leftWorld=camX-260,topWorld=camY-260,rightWorld=camX+VIEW_W/viewScale+260,bottomWorld=camY+VIEW_H/viewScale+260;
- for(const tree of treeDecor){if(tree.x<leftWorld||tree.x>rightWorld||tree.y<topWorld||tree.y>bottomWorld)continue;enqueue(tree.y,()=>drawTree(tree.x,tree.y,tree.scale,tree.variant));}
- for(const rock of rockDecor){if(rock.x<leftWorld||rock.x>rightWorld||rock.y<topWorld||rock.y>bottomWorld)continue;enqueue(rock.y+18,()=>drawRock(rock.x,rock.y,rock.scale));}
+ const inView=o=>o.x>=leftWorld&&o.x<=rightWorld&&o.y>=topWorld&&o.y<=bottomWorld;
+ // Zoomed far out (below DECOR_LAYER_SCALE) scenery comes from one cached layer; closer in, each item is depth-sorted
+ // with units so they can walk in front of or behind trees.
+ if(viewScale<DECOR_LAYER_SCALE)ctx.drawImage(decorLayerCanvas(),0,0,W,H);
+ else{
+  for(const lily of waterDecor)if(inView(lily))drawDecor(lily);
+  for(const item of treeDecor)if(inView(item))enqueue(item.y,()=>drawDecor(item));
+  for(const item of rockDecor)if(inView(item))enqueue(item.y+(item.kind==='stone'?4:18),()=>drawDecor(item));
+  for(const item of shoreDecor)if(inView(item))enqueue(item.y,()=>drawDecor(item));
+ }
  for(const b of state.bases){if(b.team!==localTeam()&&!currentlyVisible(b.x,b.y))continue;drawMusterYard(b);enqueue(b.y+106,()=>drawBase(b));}
  for(const r of state.regions){if(!r.cp||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(r));}
  for(const b of state.buildings){if(b.team!==localTeam()&&!currentlyVisible(b.x,b.y))continue;enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));}
@@ -84,6 +95,8 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
  drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');
+ // Route lines of the selected units go above the fog so a march into unexplored ground stays visible.
+ drawUnitPaths();
  // Keep placement feedback readable even when the cursor crosses unexplored fog.
  if(placement)drawBuilding({kind:placement.kind,x:placement.x,y:placement.y,team:localTeam(),previewValid:placement.valid},true);
  // Hide enemy forces and enemy structures when their location is not currently visible.
@@ -91,6 +104,6 @@ ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Return to screen coordinates for selection feedback and fixed viewport labels.
  ctx.restore();
  if(dragSelect){const x=Math.min(dragSelect.x,dragSelect.cx),y=Math.min(dragSelect.y,dragSelect.cy),w=Math.abs(dragSelect.cx-dragSelect.x),h=Math.abs(dragSelect.cy-dragSelect.y);ctx.fillStyle='#69b9ff22';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#8bd0ff';ctx.setLineDash([6,4]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);}
- if(placement){const valid=placement.valid,color=valid?'#47b96c':'#d84c58',name=BUILDING_TYPES[placement.kind].name.toUpperCase(),text=valid?name+' · VỊ TRÍ HỢP LỆ':name+' · '+(placement.problem||'VỊ TRÍ BỊ CHẶN');ctx.save();ctx.font='700 13px system-ui';const w=Math.min(VIEW_W-32,Math.max(280,ctx.measureText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy').width+28)),x=(VIEW_W-w)/2,y=VIEW_H-43;ctx.fillStyle='#101b25eF';ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x,y,w,30,8);ctx.fill();ctx.stroke();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy',VIEW_W/2,y+15,w-18);ctx.restore();}
- ctx.textAlign='left';ctx.font='12px system-ui';ctx.fillStyle='#efffea99';ctx.fillText('CHIẾN TRƯỜNG 01',16,22);
+ if(placement){const valid=placement.valid,color=valid?'#47b96c':'#d84c58',name=BUILDING_TYPES[placement.kind].name.toUpperCase(),text=valid?name+' · VỊ TRÍ HỢP LỆ':name+' · '+(placement.problem||'VỊ TRÍ BỊ CHẶN');ctx.save();ctx.font='700 13px system-ui';const w=Math.min(VIEW_W-32,Math.max(280,ctx.measureText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy').width+28)),x=(VIEW_W-w)/2,y=Math.round(VIEW_H*.14);ctx.fillStyle='#101b25eF';ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x,y,w,30,8);ctx.fill();ctx.stroke();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy',VIEW_W/2,y+15,w-18);ctx.restore();}
+ drawMinimap();
 }

@@ -5,7 +5,7 @@ import { $, conn, ended, gameTime, localSelectedIds, localTeam, mode, netRole, n
 import { setNetStatus } from './peer';
 import { revealTeamVision } from '../sim/fog';
 import { ensureRegionMap } from '../map/regions';
-import { updateHUD } from '../ui/hud';
+import { setPauseButton, updateHUD } from '../ui/hud';
 
 export function serializeSnapshot(){
  // Keep explored fog maps local to each browser; serialize only live simulation state.
@@ -27,7 +27,7 @@ export function applySnapshot(packet){
  const localWon=localTeam()===0?hostWon:!hostWon;
  $('resultTitle').textContent=ended?(localWon?'🏆 CHIẾN THẮNG!':'💥 THẤT THỦ!'):(packet.resultTitle||'Trận đấu kết thúc');
  $('resultText').textContent=ended?(localWon?'Bạn đã phá hủy căn cứ đối phương. Chỉ huy xuất sắc!':'Căn cứ của bạn đã bị phá hủy. Hãy thử chiến thuật khác!'):(packet.resultText||'');
- $('pause').innerHTML=paused?'▶ Tiếp tục<span>Tiếp tục trận đấu</span>':'Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';
+ setPauseButton();
  for(const u of state.units){u.selected=picked.has(u.id)&&u.team===localTeam();}
  setSelectedBuilding(state.buildings.find(b=>b.id===selectedBuildingId)||null);
  setSelected(state.units.find(u=>u.selected)||null);

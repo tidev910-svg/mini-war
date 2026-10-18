@@ -1,13 +1,13 @@
 # Kiến trúc code
 
-> Cập nhật lần cuối: 2026-10-17
+> Cập nhật lần cuối: 2026-10-18
 
 ## Công nghệ & file
 | File / thư mục | Vai trò |
 |---|---|
-| [index.html](../index.html) | Khung giao diện: màn hình chọn chế độ/phòng (`#modeScreen`), HUD, canvas `#game`, nút điều khiển, nhật ký, overlay kết quả. |
+| [index.html](../index.html) | Khung giao diện: màn hình chọn chế độ/phòng (`#modeScreen`), canvas `#game` toàn màn hình và lớp HUD nổi (huy hiệu, tài nguyên, hàng đợi, minimap, nhật ký, nút lệnh, bảng trượt, hướng dẫn), overlay kết quả. |
 | [src/](../src/) | Logic game, chia module theo tính năng (bảng bên dưới). Mọi file có `// @ts-nocheck`. |
-| [src/style.css](../src/style.css) | Theme "Storybook", bố cục, responsive, lobby. |
+| [src/style.css](../src/style.css) | Giao diện kiểu vương quốc (xanh đậm, viền vàng đồng), bố cục HUD, responsive, lobby. |
 | [public/assets/](../public/assets/) | Spritesheet quân, sprite pháo đài & nông trại (đường dẫn `/assets/...`). Ảnh nguồn ở [art/](../art/). |
 | [tests/](../tests/) | Unit test (vitest + jsdom) chạy chính các module game: sinh bản đồ, chiếm cờ, tầm nhìn vùng, thu nhập, hàng đợi huấn luyện. `pnpm test`. |
 | [scripts/smoke/](../scripts/smoke/) | Smoke test trên Chrome headless (cần `pnpm dev` đang chạy): `pnpm smoke` hoặc `pnpm smoke maps pvp`. Ảnh chụp ở `scripts/smoke/out/`. |
@@ -26,12 +26,12 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 | | `view.ts` | Canvas, khung nhìn, camera/zoom, đổi toạ độ | [controls.md](features/controls.md) |
 | | `match.ts` | `fresh()`, `update(dt)`, `finish()`, `loop()`; bộ đếm `aiTimer`, `incomeTimer`… | [match-flow.md](features/match-flow.md) |
 | | `actions.ts` | `requestAction()` / `applyAction()` | [multiplayer.md](features/multiplayer.md) |
-| `map/` | `terrain.ts`, `regions.ts`, `bases.ts` | Địa hình, `walkDistances()`; bản đồ vùng và `generateRegions()`; hình học pháo đài (`baseDir()`, `musterYard()`) | [territory.md](features/territory.md), [fortress.md](features/fortress.md) |
-| `sim/` | `economy.ts`, `units.ts`, `fog.ts`, `buildings.ts`, `territory.ts`, `combat.ts` | Luật mô phỏng: lúa & tiếp tế; mua quân, hàng đợi huấn luyện, xuất quân; sương mù & tầm nhìn; công trình; chiếm cờ; chọn mục tiêu & sát thương | file tính năng cùng tên |
+| `map/` | `terrain.ts`, `regions.ts`, `bases.ts`, `paths.ts` | Địa hình, `walkDistances()`; bản đồ vùng và `generateRegions()`; hình học pháo đài (`baseDir()`, `musterYard()`); ô đi được, cầu, A* (`findPath()`, `groupPaths()`) | [territory.md](features/territory.md), [fortress.md](features/fortress.md) |
+| `sim/` | `economy.ts`, `units.ts`, `movement.ts`, `fog.ts`, `buildings.ts`, `territory.ts`, `combat.ts` | Luật mô phỏng: lúa & tiếp tế; mua quân, hàng đợi huấn luyện, xuất quân; đi theo đường (`steerTo()`); sương mù & tầm nhìn; công trình; chiếm cờ; chọn mục tiêu & sát thương | file tính năng cùng tên |
 | `ai/` | `enemy.ts` | `runEnemyAI()` | [ai-opponent.md](features/ai-opponent.md) |
 | `net/` | `peer.ts`, `snapshot.ts` | Phòng PeerJS; gửi/nhận snapshot | [multiplayer.md](features/multiplayer.md) |
-| `render/` | `draw.ts`, `sprites.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự | [rendering.md](features/rendering.md) |
-| `ui/` | `hud.ts`, `input.ts`, `modeScreen.ts` | HUD & bảng bên; chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
+| `render/` | `draw.ts`, `sprites.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts`, `minimap.ts`, `paths.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự (gồm cầu, đường đi của quân đang chọn), cuối cùng là minimap | [rendering.md](features/rendering.md), [minimap.md](features/minimap.md) |
+| `ui/` | `hud.ts`, `panels.ts`, `hotkeys.ts`, `input.ts`, `modeScreen.ts` | HUD nổi trên bản đồ; bảng Huấn luyện/Xây dựng, hướng dẫn, chân dung quân; phím tắt kiểu Đế Chế (`hotkeys.ts`); chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
 
 Quy ước giữa các module (chi tiết ở [conventions.md](conventions.md)):
 - **Biến dùng chung**: mỗi biến `let` có một module sở hữu. Module khác đọc trực tiếp (ES module luôn thấy giá trị mới nhất), nhưng muốn gán thì gọi setter của module sở hữu, vd. `setPaused(true)`, `setState(packet.state)`, `setZoom(z)`, `setNextId(nextId+1)`.
@@ -60,7 +60,7 @@ Nút / chuột / phím ─► requestAction(action, payload)
    ├─ guest PvP: conn.send({type:'action',...}) ─► host: applyAction(1, ...)
    └─ còn lại:   applyAction(localTeam(), ...)
 ```
-Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm', id}`, `outpost {regionId}`, `moveFarm {id, x, y}`, `turret`, `attack {ids}`, `move {ids, x, y}`, `pause {paused}`. Ngoại lệ: kéo nông trại ở host/AI và chọn quân/công trình sửa trực tiếp ở phía client (xem [controls.md](features/controls.md)).
+Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm', id}`, `outpost {regionId}`, `moveFarm {id, x, y}`, `turret`, `attack {ids}`, `stop {ids}`, `delete {ids}`, `move {ids, x, y}`, `pause {paused}`. Ngoại lệ: kéo nông trại ở host/AI và chọn quân/công trình sửa trực tiếp ở phía client (xem [controls.md](features/controls.md)).
 
 ## Camera & toạ độ
 - `worldToScreenPlane()` / `screenPlaneToWorld()` hiện là hàm đồng nhất (góc nhìn từ trên xuống, chưa phải isometric thật); giữ lại làm điểm mở rộng.

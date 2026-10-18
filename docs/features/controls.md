@@ -1,6 +1,6 @@
 # Điều khiển, chọn quân & camera
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Điều khiển bằng chuột (có hỗ trợ cảm ứng để kéo bản đồ) và phím. Người chơi chọn một hoặc nhiều quân, ra lệnh di chuyển theo đội hình hoặc tấn công; kéo/zoom bản đồ.
@@ -21,24 +21,42 @@
 | Phải nhấp (không kéo) | Ra lệnh `move` cho cả nhóm đang chọn |
 | Giữ phải / giữa rồi kéo; kéo bằng cảm ứng | Di chuyển camera (ngưỡng 4 px mới tính là kéo) |
 | Lăn chuột | Zoom ×1.15 quanh con trỏ |
+| Nhấp / kéo trên minimap | Đưa tâm camera tới điểm đó ([minimap.md](minimap.md)) |
+| Bấm xuống bản đồ khi đang mở bảng Huấn luyện / Xây dựng | Đóng bảng ([hud-ui.md](hud-ui.md)) |
 
-**Phím** (phím mũi tên và +/- chỉ hoạt động khi canvas đang được focus — nhấp vào bản đồ trước)
+**Phím tắt kiểu Đế Chế (Age of Empires II)** — mọi phím xử lý trong `src/ui/hotkeys.ts`, bảng `HOTKEYS` (cũng hiện trong hộp thoại hướng dẫn, `#hotkeyTable`). Không cần focus canvas; bỏ qua khi đang gõ trong ô nhập hoặc khi màn chọn chế độ đang mở.
 | Phím | Kết quả |
 |---|---|
-| Mũi tên | Kéo camera 180/zoom (Shift: 360/zoom) |
-| `+` / `=` | Phóng to (×1.15) |
-| `-` / `_` | Thu nhỏ (÷1.15) |
-| Space | Tạm dừng/tiếp tục |
-| A | Lệnh tấn công cho quân đang chọn |
-| Escape | Huỷ đặt công trình |
-| T | Ẩn/hiện lớp lãnh thổ (không cần focus canvas; bỏ qua khi đang gõ trong ô nhập) |
+| Ctrl + 1…9 | Gán nhóm quân đang chọn vào số đó (Ctrl + số khi không chọn gì: xoá nhóm) |
+| 1…9 | Chọn nhóm; bấm cùng số hai lần trong `GROUP_DOUBLE_TAP_MS` = 400 ms: camera tới giữa nhóm |
+| Shift + 1…9 | Thêm nhóm vào lựa chọn hiện tại |
+| H | Chọn pháo đài, đưa camera về, mở bảng Huấn luyện |
+| Q W E R T | Khi pháo đài đang chọn hoặc bảng Huấn luyện mở: trinh sát, lính, cung thủ, lính giáo, kỵ binh (`TRAIN_KEYS`, qua `requestBuy()`) |
+| B | Mở/đóng bảng Xây dựng |
+| F T O U P | Khi bảng Xây dựng mở: nông trại, tháp, tiền đồn, nâng cấp nông trại, pháo thứ hai (`BUILD_KEYS`, bấm nút tương ứng) |
+| , (dấu phẩy) | Chọn lần lượt quân đang rảnh (không lệnh đi/tấn công, đứng yên) và đưa camera tới |
+| Ctrl + A | Chọn tất cả quân của mình |
+| Nhấp đúp vào quân | Chọn mọi quân cùng loại đang trên màn hình |
+| A | Nhóm đang chọn tấn công (action `attack`) |
+| S | Nhóm đang chọn dừng lại (action `stop`: lệnh `hold`, xoá đích và đường đi) |
+| Delete | Loại bỏ quân đang chọn, không hoàn tiền (action `delete`) |
+| Space | Camera tới giữa nhóm đang chọn; không chọn gì thì tới pháo đài |
+| Mũi tên / `+` `=` / `-` `_` | Kéo camera 180/zoom (Shift: 360/zoom) / phóng to ×1,15 / thu nhỏ ÷1,15 |
+| T | Ẩn/hiện ranh giới vùng (khi T không đang là phím huấn luyện/xây) |
+| F3 hoặc Pause | Tạm dừng / tiếp tục (trước 2026-10-18 là Space) |
+| F1 | Mở/đóng hướng dẫn |
+| Esc | Theo thứ tự: huỷ đặt công trình → đóng bảng đang mở → bỏ chọn tất cả |
 
-**Đội hình** (action `move`): quân được xếp lưới vuông `ceil(√n)` cột, khoảng cách 34, tâm lưới là điểm nhấp và được đẩy vào trong nếu sát mép. Toạ độ kẹp trong `[25, W−25] × [45, H−30]`. Khi đang khoá xuất quân, quân có ô đích ngoài vùng căn cứ bị chuyển `hold`.
+Nhóm quân là dữ liệu cục bộ của trình duyệt (danh sách id, tự bỏ quân đã chết). Thẻ quân và thẻ công trình có nhãn phím nhỏ ở góc (`.hotkey`).
+
+**Đội hình** (action `move`): quân được xếp lưới vuông `ceil(√n)` cột, khoảng cách 34, tâm lưới là điểm nhấp và được đẩy vào trong nếu sát mép. Ô rơi vào nước/đá dời tới ô đi được gần nhất; mỗi quân đi theo đường vòng qua vật cản (`assignGroupMove()`, [pathfinding.md](pathfinding.md)). Điểm nhấp có vòng sáng nhấp nháy (`showMoveMarker()`); quân mình đang chọn và đang đi hiện đường nét đứt có mũi tên tới đích (một đường cho mỗi nhóm). Toạ độ kẹp trong `[25, W−25] × [45, H−30]`. Khi đang khoá xuất quân, quân có ô đích ngoài vùng căn cứ bị chuyển `hold`.
 
 **Camera**: `zoom` trong `[MIN_ZOOM, MAX_ZOOM]`; mặc định `DEFAULT_ZOOM` = khung nhìn rộng 64 ô, tối đa zoom vào 32 ô. Đầu trận camera đặt ở pháo đài của mình (`centerCameraOnHome()`; guest PvP là pháo đài đỏ).
 
 ## Code liên quan
-- [src/ui/input.ts](../../src/ui/input.ts): các `addEventListener` ở cấp module (`wheel`, hai `pointerdown`, hai `pointermove`, `stopPan()`, `endPointer()`, `click`, hai `keydown`).
+- [src/ui/input.ts](../../src/ui/input.ts): các `addEventListener` ở cấp module (`wheel`, hai `pointerdown`, hai `pointermove`, `stopPan()`, `endPointer()`, `click`, hai `keydown`; minimap: `centerCameraOnMinimap()`).
+- [src/ui/hotkeys.ts](../../src/ui/hotkeys.ts): `HOTKEYS`, `TRAIN_KEYS`, `BUILD_KEYS`, `selectUnits()`, nhóm quân, nhấp đúp chọn cùng loại, một trình xử lý `keydown` cho mọi phím.
+- [src/ui/panels.ts](../../src/ui/panels.ts): đóng bảng khi bấm xuống canvas.
 - `applyAction()` nhánh `'move'` (đội hình), `commandAttack()`.
 - `canvasPoint()`, `canvasPos()`, `worldToCanvas()`, `viewOffsets()`, `clampCamera()`, `unitHitRadius()`.
 - Trạng thái UI: `selected`, `localSelectedIds`, `selectedFortress`, `selectedBuilding`, `placement`, `dragSelect`, `selectingBox`, `panning`.
@@ -57,7 +75,8 @@
 - [ ] Kéo khung chọn 5 quân → log "5 lính được chọn"; nhấp phải → quân dàn đội hình, không chồng lên nhau.
 - [ ] Shift + nhấp thêm/bỏ quân.
 - [ ] Zoom bằng con lăn giữ đúng điểm dưới con trỏ; kéo camera bằng chuột phải.
-- [ ] Phím mũi tên chỉ chạy sau khi nhấp vào canvas.
+- [ ] Ctrl+1 gán nhóm, Esc bỏ chọn, 1 chọn lại, bấm 1 hai lần camera tới nhóm; H rồi Q/T huấn luyện; B rồi F đặt nông trại; S dừng; Delete loại bỏ; dấu phẩy chọn quân rảnh; F3 tạm dừng; F1 hướng dẫn.
+- Đã chạy thử 2026-10-18: `pnpm smoke hotkeys` đạt toàn bộ các phím trên.
 
 ## Giới hạn / việc tồn đọng
 - Biến `guiding` và nhánh sửa `u.dest` trong `pointermove` là code chết (không nơi nào đặt `guiding=true`).

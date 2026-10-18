@@ -1,6 +1,6 @@
 # Đối thủ AI
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; mọi loại quân tuyển tại pháo đài. AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
@@ -23,14 +23,14 @@
 
 AI không qua `buy()`/`applyAction()` nên không có log.
 
-**Di chuyển khi không có mục tiêu** (mỗi quân đỏ):
+**Di chuyển khi không có mục tiêu** (mỗi quân đỏ; mọi lần đi theo đường vòng vật cản qua `steerTo()` — điểm đến không tới được thì bỏ, chọn điểm khác; xem [pathfinding.md](pathfinding.md)):
 - Đổi đích khi chưa có đích, đã tới gần (< 35), hoặc ngẫu nhiên 0.3% mỗi frame.
 - Quân có `buildTarget` còn hiệu lực thì đi/đứng ở tiền đồn đó; quân có `captureTarget` thì đứng ở cờ đó.
 - Ưu tiên mỏ gần nhất chưa thuộc phe đỏ (gồm cả mỏ trong vùng xanh); nếu mỏ gần hơn 70 thì thử 48 ô ngẫu nhiên chưa khám phá; nếu vẫn không có thì chọn điểm ngẫu nhiên.
 - Có mục tiêu thì luôn đuổi (không cần lệnh tấn công), ngay từ đầu trận.
 
 **Tầm nhìn & trí nhớ**:
-- Bản đồ khám phá riêng `state.enemyFogSeen` (khu đất nhà khám phá sẵn); bán kính: trinh sát 145, giáo 120, khác 105, căn cứ đỏ 160, công trình theo `buildingVision()`.
+- Bản đồ khám phá riêng `state.enemyFogSeen` (khu đất nhà khám phá sẵn); bán kính: trinh sát 260 (`SCOUT_VISION`), giáo 120, khác 105, căn cứ đỏ 160, công trình theo `buildingVision()`.
 - `state.enemyMemory.base` lưu vị trí pháo đài xanh khi thấy; `state.enemyMemory.targets` lưu quân xanh đã thấy, xoá sau 90 giây.
 - AI chọn mục tiêu chỉ trong vùng `aiCanSee()` (cùng `teamCanSee(1)`).
 

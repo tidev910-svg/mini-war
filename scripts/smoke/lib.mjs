@@ -12,9 +12,9 @@ export const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Every module under src/, so game() can see all exports. Keep in sync with the folders in docs/architecture.md.
 const MODULES = ['config/map', 'config/balance', 'config/visuals', 'core/game', 'core/view', 'core/match', 'core/actions',
-  'map/terrain', 'map/regions', 'map/bases', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat',
+  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat',
   'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
-  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/draw'];
+  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/paths', 'render/draw', 'ui/panels', 'ui/hotkeys'];
 
 // The Chrome profile lives in the OS temp folder: inside the project, Vite's file watcher crashes on Chrome's locked files.
 export async function launch({ port, outDir, size = '1400,1000', url = URL }) {
@@ -42,7 +42,11 @@ export async function launch({ port, outDir, size = '1400,1000', url = URL }) {
   };
   const page$ = expr => evaluate(expr);
   const game = async body => {
-    const loader = `(async()=>{if(!window.__smokeScope){const mods=await Promise.all(${JSON.stringify(MODULES)}.map(m=>import('/src/'+m+'.ts')));
+    // Import each module by the exact URL the page loaded (Vite adds ?t=… to files edited while the server runs);
+    // a bare '/src/x.ts' would load a second copy of the game with its own state and event handlers.
+    const loader = `(async()=>{if(!window.__smokeScope){const loaded=performance.getEntriesByType('resource').map(e=>e.name);
+      const url=m=>loaded.find(n=>new URL(n).pathname==='/src/'+m+'.ts')||'/src/'+m+'.ts';
+      const mods=await Promise.all(${JSON.stringify(MODULES)}.map(m=>import(url(m))));
       window.__smokeScope=new Proxy({},{has:(_,k)=>mods.some(m=>k in m),get:(_,k)=>{for(const m of mods)if(k in m)return m[k];}});}
       with(window.__smokeScope){return JSON.stringify((()=>{${body}})());}})()`;
     const v = await evaluate(loader); return v === undefined ? undefined : JSON.parse(v);

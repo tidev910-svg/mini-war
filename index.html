@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mini War — Storybook Command</title>
+<title>Mini War — Kingdom Command</title>
 
   <script type="module" src="/src/main.ts"></script>
 </head>
@@ -42,61 +42,118 @@
   </section>
 </div>
 
-<div class="wrap" id="gameApp">
-  <div class="top">
-    <div><h1>⚔️ MINI WAR <span style="color:#6fbaff">: CAPTURE THE BASE</span></h1><div class="sub" id="modeStatus">Bản demo chiến thuật · Chưa bắt đầu</div></div>
-    <button class="toggle-panel" id="toggleSideHud" type="button" aria-label="Thu gọn bảng điều khiển">▣</button>
-    <div class="hud">
-      <div class="stat"><small>🌾 Lúa</small><b id="food">150</b><small id="foodRate">+0 −0 = +0/phút</small></div>
-      <div class="stat"><small>🪵 Gỗ</small><b id="wood">400</b></div>
-      <div class="stat"><small>🪨 Đá</small><b id="stone">50</b></div>
-      <div class="stat"><small>🪙 Vàng</small><b id="gold">50</b></div>
-      <div class="stat"><small>🚩 Lãnh thổ</small><b id="territory">0</b><small id="territoryIncome">Chưa có mỏ</small></div>
-      <div class="stat"><small>⏱ Thời gian</small><b id="time">00:00</b><small id="phaseHint">Giai đoạn phát triển kinh tế</small></div>
-      <div class="stat"><small>🪖 Quân xanh</small><b id="unitCount">0</b><small id="unitBreakdown">Lính 0 · Cung 0 · Trinh sát 0 · Kỵ binh 0</small></div>
-      <div class="stat"><small>🗡️ Lính giáo</small><b id="spearmanCount">0</b></div>
-    </div>
+<div class="game-app" id="gameApp">
+  <canvas id="game" width="960" height="540" tabindex="0" aria-label="Chiến trường Mini War — nhấp vào bản đồ để dùng phím mũi tên và dấu cộng/trừ"></canvas>
+
+  <div class="hud-layer">
+    <!-- Top left: commander badge -->
+    <section class="commander" aria-label="Chỉ huy">
+      <div class="crest" id="crest"><span>⚔️</span></div>
+      <div class="commander-info">
+        <div class="commander-name"><b id="sideName">QUÂN XANH</b><span class="clock">⏱ <b id="time">00:00</b></span></div>
+        <div class="commander-sub" id="modeStatus">Chưa bắt đầu</div>
+        <div class="commander-stats">
+          <span title="Tổng quân (gồm quân chờ ở sân tập kết)"><small id="unitLabel">🪖 Quân</small> <b id="unitCount">0</b></span>
+          <span id="phaseHint">Giai đoạn phát triển kinh tế</span>
+        </div>
+        <div class="commander-army" id="unitBreakdown">Lính 0 · Cung 0 · Lính giáo 0 · Kỵ binh 0</div>
+      </div>
+    </section>
+
+    <!-- Top: resources -->
+    <section class="resource-bar" aria-label="Tài nguyên">
+      <div class="res" id="resFood"><i>🌾</i><div><b id="food">150</b><small id="foodRate">+0 −0 = +0/phút</small></div></div>
+      <div class="res" id="resWood"><i>🪵</i><div><b id="wood">400</b><small id="woodRate">+0/phút</small></div></div>
+      <div class="res" id="resStone"><i>🪨</i><div><b id="stone">50</b><small id="stoneRate">+0/phút</small></div></div>
+      <div class="res" id="resGold"><i>🪙</i><div><b id="gold">50</b><small id="goldRate">+0/phút</small></div></div>
+      <div class="res territory" title="Số vùng đang giữ và thu nhập từ mỏ"><i>🚩</i><div><b id="territory">0</b><small id="territoryIncome">Chưa có mỏ</small></div></div>
+    </section>
+
+    <!-- Right: small round buttons -->
+    <nav class="side-rail" aria-label="Tuỳ chọn">
+      <button class="rail-btn" id="pause" type="button"><i>Ⅱ</i><span>Tạm dừng · F3</span></button>
+      <button class="rail-btn" id="toggleTerritory" type="button"><i>🗺️</i><span>Ranh giới · T</span></button>
+      <button class="rail-btn" id="fullscreen" type="button"><i>⛶</i><span>Toàn màn hình</span></button>
+      <button class="rail-btn" id="openGuide" type="button"><i>❓</i><span>Hướng dẫn · F1</span></button>
+      <button class="rail-btn" id="toggleSideHud" type="button" aria-label="Ẩn giao diện"><i>▣</i><span>Ẩn giao diện</span></button>
+    </nav>
+
+    <!-- Left: queues -->
+    <section class="queue-panel" aria-label="Hàng đợi">
+      <h3>Hàng đợi</h3>
+      <div class="queue-list" id="trainQueue" aria-live="polite"></div>
+    </section>
+
+    <!-- Bottom left: minimap -->
+    <section class="minimap-frame" aria-label="Bản đồ thu nhỏ — nhấp để di chuyển camera">
+      <canvas id="minimap" width="200" height="200"></canvas>
+    </section>
+
+    <!-- Bottom: battle log strip -->
+    <section class="chat-strip" id="chatStrip" aria-label="Nhật ký chiến trường">
+      <button class="chat-toggle" id="chatToggle" type="button" aria-label="Mở rộng nhật ký">📜</button>
+      <div class="feed" id="feed"><div>Chào chỉ huy! Hãy huấn luyện quân rồi đưa tới cột cờ để chiếm vùng.</div><div>Pháo đài sinh tài nguyên mỗi phút. Xây nông trại để có thêm lúa nuôi quân.</div></div>
+    </section>
+
+    <!-- Bottom right: main actions -->
+    <nav class="action-dock" aria-label="Lệnh chính">
+      <button class="dock-btn" id="openTrain" type="button" title="Huấn luyện quân (phím H)"><i>🛡️</i><span>Huấn luyện</span></button>
+      <button class="dock-btn" id="openBuild" type="button" title="Xây dựng (phím B)"><i>🔨</i><span>Xây dựng</span></button>
+      <button class="dock-btn warn" id="attack" type="button" title="Nhóm quân đang chọn tấn công (phím A)"><i>⚔️</i><span>Tấn công</span></button>
+    </nav>
+
+    <!-- Drawers -->
+    <section class="drawer controls" id="trainDrawer" aria-label="Huấn luyện quân" hidden>
+      <header><h2>Huấn luyện tại pháo đài</h2><button class="drawer-close" type="button" data-close aria-label="Đóng">✕</button></header>
+      <div class="cards">
+        <button class="card-btn unit-card" id="scout" type="button"><kbd class="hotkey">Q</kbd><canvas class="portrait" data-unit="scout" width="96" height="96"></canvas><strong>Trinh sát</strong><span>30 lúa</span></button>
+        <button class="card-btn unit-card" id="infantry" type="button"><kbd class="hotkey">W</kbd><canvas class="portrait" data-unit="infantry" width="96" height="96"></canvas><strong>Lính</strong><span>45 lúa</span></button>
+        <button class="card-btn unit-card" id="archer" type="button"><kbd class="hotkey">E</kbd><canvas class="portrait" data-unit="archer" width="96" height="96"></canvas><strong>Cung thủ</strong><span>55 lúa · 25 gỗ · 10 vàng</span></button>
+        <button class="card-btn unit-card" id="spearman" type="button"><kbd class="hotkey">R</kbd><canvas class="portrait" data-unit="spearman" width="96" height="96"></canvas><strong>Lính giáo</strong><span>45 lúa · 15 gỗ</span></button>
+        <button class="card-btn unit-card" id="cavalry" type="button"><kbd class="hotkey">T</kbd><canvas class="portrait" data-unit="cavalry" width="96" height="96"></canvas><strong>Kỵ binh</strong><span>80 lúa · 40 vàng</span></button>
+      </div>
+      <p class="drawer-note">Trả tiền khi xếp hàng · huấn luyện lần lượt từng quân · tối đa 5 quân trong hàng đợi.</p>
+    </section>
+
+    <section class="drawer controls" id="buildDrawer" aria-label="Xây dựng" hidden>
+      <header><h2>Xây dựng & nâng cấp</h2><button class="drawer-close" type="button" data-close aria-label="Đóng">✕</button></header>
+      <div class="cards">
+        <button class="card-btn" id="farm" type="button"><kbd class="hotkey">F</kbd><i class="card-icon">🌾</i><strong>Nông trại</strong><span>100 gỗ · +20 lúa/phút</span></button>
+        <button class="card-btn" id="buildTower" type="button"><kbd class="hotkey">T</kbd><i class="card-icon">🗼</i><strong>Tháp phòng thủ</strong><span>100 gỗ · 200 đá · 50 vàng</span></button>
+        <button class="card-btn" id="upgradeOutpost" type="button"><kbd class="hotkey">O</kbd><i class="card-icon">🛡️</i><strong>Tiền đồn</strong><span>200 gỗ · 100 đá</span></button>
+        <button class="card-btn" id="upgradeFarm" type="button"><kbd class="hotkey">U</kbd><i class="card-icon">⬆️</i><strong>Nâng cấp nông trại</strong><span>cấp 2: 80 gỗ · 40 đá</span></button>
+        <button class="card-btn" id="turret" type="button"><kbd class="hotkey">P</kbd><i class="card-icon">🏰</i><strong>Pháo thứ hai</strong><span>100 đá</span></button>
+      </div>
+      <p class="drawer-note">Chọn công trình rồi nhấp lên bản đồ để đặt · nhấp phải hoặc Esc để huỷ · tiền đồn và nâng cấp: chọn cờ/nông trại trước.</p>
+    </section>
   </div>
-  <div class="gamebox">
-    <canvas id="game" width="960" height="540" tabindex="0" aria-label="Chiến trường Mini War — nhấp vào bản đồ để dùng phím mũi tên và dấu cộng/trừ"></canvas>
-  
- 
-    <div class="sideHud">
-<div class="controls">
-    <button class="btn primary" id="scout">🔭 Trinh sát<span>30 lúa</span></button>
-    <button class="btn primary" id="infantry">🪖 Tạo lính<span>45 lúa</span></button>
-    <button class="btn primary" id="archer">🏹 Tạo cung thủ<span>55 lúa · 25 gỗ · 10 vàng</span></button>
-    <button class="btn primary" id="spearman">🗡️ Tạo lính giáo<span>45 lúa · 15 gỗ</span></button>
-    <button class="btn primary" id="cavalry">🐎 Tạo lính kỵ binh<span>80 lúa · 40 vàng</span></button>
-    <div class="trainQueue" id="trainQueue" aria-live="polite"></div>
-    <button class="btn warn" id="attack">⚔️ Tấn công<span>Ra lệnh tiến quân</span></button>
-    <button class="btn" id="farm">🌾 Xây nông trại<span>100 gỗ · +20 lúa/phút</span></button>
-    <button class="btn" id="upgradeFarm">⬆️ Nâng cấp nông trại<span>cấp 2: 80 gỗ · 40 đá</span></button>
-    <button class="btn" id="upgradeOutpost">🛡️ Xây tiền đồn<span>200 gỗ · 100 đá</span></button>
-    <button class="btn" id="buildTower">🗼 Tháp phòng thủ<span>100 gỗ · 200 đá · 50 vàng</span></button>
-    <button class="btn" id="turret">🏰 Nâng cấp pháo đài<span>100 đá · tích hợp pháo thứ hai</span></button>
-    <button class="btn" id="pause">Ⅱ Tạm dừng<span>Dừng / tiếp tục</span></button>
-    <button class="btn" id="toggleTerritory">🗺️ Ranh giới vùng<span>Đang hiện · phím T</span></button>
-    <button class="btn" id="fullscreen">⛶ Toàn màn hình<span>Mở rộng game</span></button>
+
+  <!-- Guide -->
+  <div class="modal" id="guideModal" hidden>
+    <section class="modal-panel" role="dialog" aria-labelledby="guideTitle">
+      <header><h2 id="guideTitle">Mục tiêu & hướng dẫn</h2><button class="drawer-close" type="button" data-close aria-label="Đóng">✕</button></header>
+      <div class="modal-body">
+        <p class="legend"><span><i class="dot blue"></i>Quân xanh</span><span><i class="dot red"></i>Quân đỏ</span><span>🚩 Cột cờ: đưa quân vào vòng quanh cờ để chiếm</span></p>
+        <h3>Thắng trận</h3>
+        <p>Phá hủy pháo đài đối phương; bảo vệ pháo đài của mình.</p>
+        <h3>Tài nguyên</h3>
+        <p>Pháo đài luôn sinh 25 lúa, 20 gỗ, 8 đá, 8 vàng mỗi phút; nông trại sinh thêm lúa; mỏ trong các vùng đã chiếm cờ sinh loại tài nguyên của vùng. Quân nào cũng ăn lúa mỗi phút; hết lúa quá 30 giây thì quân bị chậm. Vùng lúa sinh 25 lúa/phút và tăng 25% lúa cho nông trại của bạn xây trong vùng đó.</p>
+        <h3>Lãnh thổ & cột cờ</h3>
+        <p>Bản đồ chia thành 20 vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện), mỗi vùng có sẵn một cột cờ lớn ở giữa; gần nhà luôn có đủ vùng lúa, gỗ, đá, vàng. Đưa quân chiến đấu vào vòng quanh cờ để chiếm (trinh sát không chiếm được): 1 quân khoảng 60 giây, càng đông càng nhanh, từ 10 quân trở lên khoảng 15 giây. Hai phe cùng đứng trong vòng thì tiến độ dừng; bỏ trống cờ 5 giây thì tiến độ giảm dần về 0 (không đổi chủ). Cờ của địch chiếm qua 2 giai đoạn: hạ cờ về trung lập rồi mới chiếm. Giữ cờ thì thấy toàn bộ vùng. Xây tiền đồn cạnh cờ đã chiếm để có súng và giữ cờ: còn tiền đồn thì đối phương không chiếm được cờ.</p>
+        <h3>Quân đội</h3>
+        <p>Mọi loại quân tuyển tại pháo đài (nút <b>Huấn luyện</b>, phím H rồi Q W E R T): trả tiền khi xếp hàng, mỗi lần huấn luyện một quân (4–12 giây), hàng đợi tối đa 5 quân. Quân mới tập kết tại sân cạnh pháo đài và tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> (phím A) chỉ ra lệnh cho nhóm đang chọn.</p>
+        <h3>Công trình</h3>
+        <p>Nút <b>Xây dựng</b> (phím B): chọn công trình, đặt ở chỗ xanh trên vùng đã khám phá bằng chuột trái; nhấp phải hoặc Esc để huỷ. Không xây trên nước, đá hoặc chồng lên công trình/đơn vị; kéo được nông trại đã xây. Tháp chỉ xây trong lãnh thổ của mình. Nhấp công trình của mình để chọn rồi bấm nâng cấp. Pháo đài có tối đa 2 khẩu pháo; khẩu thứ hai tốn 100 đá.</p>
+        <h3>Điều khiển</h3>
+        <p>Lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ; nhấp vào bản đồ thu nhỏ để nhảy tới đó. Nhấp phải để ra lệnh đi.</p>
+        <h3>Phím tắt (kiểu Đế Chế)</h3>
+        <table class="hotkey-table" id="hotkeyTable"></table>
+      </div>
+    </section>
   </div>
-<div class="legend">
-    <span><i class="dot" style="background:#4aaaff"></i>Quân xanh của bạn</span>
-    <span><i class="dot" style="background:#ff626b"></i>Quân đỏ của máy</span>
-    <span>🚩 Mỗi vùng có sẵn một cột cờ: đưa quân chiến đấu vào vòng quanh cờ để chiếm, càng đông càng nhanh; hai phe cùng đứng thì tạm dừng</span>
-  </div>
-<div class="lower">
-    <div class="card"><h3>📜 Nhật ký chiến trường</h3><div class="feed" id="feed"><div>Chào chỉ huy! Hãy tạo quân rồi nhấn Tấn công.</div><div>Vùng gỗ gần nhà đã thuộc về bạn. Xây nông trại bằng gỗ để có lúa, rồi đưa quân tới cột cờ của các vùng trung lập để chiếm thêm tài nguyên.</div></div></div>
-    <div class="card"><h3>🎯 Mục tiêu & hướng dẫn</h3><p>• Phá hủy căn cứ đỏ để chiến thắng; bảo vệ căn cứ xanh.</p><p>• Bốn tài nguyên: pháo đài luôn sinh 25 lúa, 20 gỗ, 8 đá, 8 vàng mỗi phút; nông trại sinh thêm lúa; mỏ trong các vùng đã chiếm cờ sinh loại tài nguyên của vùng. Quân nào cũng ăn lúa mỗi phút; hết lúa quá 30 giây thì quân bị chậm. Công trình cần thời gian xây và có thể bị phá. Vùng nhà quanh pháo đài thuộc sẵn về mỗi phe. Bản đồ chia thành các vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện). Mỗi vùng trung lập có sẵn một cột cờ lớn ở giữa vùng (gần nhà luôn có đủ vùng lúa, gỗ, đá, vàng). Đưa quân chiến đấu vào vòng quanh cờ để chiếm (trinh sát không chiếm được): 1 quân khoảng 60 giây, càng đông càng nhanh, từ 10 quân trở lên khoảng 15 giây. Hai phe cùng đứng trong vòng thì tiến độ dừng; bỏ trống cờ 5 giây thì tiến độ giảm dần về 0 (không đổi chủ). Cờ của địch chiếm qua 2 giai đoạn: hạ cờ về trung lập rồi mới chiếm. Vùng lúa sinh 25 lúa/phút và tăng 25% lúa cho nông trại của bạn xây trong vùng đó. Nhấp vào cờ để xem vòng chiếm. Xây tiền đồn cạnh cờ đã chiếm để có súng và giữ cờ: còn tiền đồn thì đối phương không chiếm được cờ. Mọi loại quân (trinh sát, lính bộ, cung thủ, lính giáo, kỵ binh) tuyển tại pháo đài: trả tiền khi xếp hàng, mỗi lần huấn luyện một quân (4–12 giây), hàng đợi tối đa 5 quân. Tháp chỉ xây trong lãnh thổ của mình. Nhấp vào công trình của mình để chọn rồi bấm nâng cấp. Pháo đài tích hợp tối đa 2 khẩu pháo; mở khẩu thứ hai tốn 100 đá. Quân mới tập kết tại sân riêng cạnh pháo đài. Bấm “Xây nông trại”, chọn vị trí xanh trên vùng đã khám phá rồi nhấp trái để đặt; nhấp phải hoặc Escape để hủy. Không thể xây trên nước, đá hoặc chồng lên công trình/đơn vị; có thể kéo nông trại đã xây bằng chuột trái. Quân hai bên tấn công công trình của nhau khi nhìn thấy.</p><p>• Quân sẽ tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> chỉ ra lệnh cho nhóm đang chọn.</p><p>• AI mức vừa: tự tích lũy, tạo quân và định kỳ tổ chức tấn công.</p></div>
-  </div>
-<div class="tip">Bản đồ chiến trường rộng gấp đôi phiên bản trước · Lăn con lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ. Mẹo: đừng chỉ tạo một loại quân — phối hợp lính, cung thủ, lính giáo và kỵ binh để vượt qua phòng thủ.</div>
-  </div>
-    <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div>
-  </div>
-  
- 
-  
+
+  <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div>
 </div>
 
 </body>
 </html>
-

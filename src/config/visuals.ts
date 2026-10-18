@@ -5,7 +5,7 @@
 // regionMap[tile] = region id. Built by a multi-source Dijkstra from each region's seed tile; water and rock cost more
 // to cross, so borders follow rivers and rocky ground. Deterministic from the seeds, so a guest rebuilds the same map.
 // Border colours (neutral is a pale cream) and widths in screen pixels.
-export const TERRITORY_COLORS={neutral:'#fff4c8e6',0:'#4aaaff',1:'#ff626b'},TERRITORY_BORDER_PX={neutral:3,owned:4};
+export const TERRITORY_COLORS={neutral:'#fff4c8e6',0:'#4aaaff',1:'#ff626b'},TERRITORY_BORDER_PX={owned:4};
 // Soft glow around each border line: TERRITORY_GLOW_PX screen pixels on each side, in a faint version of the line colour.
 export const TERRITORY_GLOW={neutral:'#fff4c833',0:'#4aaaff4d',1:'#ff626b4d'},TERRITORY_GLOW_PX=3;
 // Region flags are about as tall as a fortress; below FLAG_MIN_SCREEN_ZOOM they grow so they stay recognisable when zoomed out.

@@ -1,6 +1,6 @@
 # Công trình (xây dựng, nâng cấp, tiền đồn, tháp)
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Mọi công trình người chơi xây (nông trại, tiền đồn, tháp phòng thủ) dùng chung một hệ thống. Nhà lính bộ, nhà lính cung và chuồng ngựa **đã bỏ** ngày 2026-10-17 ("Yêu cầu sửa game RTS 1vs1 — 17/10/2026"):
@@ -78,7 +78,8 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 - [ ] Không còn nút nhà lính bộ, nhà lính cung, chuồng ngựa; gọi `placeBuilding(…,'barracks',…)` bị từ chối.
 - [ ] Chọn nông trại → "Nâng cấp nông trại" hiện giá cấp kế; nâng xong lúa/phút tăng.
 - [ ] Chọn cờ vùng đã chiếm → "Xây tiền đồn" → tiền đồn hiện cạnh cờ, "CHỜ QUÂN XÂY" khi không có quân; xong thì máu 1.500, bắn quân địch đến gần. Lần thứ hai cho cùng vùng bị từ chối.
-- [ ] Thả nông trại vào chỗ hợp lệ → đúng 3 giây sau xong (lúa bắt đầu sinh).
+- [ ] Thả nông trại vào chỗ hợp lệ → đúng 3 giây sau xong (lúa bắt đầu sinh); máu tăng dần từ 20% lên đầy trong lúc xây.
+- Sửa 2026-10-18: từ 17/10 dòng tăng máu khi xây bị dính vào sau một comment nên không chạy (công trình xong vẫn chỉ 20% máu); đã tách lại, có unit test `tests/buildings.test.ts`.
 - [ ] Để quân địch phá một công trình → công trình biến mất, log báo.
 - Đã chạy thử 2026-10-17 (yêu cầu 17/10): đặt nông trại qua `requestAction('build')` → −100 gỗ, giây 2,9 chưa xong, giây 3,0 xong, sinh 20 lúa/phút; `BUILDING_TYPES` chỉ còn farm/outpost/tower, 3 nút nhà lính không còn trong trang.
 - Đã chạy thử 2026-10-17: nông trại 5 giây (trước khi đổi 3 giây); tiền đồn cạnh cờ (cách 2–3,5 ô, chờ thợ xây), không xây được tiền đồn thứ hai trong cùng vùng; nông trại đặt sát cờ bị chặn; PvP guest xây tiền đồn.

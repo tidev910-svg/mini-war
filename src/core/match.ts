@@ -4,19 +4,21 @@ import { DEFAULT_ZOOM, camX, camY, centerCameraOnHome, setCamX, setCamY, setZoom
 import { BASE_MIN_SEPARATION, H, MAP_FAIRNESS_TOLERANCE, MAP_GENERATION_TRIES, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { $, addLog, dist, ended, gameStarted, gameTime, localTeam, mode, netRole, nextId, paused, selected, selectedBuilding, selectedFlag, selectedFortress, setEnded, setGameTime, setNextId, setPaused, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setState, setSuppressNextCanvasClick, state, suppressNextCanvasClick, teamResources } from './game';
 import { endPlacement } from '../ui/input';
-import { FLAG_CAPTURE_RADIUS_TILES, FORTRESS_INCOME_PER_MINUTE, STARTING_RESOURCES, specs } from '../config/balance';
+import { FLAG_CAPTURE_RADIUS_TILES, FORTRESS_INCOME_PER_MINUTE, SCOUT_VISION, STARTING_RESOURCES, specs } from '../config/balance';
 import { facingFrom, processPendingSpawns, unitVisionRadius, updateTraining } from '../sim/units';
 import { farmFoodPerMinute, supplyFactor, updateSupply } from '../sim/economy';
 import { sendSnapshot } from '../net/snapshot';
 import { aiCanSee, revealHomeTerritory, teamCanSee } from '../sim/fog';
-import { baseSiteClear, fortressGunPosition } from '../map/bases';
+import { baseSiteClear, fortressGunPosition, musterYard } from '../map/bases';
 import { buildRegionMap, generateRegions } from '../map/regions';
-import { updateHUD, updateMatchClockHUD, updateTrainQueueHUD } from '../ui/hud';
+import { setPauseButton, updateHUD, updateMatchClockHUD, updateTrainQueueHUD } from '../ui/hud';
 import { buildingDone, buildingVision, needsBuilder, updateBuildings } from '../sim/buildings';
 import { hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
 import { buildWorldDecor } from '../render/terrain';
 import { draw } from '../render/draw';
+import { clearPath, steerTo } from '../sim/movement';
+import { nearestWalkable, reachableFrom, tileOf } from '../map/paths';
 
 export let last=0;
 export let aiTimer=0,incomeTimer=0;
@@ -38,6 +40,9 @@ export function fresh(){
   if(![blueBase,redBase].every(baseSiteClear)&&(best||rolls<1999))continue;
   attempt++;
   const gen=generateRegions(blueBase,redBase);
+  // Both muster yards, every flag and every mine must be reachable on foot (water and rock block; bridges cross the river).
+  const reach=reachableFrom(musterYard(blueBase).x,musterYard(blueBase).y),onFoot=p=>{const q=nearestWalkable(p.x,p.y,4);return !!q&&reach[tileOf(q.y)*MAP_TILES+tileOf(q.x)]===1;};
+  if(!onFoot(musterYard(redBase))||gen.regions.some(r=>r.cp&&!onFoot(r.cp))||gen.mines.some(m=>!onFoot(m)))gen.unfairness=Infinity;
   if(!best||gen.unfairness<best.unfairness)best={...gen,blueBase,redBase};
   if(gen.unfairness<=MAP_FAIRNESS_TOLERANCE)break;
  }
@@ -47,7 +52,7 @@ export function fresh(){
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
  centerCameraOnHome();
- $('overlay').classList.remove('show');$('pause').innerHTML='Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';
+ $('overlay').classList.remove('show');setPauseButton();
  addLog('Trận đấu bắt đầu. Vị trí căn cứ được chọn ngẫu nhiên trong mỗi trận!');
  updateHUD();
 }
@@ -90,7 +95,8 @@ export function update(dt){
     if(!candidate)candidate={x:Math.random()*W,y:45+Math.random()*(H-75)};
     u.dest=candidate;u.order='explore';
    }
-   const ed=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);if(ed>5){u.moving=true;const step=Math.min(ed,speed*dt);u.x+=(u.dest.x-u.x)/ed*step;u.y+=(u.dest.y-u.y)/ed*step;}
+   // Walk the path; an errand whose spot cannot be reached is dropped so a new one is picked next frame.
+   if(Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>5&&steerTo(u,u.dest.x,u.dest.y,speed,dt)&&Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>35&&u.captureTarget==null&&!u.buildTarget){u.dest=null;clearPath(u);}
   }
   if(target){
    const d=dist(u,target),tr=target.type?specs[target.type]:null;
@@ -101,19 +107,14 @@ export function update(dt){
       else hurt(target,s.damage,u.team,u.type);
     }
    }else if((u.order==='attack'||(mode==='ai'&&u.team===1))){
-    const dx=(target.x-u.x)/Math.max(1,d),dy=(target.y-u.y)/Math.max(1,d);u.moving=true;u.x+=dx*speed*dt;u.y+=dy*speed*dt;
+    steerTo(u,target.x,target.y,speed,dt);
     u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
    }
   }
-  // Player units with a move order travel to the clicked point, not a fixed lane.
+  // Player units with a move order follow their path to the clicked point (formation slot).
   if((mode==='pvp'||u.team===0)&&u.order==='move'&&u.dest){
-   const dd=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);
-   if(dd<5){u.order='hold';u.dest=null;}
-   else{
-    u.moving=true;const step=Math.min(dd,speed*dt);
-    u.x+=(u.dest.x-u.x)/dd*step;u.y+=(u.dest.y-u.y)/dd*step;
-    u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
-   }
+   if(steerTo(u,u.dest.x,u.dest.y,speed,dt)){u.order='hold';u.dest=null;clearPath(u);}
+   u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
   }
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
@@ -155,7 +156,7 @@ export function update(dt){
   const radiusSq=radius*radius;for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){const dx=(gx+.5)*cellW-u.x,dy=(gy+.5)*cellH-u.y;if(dx*dx+dy*dy<=radiusSq)state.fogSeen[gy*cols+gx]=1;}
  }
  // AI has its own independent vision map and stale memory of sightings.
- const aiSources=[...state.units.filter(u=>u.team===1&&u.hp>0).map(u=>({x:u.x,y:u.y,r:u.type==='scout'?145:(u.type==='spearman'?120:105)})),{x:state.bases[1].x,y:state.bases[1].y,r:160},...state.buildings.filter(b=>b.team===1).map(b=>({x:b.x,y:b.y,r:buildingVision(b)}))];
+ const aiSources=[...state.units.filter(u=>u.team===1&&u.hp>0).map(u=>({x:u.x,y:u.y,r:u.type==='scout'?SCOUT_VISION:(u.type==='spearman'?120:105)})),{x:state.bases[1].x,y:state.bases[1].y,r:160},...state.buildings.filter(b=>b.team===1).map(b=>({x:b.x,y:b.y,r:buildingVision(b)}))];
  for(const source of aiSources){
   const minX=Math.max(0,Math.floor((source.x-source.r)/cellW)),maxX=Math.min(cols-1,Math.ceil((source.x+source.r)/cellW));
   const minY=Math.max(0,Math.floor((source.y-source.r)/cellH)),maxY=Math.min(rows-1,Math.ceil((source.y+source.r)/cellH));

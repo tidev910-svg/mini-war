@@ -7,6 +7,7 @@ import { TERRITORY_BORDER_PX, TERRITORY_COLORS, TERRITORY_GLOW, TERRITORY_GLOW_P
 import { regionEdges, regionMap, regionTintKey, setRegionTintKey } from '../map/regions';
 import { showTerritory } from '../ui/hud';
 import { fogMask, fogVisible } from './fog';
+import { terrainType } from '../map/terrain';
 
 export const regionTintCanvas=document.createElement('canvas');
 regionTintCanvas.width=MAP_TILES;
@@ -28,18 +29,21 @@ export function drawTerritory(viewLeft,viewTop,viewRight,viewBottom,layer='under
  ctx.save();if(!over){refreshRegionTint();ctx.drawImage(regionTintCanvas,0,0,W,H);}
  const x1=viewLeft/T-1,x2=viewRight/T+1,y1=viewTop/T-1,y2=viewBottom/T+1;
  // Widths are in screen pixels (divided by zoom) so borders stay equally thick at every zoom level.
- // Every boundary is drawn once: a solid line in the colour of the side that owns either region (neutral if neither,
- // the local side's colour between a blue and a red region), over a faint glow and a thin dark edge for light ground.
- const buckets={neutral:[],0:[],1:[]},me=localTeam();
+ // Every boundary of an owned region is drawn once: a solid line in the colour of the side that owns either region (the
+ // local side's colour between a blue and a red region), over a faint glow and a thin dark edge for light ground.
+ const buckets={0:[],1:[]},me=localTeam();
  for(const e of regionEdges){
   if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;if((fogMask[e[6]]||fogMask[e[7]]||!fogVisible[e[6]]||!fogVisible[e[7]]?1:0)!==(over?1:0))continue;
+  // Rivers and lakes already separate regions: skip borders on or along water. Between two neutral regions nothing is drawn.
+  if(terrainType[e[6]]===2||terrainType[e[7]]===2)continue;
   const a=state.regions[e[4]]?.owner??-1,b=state.regions[e[5]]?.owner??-1;
-  buckets[a<0&&b<0?'neutral':a>=0&&b>=0&&a!==b?me:a>=0?a:b].push(e);
+  if(a<0&&b<0)continue;
+  buckets[a>=0&&b>=0&&a!==b?me:a>=0?a:b].push(e);
  }
  ctx.lineCap='round';ctx.lineJoin='round';
- for(const key of ['neutral',0,1]){
+ for(const key of [0,1]){
   const edges=buckets[key];if(!edges.length)continue;
-  const px=key==='neutral'?TERRITORY_BORDER_PX.neutral:TERRITORY_BORDER_PX.owned;
+  const px=TERRITORY_BORDER_PX.owned;
   ctx.beginPath();for(const e of edges){ctx.moveTo(e[0]*T,e[1]*T);ctx.lineTo(e[2]*T,e[3]*T);}
   ctx.strokeStyle=TERRITORY_GLOW[key];ctx.lineWidth=(px+2*TERRITORY_GLOW_PX)/zoom;ctx.stroke();
   ctx.strokeStyle='#0f1a1459';ctx.lineWidth=(px+1.5)/zoom;ctx.stroke();

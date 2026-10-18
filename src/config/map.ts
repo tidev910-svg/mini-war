@@ -9,6 +9,12 @@ export const forestRegions=[[.12,.18,.15,.14],[.35,.12,.13,.12],[.73,.14,.16,.13
 export const rockRegions=[[.12,.31,.11,.10],[.55,.14,.12,.10],[.82,.49,.11,.13],[.29,.65,.14,.10],[.68,.76,.12,.11],[.48,.94,.12,.08]];
 // Golden fields; together with forestRegions (wood) and rockRegions (stone) these become the capturable territories.
 export const goldRegions=[[.27,.22,.09,.08],[.59,.28,.10,.08],[.91,.43,.07,.10],[.30,.49,.09,.09],[.59,.61,.10,.08],[.16,.88,.09,.07],[.89,.91,.08,.07],[.47,.44,.08,.07]];
+// Lakes added 2026-10-18 on open grass between the biomes and away from the river: [cx, cy, rx, ry] as map fractions.
+// They become water tiles (no building, flags or mines; units still wade through) before rock, fields and forest are placed.
+export const lakeRegions=[[.48,.75,.050,.040],[.59,.48,.045,.035],[.31,.34,.045,.040],[.23,.79,.040,.035],[.78,.88,.035,.030],[.88,.12,.035,.030],[.72,.62,.035,.030]];
+// Wooden bridges over the river (docs/features/pathfinding.md): rows as map fractions, each BRIDGE_WIDTH_TILES tiles tall.
+// Water and rock block movement, so these are the only river crossings; 0.535 carries the main road.
+export const BRIDGE_ROWS=[.14,.36,.535,.80],BRIDGE_WIDTH_TILES=3;
 // No military buildings (removed 2026-10-17): every unit type is recruited at the fortress and deploys in its muster yard.
 export const HOME_TERRITORY_TILES=14;
 // Territory map: exactly REGION_COUNT flag regions plus the two home regions that contain the fortresses.

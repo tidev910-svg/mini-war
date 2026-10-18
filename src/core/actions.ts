@@ -2,10 +2,11 @@
 // Player commands: requestAction() routes to the host, applyAction() changes state (docs/architecture.md, multiplayer.md).
 import { H, W } from '../config/map';
 import { addLog, conn, ended, localTeam, mode, netRole, paused, setPaused, state } from './game';
-import { buy, commandAttack } from '../sim/units';
+import { buy, commandAttack, deleteUnits, stopUnits } from '../sim/units';
 import { setNetStatus } from '../net/peer';
 import { updateHUD } from '../ui/hud';
 import { buildTurret, buildingPlacementProblem, placeBuilding, startOutpost, startUpgrade } from '../sim/buildings';
+import { assignGroupMove } from '../sim/movement';
 
 export function requestAction(action,payload={}){
  if(mode==='pvp'&&netRole==='guest'){
@@ -20,6 +21,8 @@ export function applyAction(team,action,payload={}){
  else if(action==='upgrade')startUpgrade(team,'farm',payload.id==null?null:Number(payload.id));
  else if(action==='outpost')startOutpost(team,payload.regionId==null?null:Number(payload.regionId));
  else if(action==='turret')buildTurret(team);
+ else if(action==='stop')stopUnits(team,payload.ids);
+ else if(action==='delete')deleteUnits(team,payload.ids);
  else if(action==='attack')commandAttack(team,payload.ids);
  else if(action==='move'){
   if(ended||paused)return;
@@ -37,12 +40,9 @@ export function applyAction(team,action,payload={}){
    // Shift the whole formation inward near map edges so slots do not pile up on a clamp boundary.
    const cx=Math.max(25+halfW,Math.min(W-25-halfW,x));
    const cy=Math.max(45+halfH,Math.min(H-30-halfH,y));
-   chosen.forEach((u,i)=>{
-    const col=i%cols,row=Math.floor(i/cols);
-    const slotX=cx+(col-(cols-1)/2)*spacing;
-    const slotY=cy+(row-(rows-1)/2)*spacing;
-    u.dest={x:slotX,y:slotY};u.order='move';
-   });
+   const slots=chosen.map((u,i)=>{const col=i%cols,row=Math.floor(i/cols);return {x:cx+(col-(cols-1)/2)*spacing,y:cy+(row-(rows-1)/2)*spacing};});
+   // Each unit walks its own path around water and rock to its slot (one shared flow field for the group).
+   assignGroupMove(chosen,slots,cx,cy);
   }
  }
  else if(action==='pause'){if(!ended){setPaused(!!payload.paused);updateHUD();}}

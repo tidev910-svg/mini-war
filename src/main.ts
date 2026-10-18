@@ -31,6 +31,7 @@ import './render/terrain';
 import './render/flags';
 import './render/fog';
 import './render/draw';
+import './ui/hotkeys';
 
 fresh();
 setGameStarted(false);

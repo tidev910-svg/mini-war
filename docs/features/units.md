@@ -1,6 +1,6 @@
 # Quân lính & xuất quân
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Người chơi dùng lúa (và gỗ/vàng tuỳ loại) để mua 5 loại quân tại pháo đài. Quân đã trả tiền vào **hàng đợi huấn luyện**: mỗi phe huấn luyện lần lượt từng quân (4–12 giây), xong thì xuất hiện ở **sân tập kết** cạnh pháo đài. Nếu sân đã kín, quân vào hàng chờ xuất quân và tự ra khi có chỗ.
@@ -12,7 +12,7 @@ Bảng `specs` (đơn vị: HP, sát thương/đòn, tầm & tốc độ theo đ
 
 | Khoá | Tên | HP | ST | Tầm | Tốc độ | Cooldown | Giá (`cost`) | Huấn luyện (`train`, giây) | Nuôi (`upkeep`, lúa/phút) | Bán kính `r` | Tầm nhìn |
 |---|---|---:|---:|---:|---:|---:|---|---:|---:|---:|---:|
-| `scout` | Trinh sát | 60 | 5 | 18 | 72 | 1.1 | 30 lúa | 4 | 0,5 | 8 | 145 |
+| `scout` | Trinh sát | 60 | 5 | 18 | 72 | 1.1 | 30 lúa | 4 | 0,5 | 8 | 260 |
 | `infantry` | Lính | 100 | 13 | 22 | 45 | 0.8 | 45 lúa | 5 | 1 | 10 | 105 |
 | `archer` | Cung thủ | 65 | 10 | 125 | 34 | 1.05 | 55 lúa, 25 gỗ, 10 vàng | 8 | 1,5 | 9 | 130 |
 | `spearman` | Lính giáo | 145 | 18 | 26 | 38 | 0.82 | 45 lúa, 15 gỗ | 6 | 1 | 11 | 150 |
@@ -20,7 +20,7 @@ Bảng `specs` (đơn vị: HP, sát thương/đòn, tầm & tốc độ theo đ
 
 Giá đổi ngày 2026-10-17 theo đề xuất v1: lính bỏ 10 vàng (40 → 45 lúa) để luôn tuyển được quân cơ bản khi thiếu vàng; lính giáo 20 → 15 gỗ; cung thủ 30 → 25 gỗ; kỵ binh 50 → 40 vàng. Chỉ số chiến đấu giữ nguyên.
 
-`cost` là object `{food, wood, stone, gold}`; nhãn giá trên nút được sinh từ `specs` bằng `costText()` nên luôn khớp. Nhãn nút có thêm thời gian huấn luyện và "nuôi X lúa/phút". Hết lúa nuôi quân thì quân bị chậm, xem "Lúa duy trì & thiếu tiếp tế" trong [economy.md](economy.md). **Mọi loại quân tuyển tại pháo đài** qua hàng đợi huấn luyện rồi xuất hiện ở sân tập kết (không còn nhà lính, không khoá thời gian đầu trận). Ba nhà lính đã bỏ ngày 2026-10-17; cùng ngày người dùng chốt cho lính bộ, cung thủ, kỵ binh tuyển thẳng tại nhà chính như trinh sát và lính giáo.
+`cost` là object `{food, wood, stone, gold}`; nhãn giá trên nút được sinh từ `specs` bằng `costText()` nên luôn khớp. Nút mua là các thẻ trong bảng Huấn luyện (nút 🛡 hoặc phím H, xem [hud-ui.md](hud-ui.md)); quân đang luyện và đang chờ hiện ở bảng Hàng đợi bên trái. Nhãn thẻ có thêm thời gian huấn luyện và "nuôi X lúa/phút". Hết lúa nuôi quân thì quân bị chậm, xem "Lúa duy trì & thiếu tiếp tế" trong [economy.md](economy.md). **Mọi loại quân tuyển tại pháo đài** qua hàng đợi huấn luyện rồi xuất hiện ở sân tập kết (không còn nhà lính, không khoá thời gian đầu trận). Ba nhà lính đã bỏ ngày 2026-10-17; cùng ngày người dùng chốt cho lính bộ, cung thủ, kỵ binh tuyển thẳng tại nhà chính như trinh sát và lính giáo.
 
 (Tầm nhìn lấy từ `unitVisionRadius()`; AI dùng số khác, xem [fog-of-war.md](fog-of-war.md).)
 
@@ -40,7 +40,9 @@ Vị trí xuất quân (`spawn()`):
 - Ô bị coi là bận nếu: ngoài sân, trên nước/đá, đè quân khác, công trình (theo footprint) hay pháo đài. Công trình không được đặt đè sân tập kết.
 - `processPendingSpawns()` thử lại hàng chờ mỗi 0.35 giây; quân xuất từ hàng chờ giữ `id` và `order` đã đặt.
 
-Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('hold'|'move'|'attack'|'explore'), target, dest, selected, walk, moving, facing?}`.
+Lệnh dừng và loại bỏ (phím S / Delete, [controls.md](controls.md)): `stopUnits(team, ids)` đưa quân về `hold`, xoá đích và đường đi; `deleteUnits(team, ids)` xoá quân khỏi trận, không hoàn tiền. Cả hai đi qua `requestAction('stop'|'delete', {ids})`.
+
+Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('hold'|'move'|'attack'|'explore'), target, dest, selected, walk, moving, facing?, path?, goal?, repath?, moveGroup?}` (đường đi: [pathfinding.md](pathfinding.md)).
 
 Hướng quay `facing` (`'down'|'left'|'up'|'right'`, mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy)` (trục lớn hơn thắng). Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
 

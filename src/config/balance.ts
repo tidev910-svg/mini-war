@@ -8,6 +8,8 @@ export const specs={
  spearman:{name:'Lính giáo',hp:145,damage:18,range:26,speed:38,cooldown:.82,cost:{food:45,wood:15},upkeep:1,train:6,r:11,color:'#d7d6a4'},
  cavalry:{name:'Lính kỵ binh',hp:210,damage:24,range:27,speed:58,cooldown:.9,cost:{food:80,gold:40},upkeep:3,train:12,r:13,color:'#f2d5a0'}
 };
+// Scout sight in world units (~7 tiles; raised from 145 on 2026-10-18). Used for the player's fog and the AI's own map.
+export const SCOUT_VISION=260;
 // train = seconds in the fortress training queue (one unit at a time per side, paid when queued, TRAIN_QUEUE_MAX waiting).
 export const TRAIN_QUEUE_MAX=5;
 // upkeep = food per minute per living unit. Running out of food starts a grace period, then slows the army.

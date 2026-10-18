@@ -28,7 +28,9 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 | Điều khiển, chọn quân, camera | [features/controls.md](features/controls.md) | sự kiện chuột/phím, `applyAction('move')` | Đang có |
 | Chọn chế độ & chơi P2P | [features/multiplayer.md](features/multiplayer.md) | `createRoom()`, `joinRoom()`, snapshot | Cần kiểm thử |
 | Bản đồ, địa hình, đồ hoạ | [features/rendering.md](features/rendering.md) | `buildTerrain()`, `draw()`, spritesheet | Đang có |
-| HUD & giao diện | [features/hud-ui.md](features/hud-ui.md) | `updateHUD()`, `index.html` | Đang có |
+| HUD & giao diện | [features/hud-ui.md](features/hud-ui.md) | `updateHUD()`, `openPanel()`, `index.html` | Đang có |
+| Bản đồ thu nhỏ | [features/minimap.md](features/minimap.md) | `drawMinimap()`, `minimapToWorld()` | Đang có |
+| Vật cản & tìm đường | [features/pathfinding.md](features/pathfinding.md) | `findPath()`, `steerTo()`, `drawUnitPaths()` | Đang có |
 | Hệ thống 4 tài nguyên & lãnh thổ | [features/resource-system.md](features/resource-system.md) | thiết kế gốc, quyết định, kế hoạch | Đang có |
 
 ## Cách cập nhật tài liệu

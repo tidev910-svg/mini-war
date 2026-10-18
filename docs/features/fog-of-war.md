@@ -1,6 +1,6 @@
 # Sương mù chiến tranh & tầm nhìn
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Bản đồ phủ sương xanh xám đục. Vùng quân mình từng đi qua được **khám phá** và hiện địa hình vĩnh viễn; chỗ đã khám phá mà hiện không ai nhìn thấy được phủ **lớp sương mờ** (vẫn thấy địa hình). Quân và công trình địch chỉ hiện khi đang nằm trong vùng **đang nhìn thấy**. Mỏ đã khám phá thì luôn hiện.
@@ -8,7 +8,7 @@ Bản đồ phủ sương xanh xám đục. Vùng quân mình từng đi qua đ�
 ## Luật & thông số
 | Nguồn nhìn | Bán kính | Nguồn |
 |---|---:|---|
-| Trinh sát / Cung thủ / Lính giáo | 145 / 130 / 150 | `unitVisionRadius()` |
+| Trinh sát / Cung thủ / Lính giáo | 260 (`SCOUT_VISION`, tăng từ 145 ngày 2026-10-18) / 130 / 150 | `unitVisionRadius()` |
 | Lính / Kỵ binh | 105 | `unitVisionRadius()` |
 | Pháo đài | 175 | `teamCanSee()`, `revealTeamVision()` |
 | Mỗi pháo đang bật | 105 (chỉ cho "đang nhìn thấy") | `teamCanSee()` |
@@ -42,6 +42,7 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
 - [buildings.md](buildings.md): mọi công trình chỉ đặt được trên vùng đã khám phá; công trình là nguồn tầm nhìn.
 - [territory.md](territory.md): ranh giới vùng chỉ vẽ ở cạnh mà một ô kề đã khám phá; điểm chiếm hiện khi đã khám phá.
 - [economy.md](economy.md): mỏ ẩn khi chưa khám phá.
+- [pathfinding.md](pathfinding.md): quân lập đường theo bản đồ đã khám phá của phe (vùng mù coi là đi được, gặp vật cản mới tìm đường khác).
 - [multiplayer.md](multiplayer.md): mỗi trình duyệt giữ fog riêng.
 
 ## Multiplayer

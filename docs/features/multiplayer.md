@@ -1,6 +1,6 @@
 # Chọn chế độ & chơi với bạn bè (P2P)
 
-> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
 Màn hình đầu (`#modeScreen`) có 2 lựa chọn:
@@ -29,7 +29,7 @@ Guest                                   Host
 Thông điệp:
 - `{type:'hello', room}` — guest gửi khi kết nối mở; host trả snapshot.
 - `{type:'action', action, payload}` — xem danh sách action trong [architecture.md](../architecture.md).
-- `{type:'snapshot', gameTime, paused, ended, state, resultTitle, resultText}` — `state` bỏ fog, `target:null`, `selected:false`.
+- `{type:'snapshot', gameTime, paused, ended, state, resultTitle, resultText}` — `state` bỏ fog, `target:null`, `selected:false`; mỗi quân mang theo `path`/`goal`/`moveGroup` để khách vẽ đường đi.
 
 Ngắt kết nối:
 - Guest rời → host tự **tạm dừng**, phòng vẫn mở, guest có thể vào lại bằng mã cũ.
@@ -58,7 +58,7 @@ Mọi tính năng thay đổi `state` đều phải đi qua action để chạy 
 
 ## Giới hạn / việc tồn đọng
 - **Bảo mật lệnh:** host kiểm tra loại quân bằng `Object.hasOwn(specs, type)`; các action khác kẹp toạ độ/kiểm tra team. Chưa giới hạn tần suất lệnh.
-- Log của host không tới guest; riêng việc mua quân thì guest tự kiểm tra trước (`requestBuy()`) nên vẫn thấy lý do bị từ chối. Ngoại lệ: bấm mua nhanh nhiều lần trong một chu kỳ snapshot thì guest chưa thấy hàng đợi đầy, host từ chối phần thừa (không trừ tiền) mà guest không thấy lý do. Log "đã xếp vào hàng huấn luyện" / "huấn luyện xong" của guest cũng chỉ hiện ở host; guest theo dõi qua dòng `#trainQueue`. Các lệnh khác (xây, nâng cấp) bị từ chối thì guest không thấy lý do.
+- Log của host không tới guest; riêng việc mua quân thì guest tự kiểm tra trước (`requestBuy()`) nên vẫn thấy lý do bị từ chối. Ngoại lệ: bấm mua nhanh nhiều lần trong một chu kỳ snapshot thì guest chưa thấy hàng đợi đầy, host từ chối phần thừa (không trừ tiền) mà guest không thấy lý do. Log "đã xếp vào hàng huấn luyện" / "huấn luyện xong" của guest cũng chỉ hiện ở host; guest theo dõi qua bảng Hàng đợi (`#trainQueue`). Các lệnh khác (xây, nâng cấp) bị từ chối thì guest không thấy lý do.
 - Snapshot gửi toàn bộ `state` mỗi 0.18 giây (không nén, không delta), nay gồm cả `buildings`, `regions`, ~20 `mines` — tốn băng thông khi nhiều quân/công trình.
 - Log sự kiện (xây xong, chiếm vùng, thiếu tiếp tế…) chỉ hiện ở host; guest chỉ thấy qua bản đồ/HUD.
 - `regionMap` (bản đồ vùng 256×256) không gửi qua mạng; guest tự dựng lại từ hạt giống trong `state.regions` (`ensureRegionMap()`), nên host và guest phải cùng địa hình (`buildTerrain()` tất định).

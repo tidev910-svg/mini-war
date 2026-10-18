@@ -3,14 +3,14 @@
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
 import { addLog, canAfford, ended, gameTime, localTeam, missingText, mode, netRole, nextId, normalizeUnitType, paused, setNextId, spend, state } from '../core/game';
-import { BUILDING_TYPES, TRAIN_QUEUE_MAX, specs } from '../config/balance';
+import { BUILDING_TYPES, SCOUT_VISION, TRAIN_QUEUE_MAX, specs } from '../config/balance';
 import { requestAction } from '../core/actions';
 import { baseDir, musterYard } from '../map/bases';
 import { updateHUD } from '../ui/hud';
 
 // Dominant axis wins so diagonal movement still picks one of the four painted directions.
 export function facingFrom(dx,dy){return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
-export function unitVisionRadius(type){switch(normalizeUnitType(type)){case 'spearman':return 150;case 'archer':return 130;case 'scout':return 145;default:return 105;}}
+export function unitVisionRadius(type){switch(normalizeUnitType(type)){case 'spearman':return 150;case 'archer':return 130;case 'scout':return SCOUT_VISION;default:return 105;}}
 export function spawn(team,type,x,y,queueIfBlocked=true,pendingOrder='hold'){
  const spec=specs[type],left=team===0;
  const base=state.bases.find(b=>b.team===team)||{team,x:left?75:W-75,y:H/2,w:TILE_SIZE*5.5,h:TILE_SIZE*5};
@@ -72,4 +72,8 @@ export function updateTraining(dt){
 }
 // Unit buttons: the guest checks locally first so it sees the reason; the host re-validates every purchase.
 export function requestBuy(type){if(mode==='pvp'&&netRole==='guest'){const problem=buyProblem(type,localTeam());if(problem){addLog(problem);return;}}requestAction('buy',{unit:type});}
-export function commandAttack(team=localTeam(),ids=null){if(ended||paused)return;const wanted=ids?new Set(ids):new Set(state.units.filter(u=>u.team===team&&u.selected).map(u=>u.id));const chosen=state.units.filter(u=>u.team===team&&wanted.has(u.id));for(const u of chosen){u.order='attack';u.dest=null;u.target=null;}if(team===localTeam())addLog(chosen.length?`${chosen.length} đơn vị được chọn nhận lệnh tấn công!`:'Chưa chọn quân. Hãy chọn lính trước.');}
+export function commandAttack(team=localTeam(),ids=null){if(ended||paused)return;const wanted=ids?new Set(ids):new Set(state.units.filter(u=>u.team===team&&u.selected).map(u=>u.id));const chosen=state.units.filter(u=>u.team===team&&wanted.has(u.id));for(const u of chosen){u.order='attack';u.dest=null;u.target=null;u.path=null;u.goal=null;}if(team===localTeam())addLog(chosen.length?`${chosen.length} đơn vị được chọn nhận lệnh tấn công!`:'Chưa chọn quân. Hãy chọn lính trước.');}
+// Stop (S): the chosen units drop their order and path and hold where they are.
+export function stopUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);for(const u of state.units)if(u.team===team&&want.has(u.id)){u.order='hold';u.dest=null;u.target=null;u.path=null;u.goal=null;u.moveGroup=null;}}
+// Delete: the chosen units are removed from the battlefield (no refund), like deleting units in Age of Empires.
+export function deleteUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);const before=state.units.length;state.units=state.units.filter(u=>!(u.team===team&&want.has(u.id)));const n=before-state.units.length;if(n&&team===localTeam())addLog(`Đã loại bỏ ${n} quân.`);}

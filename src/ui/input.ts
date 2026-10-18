@@ -13,11 +13,14 @@ import { applySnapshot } from '../net/snapshot';
 import { isTeamAreaExplored } from '../sim/fog';
 import { requestAction } from '../core/actions';
 import { regionLabel } from '../map/regions';
-import { setShowTerritory, setSidebarCollapsed, showTerritory, updateHUD } from './hud';
+import { setPauseButton, setShowTerritory, setSidebarCollapsed, showTerritory, updateHUD } from './hud';
 import { buildingDone, buildingName, buildingPlacementProblem } from '../sim/buildings';
 import { captureSeconds } from '../sim/territory';
 import { unitHitRadius } from '../render/units';
 import { flagHit } from '../render/flags';
+import { minimapCanvas, minimapToWorld } from '../render/minimap';
+import { closePanels } from './panels';
+import { showMoveMarker } from '../render/paths';
 
 export function endPlacement(){setPlacement(null);document.querySelectorAll('.controls .placing').forEach(el=>el.classList.remove('placing'));canvas.style.cursor='';}
 export function beginPlacement(kind){
@@ -45,17 +48,18 @@ for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.butto
 $('upgradeOutpost').querySelector('span').textContent=costText(BUILDING_TYPES.outpost.cost)+' · '+BUILDING_TYPES.outpost.buildTime+'s · cạnh cờ đã chiếm, có súng';
 $('turret').querySelector('span').textContent=costText(FORTRESS_GUN_COST)+' · tích hợp pháo thứ hai';
 for(const type of Object.keys(specs))$(type).onclick=()=>requestBuy(type);
-for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).onclick=()=>beginPlacement(kind);
+// Building cards close the drawer so the map is free for placement.
+for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).onclick=()=>{closePanels();beginPlacement(kind);};
 $('toggleTerritory').onclick=()=>setShowTerritory(!showTerritory);
 $('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});
 $('upgradeOutpost').onclick=()=>requestAction('outpost',{regionId:selectedFlag});
 $('turret').onclick=()=>requestAction('turret');
 $('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
 $('fullscreen').onclick=async()=>{const app=$('gameApp');try{if(document.fullscreenElement){await document.exitFullscreen();}else{await app.requestFullscreen();}}catch{addLog('Trình duyệt không cho phép bật toàn màn hình.');}};
-document.addEventListener('fullscreenchange',()=>{$('fullscreen').innerHTML=document.fullscreenElement?'⤢ Thoát toàn màn hình<span>Thu nhỏ game</span>':'⛶ Toàn màn hình<span>Mở rộng game</span>';});
+document.addEventListener('fullscreenchange',()=>{$('fullscreen').innerHTML=document.fullscreenElement?'<i>⤢</i><span>Thoát toàn màn hình</span>':'<i>⛶</i><span>Toàn màn hình</span>';});
 toggleSideHud.onclick=()=>setSidebarCollapsed(!gameApp.classList.contains('panel-collapsed'));
 window.addEventListener('resize',()=>{syncWorldMetrics();});
-$('pause').onclick=()=>{if(ended)return;if(mode==='pvp'&&netRole==='guest'){requestAction('pause',{paused:!paused});return;}setPaused(!paused);$('pause').innerHTML=paused?'▶ Tiếp tục<span>Tiếp tục trận đấu</span>':'Ⅱ Tạm dừng<span>Dừng / tiếp tục</span>';addLog(paused?'Đã tạm dừng trận đấu.':'Trận đấu tiếp tục.');updateHUD();};
+$('pause').onclick=()=>{if(ended)return;if(mode==='pvp'&&netRole==='guest'){requestAction('pause',{paused:!paused});return;}setPaused(!paused);setPauseButton();addLog(paused?'Đã tạm dừng trận đấu.':'Trận đấu tiếp tục.');updateHUD();};
 $('overlayRestart').onclick=()=>{if(mode==='pvp'){addLog('Muốn chơi trận mới, hãy tạo phòng mới hoặc tải lại trang.');return;} $('feed').innerHTML='';fresh();};
 export function canvasPoint(e){const rect=canvas.getBoundingClientRect();return {x:(e.clientX-rect.left)*VIEW_W/rect.width,y:(e.clientY-rect.top)*VIEW_H/rect.height};}
 export function canvasPos(e){const p=canvasPoint(e),o=viewOffsets();return screenPlaneToWorld((p.x-o.x)/zoom,(p.y-o.y)/zoom);}
@@ -99,20 +103,9 @@ export let selectingBox=false,boxStart=null,boxPointerId=null,guiding=false;
   setCamY(panCamStart.y-(e.clientY-panStart.y)*sy/zoom);
   clampCamera();
  });
- export function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});setSelected(null);}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
+ export function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});showMoveMarker(pos.x,pos.y);setSelected(null);}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
  canvas.addEventListener('pointerup',stopPan);
 canvas.addEventListener('pointercancel',stopPan);
- window.addEventListener('keydown',e=>{
-  if(document.activeElement!==canvas)return;
-  const step=(e.shiftKey?360:180)/zoom;
-  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','_'].includes(e.key)){e.preventDefault();
-   if(e.key==='+'||e.key==='=')setZoom(Math.min(MAX_ZOOM,zoom*1.15));
-   if(e.key==='-'||e.key==='_')setZoom(Math.max(MIN_ZOOM,zoom/1.15));
-   if(e.key==='ArrowLeft')setCamX(camX-(step));if(e.key==='ArrowRight')setCamX(camX+(step));
-   if(e.key==='ArrowUp')setCamY(camY-(step));if(e.key==='ArrowDown')setCamY(camY+(step));
-   clampCamera();
-  }
- });
 canvas.addEventListener('click',e=>{
  if(suppressNextCanvasClick){setSuppressNextCanvasClick(false);e.preventDefault();return;}
  if(placement)return;
@@ -142,7 +135,7 @@ canvas.addEventListener('click',e=>{
   for(const u of state.units)u.selected=false;localSelectedIds.clear();
   hit.selected=true;localSelectedIds.add(hit.id);setSelected(hit);addLog('Đã chọn '+specs[hit.type].name+'. Giữ Shift hoặc kéo khung để chọn nhiều lính.');
  }else if(selected){
-  requestAction('move',{ids:[selected.id],x,y});addLog('Đã đặt điểm đến cho đơn vị.');setSelected(null);
+  requestAction('move',{ids:[selected.id],x,y});showMoveMarker(x,y);addLog('Đã đặt điểm đến cho đơn vị.');setSelected(null);
  }
 });
 canvas.style.touchAction='none';
@@ -201,4 +194,11 @@ export function endPointer(e){
 }
 canvas.addEventListener('pointerup',endPointer);
 canvas.addEventListener('pointercancel',endPointer);
-document.addEventListener('keydown',e=>{if(placement&&e.key==='Escape'){endPlacement();addLog('Đã hủy đặt công trình.');return;}if(e.key.toLowerCase()==='t'&&!e.ctrlKey&&!e.metaKey&&document.activeElement?.tagName!=='INPUT'){setShowTerritory(!showTerritory);return;}if(e.code==='Space'){e.preventDefault();$('pause').click();}if(e.key.toLowerCase()==='a')requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});});
+// Keyboard shortcuts (Esc, T, F3, A, S, camera keys…) are all handled in ui/hotkeys.ts.
+
+// Minimap: press or drag to centre the camera there (local view only, nothing to send to the host).
+let minimapDrag=null;
+function centerCameraOnMinimap(e){const p=minimapToWorld(e);setCamX(p.x-VIEW_W/zoom/2);setCamY(p.y-VIEW_H/zoom/2);clampCamera();}
+minimapCanvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();minimapDrag=e.pointerId;try{minimapCanvas.setPointerCapture(e.pointerId);}catch{}centerCameraOnMinimap(e);});
+minimapCanvas.addEventListener('pointermove',e=>{if(minimapDrag===e.pointerId)centerCameraOnMinimap(e);});
+for(const type of ['pointerup','pointercancel'])minimapCanvas.addEventListener(type,e=>{if(minimapDrag===e.pointerId)minimapDrag=null;});
