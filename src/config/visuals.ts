@@ -24,17 +24,6 @@ export const RESOURCE_ICONS={food:'🌾',wood:'🪵',stone:'🪨',gold:'🪙'};
 // Rebuilt at most 5 times a second, or at once when the fog array changes.
 export const FOG_RGB=hexRgb(THEME['ui-fog']),FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,FOG_PAD=4,FOG_MEMORY_ALPHA=115;
 
-// ---- Unit art (render/unitArt.ts) ----
-// Material colours of the code-drawn soldiers; the side's colours come from TEAM_COLORS (cloth, plumes, shields, caparison).
-export const UNIT_ART={
- ink:'#1b130e',shadow:'rgba(0,0,0,.30)',
- skin:'#e3b48a',skinShade:'#b98461',
- steel:'#c7ccd2',steelDark:'#7b838d',steelLight:'#f0f2f5',
- leather:'#7a4f2e',leatherDark:'#4d311c',wood:'#8b5b33',boot:'#3a291d',
- cloak:'#56603a',cloakDark:'#373d24',gold:'#d9a441',string:'#efe6cf',
- horse:'#8a5a36',horseDark:'#5c3b23',horseLight:'#ab7a4d',mane:'#2d2019',hoof:'#2a211c',
-};
-// Unit animation timing: walk / idle frames per second (6-frame walk, 4-frame idle); attack = windup in the last
-// windupSeconds before a blow, then strike, follow-through and recover frames of attackFrameSeconds each; the hit flash
-// lasts hurtSeconds; a fallen unit stays fallSeconds (falls, then fades).
-export const UNIT_ANIM={walkFps:8,cavalryWalkFps:9,idleFps:1.25,windupSeconds:.16,attackFrameSeconds:.1,hurtSeconds:.18,fallSeconds:1.4};
+
+// A unit that dies leaves a falling sprite (effect kind 'fall', render/units.ts drawFallenUnit) for fallSeconds.
+export const UNIT_ANIM={fallSeconds:1.4};

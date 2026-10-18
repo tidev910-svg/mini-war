@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Target selection and damage (docs/features/combat.md).
-import { dist, gameTime, mode, selected, setSelected, state } from '../core/game';
+import { dist, mode, selected, setSelected, state } from '../core/game';
 import { UNIT_ANIM } from '../config/visuals';
 import { finish } from '../core/match';
 import { aiCanSee, teamCanSee } from './fog';
@@ -26,8 +26,7 @@ export function hurt(target,damage,team,attackerType=null){
  if(attackerType==='spearman'&&target?.type==='cavalry')finalDamage*=1.35;
  else if(attackerType==='cavalry'&&target?.type==='spearman')finalDamage*=0.9;
  target.hp-=finalDamage;state.effects.push({x:target.x,y:target.y,life:.18,max:.18,color:team===0?'#73c8ff':'#ff747a'});
- // Display only: hit flash on the unit, and a falling body when it dies (both travel in the snapshot to the guest).
- if(target.type)target.hitAt=gameTime;
+ // Display only: a dying unit leaves a falling body (travels in the snapshot to the guest).
  if(target.hp<=0){
   if(target===state.bases[0])finish(false);
   else if(target===state.bases[1])finish(true);

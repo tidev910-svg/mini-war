@@ -44,11 +44,7 @@ Lệnh dừng và loại bỏ (phím S / Delete, [controls.md](controls.md)): `s
 
 Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('hold'|'move'|'attack'|'explore'), target, dest, selected, walk, moving, facing?, path?, goal?, repath?, moveGroup?}` (đường đi: [pathfinding.md](pathfinding.md)).
 
-Hướng quay `facing` (8 hướng: `down`, `down-right`, `right`, `up-right`, `up`, `up-left`, `left`, `down-left`; mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy, prev)`. Hướng là cung 45° gần nhất; khi đã có hướng, phải lệch khỏi cung cũ thêm `FACING_HYSTERESIS` = 10° mới đổi, để quân đi dọc mép hai cung không lật qua lật lại. Mọi loại quân vẽ theo hướng này ([rendering.md](rendering.md)).
-
-Trường chỉ để hiển thị, cũng gửi trong snapshot:
-- `engaged`: đang trong tầm đánh mục tiêu lượt này; dùng cho tư thế tấn công.
-- `hitAt`: `gameTime` lúc bị đánh trúng; dùng cho chớp đỏ. Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
+Hướng quay `facing` (8 hướng: `down`, `down-right`, `right`, `up-right`, `up`, `up-left`, `left`, `down-left`; mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy, prev)`. Hướng là cung 45° gần nhất; khi đã có hướng, phải lệch khỏi cung cũ thêm `FACING_HYSTERESIS` = 10° mới đổi, để quân đi dọc mép hai cung không lật qua lật lại. Hiện chỉ sprite lính giáo có 4 hướng (hướng chéo quy về trái/phải); các sprite khác chỉ có một hướng ([rendering.md](rendering.md)). Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
 
 ## Code liên quan
 - [src/config/balance.ts](../../src/config/balance.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/map/bases.ts](../../src/map/bases.ts), [src/core/game.ts](../../src/core/game.ts): `specs`, `TRAIN_QUEUE_MAX`, `trainQueueOf()`, `buyProblem()`, `buy()`, `requestBuy()`, `queueTraining()`, `updateTraining()`, `updateTrainQueueHUD()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
@@ -61,7 +57,7 @@ Trường chỉ để hiển thị, cũng gửi trong snapshot:
 - [territory.md](territory.md): quân đứng trong vòng cờ để chiếm vùng.
 - [fortress.md](fortress.md): sân tập kết gắn với pháo đài.
 - [hud-ui.md](hud-ui.md): đếm quân, số quân trong hàng chờ.
-- [rendering.md](rendering.md): hình quân vẽ bằng code theo 4 hướng.
+- [rendering.md](rendering.md): spritesheet.
 
 ## Multiplayer
 Guest gửi `buy` với `{unit}` (qua `requestBuy()`, sau khi tự kiểm tra `buyProblem()` để hiện lý do từ chối); host gọi `buy(unit, 1)` và kiểm tra lại. Snapshot có thể trễ tới 0,18 giây, nên hiếm khi guest gửi được một lệnh mà host vẫn từ chối; khi đó guest chỉ thấy là không có quân mới.
@@ -78,4 +74,5 @@ Guest gửi `buy` với `{unit}` (qua `requestBuy()`, sau khi tự kiểm tra `b
 - [ ] Thêm loại quân mới: cập nhật `specs`, `unitVisionRadius()`, `unitTargetHeight()`, `drawUnit()`, `updateHUD()`, nút trong `index.html`, AI trong `update()`, và file này.
 
 ## Giới hạn / việc tồn đọng
+- Lính thường, cung thủ, trinh sát, kỵ binh chưa có sprite 4 hướng (spritesheet chỉ có một hướng: nhìn thẳng, kỵ binh nghiêng trái).
 - Quân di chuyển không kiểm tra nước/đá; chỉ lúc xuất quân mới kiểm tra.

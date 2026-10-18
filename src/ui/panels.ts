@@ -4,7 +4,7 @@ import { $, canAfford, localTeam, state } from '../core/game';
 import { canvas } from '../core/view';
 import { specs } from '../config/balance';
 import { buyProblem } from '../sim/units';
-import { unitArtFrame } from '../render/unitArt';
+import { SPEARMAN_ROWS, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryClips, infantrySpriteSheet, scoutClips, scoutSpriteSheet, spearmanSpriteSheet } from '../render/sprites';
 
 const PANELS = { train: 'trainDrawer', build: 'buildDrawer', guide: 'guideModal', confirm: 'confirmModal' };
 const DOCK = { train: 'openTrain', build: 'openBuild' };
@@ -36,18 +36,26 @@ export function updateUnitCards() {
   }
 }
 
-// Portrait = the unit's code-drawn idle frame turned PORTRAIT_YAW degrees towards the right, in the local side's colours.
-const PORTRAIT_YAW = 25;
+// Portrait = first idle frame of the unit's sprite sheet in the local side's colour (sheets are 4 columns wide).
+const SHEETS = {
+  scout: { img: scoutSpriteSheet, rows: 4, row: t => scoutClips[t ? 'red' : 'blue'].idle.row },
+  infantry: { img: infantrySpriteSheet, rows: 4, row: t => infantryClips[t ? 'red' : 'blue'].idle.row },
+  archer: { img: archerSpriteSheet, rows: 4, row: t => archerClips[t ? 'red' : 'blue'].idle.row },
+  cavalry: { img: cavalrySpriteSheet, rows: 4, row: t => cavalryClips[t ? 'red' : 'blue'].idle.row },
+  spearman: { img: spearmanSpriteSheet, rows: SPEARMAN_ROWS, row: t => t * 8 },
+};
 export function drawPortraits() {
   const team = localTeam();
   for (const el of document.querySelectorAll('canvas.portrait')) {
-    const type = el.dataset.unit; if (!type) continue;
-    const f = unitArtFrame(type, team, PORTRAIT_YAW, 'idle', 0), k = el.height * (type === 'cavalry' ? .95 : 1.25) / f.figureH;
+    const sheet = SHEETS[el.dataset.unit]; if (!sheet) continue;
     const pctx = el.getContext('2d'); pctx.clearRect(0, 0, el.width, el.height);
-    pctx.drawImage(f.canvas, el.width / 2 - f.ax * k, el.height * (type === 'cavalry' ? 1.02 : 1.12) - f.ay * k, f.w * k, f.h * k);
+    const img = sheet.img; if (!img.complete || !img.naturalWidth) continue;
+    const cw = img.naturalWidth / 4, ch = img.naturalHeight / sheet.rows, scale = Math.min(el.width / cw, el.height / ch) * 1.25;
+    const w = cw * scale, h = ch * scale;
+    pctx.drawImage(img, 0, sheet.row(team) * ch, cw, ch, (el.width - w) / 2, el.height - h * 0.92, w, h);
   }
 }
-drawPortraits();
+for (const sheet of Object.values(SHEETS)) sheet.img.addEventListener('load', drawPortraits);
 
 // Notice banner: shows the newest log line, fades after NOTICE_SECONDS; the scroll button opens the last 12 entries.
 // A 'danger' line (under attack, losses) gives the banner a red rim while it is the newest.

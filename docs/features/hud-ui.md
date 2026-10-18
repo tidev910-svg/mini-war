@@ -65,7 +65,7 @@ Bảng màu **"sắt & máu"** (đổi ngày 2026-10-18, thay cho tông xanh nav
 
 **Bảng trượt** (`src/ui/panels.ts`; mỗi lúc chỉ mở một bảng; `openPanel()`, `closePanels()`, `togglePanel()`):
 - `#trainDrawer`: 5 thẻ quân (`#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry`).
-  - Mỗi thẻ có ảnh chân dung là hình quân vẽ bằng code (khung nhìn thẳng, đứng yên) theo màu phe (`drawPortraits()`, `unitArtFrame()`), tên, giá + thời gian huấn luyện + lúa nuôi, số quân đang có.
+  - Mỗi thẻ có ảnh chân dung vẽ từ khung đứng yên đầu tiên của spritesheet theo màu phe (`drawPortraits()`), tên, giá + thời gian huấn luyện + lúa nuôi, số quân đang có.
   - Thẻ có class `cant` (giá chữ đỏ) khi thiếu tài nguyên; tooltip là lý do từ `buyProblem()`.
   - Bấm thẻ gọi `requestBuy()`; bảng vẫn mở để mua tiếp.
 - `#buildDrawer`: `#farm`, `#buildTower`, `#upgradeOutpost`, `#upgradeFarm`, `#turret`. Bấm công trình cần đặt thì đóng bảng rồi gọi `beginPlacement()`.

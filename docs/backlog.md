@@ -43,7 +43,11 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
+- [ ] Tìm đường: hiếm khi nhóm quân trong `pnpm smoke path` không tới đích trên một bản đồ ngẫu nhiên. → [pathfinding.md](features/pathfinding.md)
+
 ## Đã xong gần đây
+**2026-10-18 (quay về ảnh vẽ tay):** bỏ quân vẽ bằng code (`render/unitArt.ts`), dùng lại spritesheet; lính giáo vẫn 4 hướng (hướng chéo → trái/phải); quân chết vẫn có sprite ngã rồi mờ.
+
 **2026-10-18 (8 hướng + đánh nhau):** quân dựng bằng con rối 3-D chiếu theo góc quay: 8 hướng (5 góc dựng + 3 lật), đi 6 khung, tấn công 4 khung (lấy đà / ra đòn / theo đà / thu về) riêng cho kiếm, dao, giáo, cung, thương; trúng đòn chớp đỏ; chết thì ngã rồi mờ; hướng 8 cung có độ trễ.
 
 **2026-10-18 (quân vẽ bằng code, 4 hướng):** cả 5 loại quân vẽ lại bằng vector (`render/unitArt.ts`): nhìn thẳng / quay lưng / nghiêng (trái = lật), đứng yên, đi 4 khung, động tác tấn công; màu phe từ theme; khung lưu đệm; chân dung thẻ Huấn luyện dùng hình mới; hướng có độ trễ chống lật.

@@ -31,47 +31,20 @@ Cầu gỗ `drawBridges()` vẽ ngay trước lớp lãnh thổ; đường đi c
 
 Canvas `#game` phủ toàn màn hình; `syncWorldMetrics()` giới hạn độ phân giải nền ở `MAX_CANVAS_PIXELS` = 2,1 triệu điểm ảnh (CSS phóng lên).
 
-**Quân (vẽ bằng code, 8 hướng)** — [src/render/unitArt.ts](../../src/render/unitArt.ts). Các spritesheet `public/assets/units/*` không còn được tải.
-- **Con rối 3-D:**
-  - Khớp và trang bị đặt trong không gian quanh quân: R sang phải quân, F ra trước, H lên trên, chân ở 0.
-  - Chiếu theo góc quay θ (0 = nhìn thẳng vào người xem, 90 = quay phải, 180 = quay lưng): x = −R·cosθ + F·sinθ; độ sâu = R·sinθ + F·cosθ; y = −H + độ sâu·`K` (`K` = 0,3, độ nghiêng mặt đất).
-  - Các phần vẽ từ xa đến gần. Khiên co theo góc nhìn: mặt trước màu phe, mặt sau gỗ.
-- **8 hướng:**
-  - `u.facing` ∈ `down`, `down-right`, `right`, `up-right`, `up`, `up-left`, `left`, `down-left`.
-  - Chỉ dựng 5 góc quay 0/45/90/135/180°. Ba hướng bên trái lật bản bên phải lúc vẽ (`DIR_VIEW`).
-- **Động tác** (`POSE_FRAMES`, `unitArtPose(u)`; thời gian trong `UNIT_ANIM`, `config/visuals.ts`). Thứ tự ưu tiên:
-  1. **Tấn công** (khi `u.engaged` và đứng yên), 4 khung:
-     - lấy đà trong `windupSeconds` = 0,16 giây cuối trước đòn (`attackTimer`);
-     - ra đòn, theo đà, thu về, mỗi khung `attackFrameSeconds` = 0,1 giây sau đòn.
-     - Kiếm chém từ trên xuống, dao đâm, giáo và thương kỵ binh đâm ngang (hơi chếch lên để vẫn thấy khi đâm thẳng về phía người xem), cung thủ kéo dây rồi thả.
-  2. **Trúng đòn**: giật người ra sau, chớp đỏ (`tint` `'hit'`) trong `hurtSeconds` = 0,18 giây kể từ `u.hitAt`.
-  3. **Đi**: 6 khung, `walkFps` = 8 (kỵ binh 9). Chân bước, tay vung, thân nhún; ngựa phi 4 chân lệch pha.
-  4. **Đứng yên**: 4 khung thở, `idleFps` = 1,25.
-- **Chết**: hiệu ứng `{kind: 'fall'}` trong `state.effects`, vẽ trong cảnh theo chiều sâu bằng `drawFallenUnit()`. Quân chớp đỏ, ngã ngửa trong một phần ba đầu, rồi mờ dần trong `fallSeconds` = 1,4 giây. Quân địch chết chỉ hiện ở chỗ phe mình đang nhìn thấy.
-- **Trang bị:**
-
-| Quân | Trang bị |
-|---|---|
-| Lính | Mũ sắt có lông nhỏ, kiếm, khiên tròn màu phe viền vàng |
-| Lính giáo | Mũ trụ có khe nhìn, chùm lông lớn, giáo dài, khiên diều màu phe |
-| Cung thủ | Mũ trùm màu phe đậm, cung (nghiêng nhẹ để không thành một đường khi nhìn thẳng), ống tên sau lưng |
-| Trinh sát | Áo choàng có mũ trùm màu rêu, khăn quàng màu phe, dao găm |
-| Kỵ binh | Ngựa phủ vải màu phe viền vàng, yên; người cưỡi mũ trụ, thương có cờ đuôi nheo màu phe, khiên diều |
-
-- **Màu:** màu phe từ `TEAM_COLORS` (`config/theme.ts`); màu vật liệu từ `UNIT_ART` (`config/visuals.ts`).
-- **Bộ đệm:**
-  - Mỗi khung (loại × phe × góc quay × động tác × khung × tint) chỉ vẽ một lần vào canvas, 1 điểm ảnh cho mỗi đơn vị thiết kế (`SS` = 1), lần đầu cần thì mới dựng (`unitArtFrame()`).
-  - Dựng đủ mọi khung của cả hai phe: 800 khung, khoảng 34 MB, khoảng 0,2 giây (chia nhỏ theo lúc cần).
-- **Kích thước:**
-  - `drawUnit()` co theo `unitTargetHeight(type)` / `FIGURE_H[type]`.
-  - Thanh máu quân nằm ngay trên mũ, rộng 30 (kỵ binh 46).
-- **Chân dung** thẻ Huấn luyện: khung `idle` quay `PORTRAIT_YAW` = 25° (`ui/panels.ts`).
-
-**Sprite công trình:**
+**Sprite** (`public/assets/units/<quân>/`, đường dẫn `/assets/units/<quân>/...`; quy ước thư mục và tên: [assets.md](../assets.md)):
 | Đối tượng | File | Ghi chú |
 |---|---|---|
+| Lính | `infantry-sheet.png` | 4 hàng: xanh idle, xanh walk, đỏ idle, đỏ walk; 4 khung |
+| Trinh sát | `scout-sheet.png` | như trên; `scoutFootAnchors` canh chân theo khung |
+| Cung thủ | `archer-sheet.png` | như trên |
+| Lính giáo | `spearman-sheet.png` | **4 hướng**: 16 hàng = phe×8 + hướng×2 + (idle 0 / walk 1), hướng theo `SPEARMAN_DIRECTIONS` (`down`, `left`, `up`, `right`); ô 256×256, chân ở 90% chiều cao ô. Dựng từ `art/units/spearman/source/spearman-motion-4dir.png` bằng `tools/build_spearman_sheet.py`; bản đỏ do script đổi màu xanh → đỏ |
+| Kỵ binh | `cavalry-sheet.png` | idle 3 khung, walk 4 khung |
 | Pháo đài | `public/assets/fortress-sprite.png` | 238×200; dự phòng hình khối nếu chưa tải |
 | Nông trại | `public/assets/farmstead-v2.png` | 88×69 |
+Clip `walk` dùng khi `u.moving`; riêng lính giáo chọn hàng theo `u.facing`, hướng chéo quy về trái/phải gần nhất (`SPEARMAN_FACING`; xem [units.md](units.md)); fps idle 1–1.25, walk 7. Ảnh nguồn, tham chiếu và bản cũ nằm trong `art/units/<quân>/`, không vào bản build.
+
+**Quân chết** (2026-10-18): hiệu ứng `{kind: 'fall'}` trong `state.effects`, vẽ trong cảnh theo chiều sâu bằng `drawFallenUnit()`. Sprite của quân ngã nghiêng 90° trong một phần ba đầu, rồi mờ dần trong `UNIT_ANIM.fallSeconds` = 1,4 giây. Quân địch chết chỉ hiện ở chỗ phe mình đang nhìn thấy.
+(Quân vẽ bằng code 4 rồi 8 hướng đã có ở commit `400a6fa` và `b574ebb`, sau đó quay về ảnh vẽ tay theo yêu cầu.)
 
 **Vật thể trang trí** (`buildWorldDecor()`, gọi trong `fresh()` và ở khách khi nhận bản đồ của chủ phòng). Mỗi lượt đi trên lưới ô theo bước `step`, chọn điểm ngẫu nhiên tất định (`decorRandom()`) trong ô, giữ lại với xác suất `chance`, và cách mọi vật đã đặt ≥ `gap` (bảng băm không gian ô 128). Bảng `DECOR_PASSES`:
 | Lượt | Nơi | step / chance / gap | Số lượng (chạy thử) |
@@ -83,7 +56,7 @@ Canvas `#game` phủ toàn màn hình; `syncWorldMetrics()` giới hạn độ p
 | `lily` | ô nước có 4 phía đều là nước | 2 / 0,09 / 34 | ~166 |
 Chừa trống: quanh pháo đài (nửa kích thước + 150), sân tập kết (+40), mỏ (95), cột cờ (120), đường chính. Sprite vẽ sẵn bằng canvas: `makePineSprite()` (5 kiểu), `makeBroadleafSprite()` (3, kiểu 2 màu thu), `makeBushSprite()` (2, một kiểu có hoa), `drawRockClusterSprite()`, `makeStoneSprite()` (3), `makeReedSprite()` (2), `makeLilySprite()` (2, một kiểu có hoa). `decorSprite(item)` trả về ảnh + khung cho mỗi loại (`kind`); `drawDecor(item)` vẽ một vật. Dựng toàn bộ mất ~80 ms mỗi trận.
 
-Màu phe của công trình vẽ bằng code (tháp, tiền đồn): `teamPalette(team)`.
+Màu phe: `teamPalette(team)`, xanh lá-lam cho team 0 và đỏ đất cho team 1.
 
 **Lớp phủ trên bản đồ** (màu và cỡ từ [src/config/theme.ts](../../src/config/theme.ts), cùng nguồn với HUD):
 - **Thanh máu quân** `bar()`: màu sáng của phe (`TEAM_COLORS[team].light`), viền tối.
@@ -108,7 +81,7 @@ Màu phe của công trình vẽ bằng code (tháp, tiền đồn): `teamPalett
 
 ## Tương tác
 - [fog-of-war.md](fog-of-war.md): lớp sương mù và việc ẩn địch.
-- [units.md](units.md): thêm quân mới cần thêm nhánh vẽ trong `render/unitArt.ts` (`drawFoot()` hoặc hàm riêng như `drawCavalry()`) và `FIGURE_H`.
+- [units.md](units.md): thêm quân mới cần spritesheet + nhánh trong `drawUnit()`.
 - Quy tắc: thay đổi phần vẽ không được làm đổi logic ([conventions.md](../conventions.md)).
 
 ## Multiplayer

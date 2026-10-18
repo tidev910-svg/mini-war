@@ -75,7 +75,7 @@ export function update(dt){
  updateBuildings(dt);
  // unit movement and combat
  for(const u of [...state.units]){
-  if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.engaged=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
+  if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
   const speed=s.speed*supplyFactor(u.team,'speed'),cooldown=s.cooldown/supplyFactor(u.team,'attack');
   let target=nearestEnemy(u);if(!unitTargetValid(target,u))target=null;
   if(mode==='ai'&&u.team===1&&!target){
@@ -103,7 +103,6 @@ export function update(dt){
    const d=dist(u,target),tr=target.type?specs[target.type]:null;
    const range=s.range+(tr?tr.r:target.w?35:10);
    if(d<=range){
-    u.engaged=true; // display only: attack poses (render/units.ts unitArtPose), also sent to the guest
     if(u.attackTimer<=0){u.attackTimer=cooldown;
       if(u.type==='archer'){state.bullets.push({x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
       else hurt(target,s.damage,u.team,u.type);
