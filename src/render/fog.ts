@@ -5,6 +5,7 @@ import { H, MAP_TILES, W } from '../config/map';
 import { localTeam } from '../core/game';
 import { teamVisibleTiles } from '../sim/fog';
 import { FOG_BLUR_SCALE, FOG_EDGE_TILES, FOG_MEMORY_ALPHA, FOG_PAD, FOG_RGB } from '../config/visuals';
+import { MAP_UI } from '../config/theme';
 
 export const fogCanvas=document.createElement('canvas');
 fogCanvas.width=fogCanvas.height=MAP_TILES+FOG_PAD*2;
@@ -12,7 +13,8 @@ export const fogCtx=fogCanvas.getContext('2d'),fogImage=fogCtx.createImageData(M
 export const fogSoftCanvas=document.createElement('canvas');
 fogSoftCanvas.width=fogSoftCanvas.height=fogCanvas.width*FOG_BLUR_SCALE;
 export const fogSoftCtx=fogSoftCanvas.getContext('2d');
-for(let i=0;i<MAP_TILES*MAP_TILES;i++){fogImage.data[i*4]=FOG_RGB[0];fogImage.data[i*4+1]=FOG_RGB[1];fogImage.data[i*4+2]=FOG_RGB[2];}
+// Fixed per-tile mottling (± MAP_UI.fogNoise) so the dark veil reads as cloud rather than a flat hole; the blur softens it.
+for(let i=0;i<MAP_TILES*MAP_TILES;i++){const n=(Math.random()*2-1)*MAP_UI.fogNoise;fogImage.data[i*4]=FOG_RGB[0]+n;fogImage.data[i*4+1]=FOG_RGB[1]+n;fogImage.data[i*4+2]=FOG_RGB[2]+n*1.4;}
 export let fogArray=null,fogBuiltAt=0;
 // Rebuilds the veil; draw() calls it before drawTerritory() so both border passes and drawFog() use the same masks.
 export function refreshFog(fog){

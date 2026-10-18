@@ -16,7 +16,7 @@ Bản đồ phủ sương xanh xám đục. Vùng quân mình từng đi qua đ�
 | Công trình | theo loại (nông trại 90, tiền đồn 14 ô, tháp 200); đang xây: 60. Cột cờ không cho tầm nhìn | `buildingVision()`, `visionOf()` |
 | Khu đất nhà | 14 ô quanh pháo đài, khám phá sẵn từ đầu trận (không phải "đang nhìn thấy") | `revealHomeTerritory()` |
 | Lưới sương mù | 256 × 256 ô (`MAP_TILES`) | — |
-| Màu ô chưa khám phá | Xanh xám **đục hoàn toàn** `FOG_RGB` = (30, 40, 60): không nhìn thấy gì của địa hình bên dưới. Mép mềm khoảng 2 ô, nằm hoàn toàn ở phía đã khám phá | `refreshFog()`, `drawFog()` |
+| Màu ô chưa khám phá | Gần đen, **đục hoàn toàn**: `FOG_RGB` = `--ui-fog` #0A0E16 (10, 14, 22) trong `config/theme.ts`, tối hơn hẳn mọi panel HUD để giao diện không chìm vào sương. Mỗi ô lệch sáng tối ngẫu nhiên ± `MAP_UI.fogNoise` = 9 nên sau khi làm mờ trông như mây. Không nhìn thấy gì của địa hình bên dưới. Mép mềm khoảng 2 ô, nằm hoàn toàn ở phía đã khám phá | `refreshFog()`, `drawFog()` |
 | Ô đã khám phá, không đang nhìn thấy | Cùng màu, alpha `FOG_MEMORY_ALPHA` = 115/255 (≈ 45%): địa hình vẫn thấy rõ | `teamVisibleTiles()`, `refreshFog()` |
 
 Hai khái niệm luôn tách riêng:

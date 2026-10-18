@@ -31,4 +31,5 @@ Game RTS 1 đấu 1 chạy trên trình duyệt: Vite + TypeScript + Canvas 2D. 
 - Giữ cả chế độ AI và PvP chạy được.
 - Sương mù: tách "đã khám phá" (`state.fogSeen` / `state.enemyFogSeen`) với "đang nhìn thấy" (`teamCanSee()`).
 - Code mới đặt đúng module (bảng trong `docs/architecture.md`): hằng số cân bằng vào `src/config/`, luật mô phỏng vào `src/sim/`, vẽ vào `src/render/`. Biến `let` dùng chung chỉ gán qua setter của module sở hữu (`setPaused()`, `setState()`…).
+- Màu, cỡ chữ, khoảng cách giao diện chỉ khai báo trong `src/config/theme.ts` (design tokens → biến CSS `var(--…)`); không viết mã màu trong CSS/HTML. Màu của người chơi dùng `--faction-*`.
 - Chữ hiển thị cho người chơi viết tiếng Việt.

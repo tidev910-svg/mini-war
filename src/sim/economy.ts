@@ -17,6 +17,6 @@ export function updateSupply(team){
  const paid=res.food>=due;res.food=paid?res.food-due:0;
  const mine=team===localTeam();
  if(net>=0){if(supply.status!=='ok'&&mine)addLog('Đã đủ lúa nuôi quân: hết thiếu tiếp tế.');supply.status='ok';supply.grace=0;return;}
- if(supply.status==='ok'&&!paid){supply.status='warning';supply.grace=SUPPLY_GRACE_SECONDS;if(mine)addLog(`Kho lúa đã cạn! Sau ${SUPPLY_GRACE_SECONDS} giây quân sẽ bị chậm lại nếu không xây thêm nông trại.`);}
- else if(supply.status==='warning'){supply.grace-=1;if(supply.grace<=0){supply.status='starving';supply.grace=0;if(mine)addLog(`Quân thiếu tiếp tế: −${Math.round((1-SUPPLY_SPEED_FACTOR)*100)}% tốc độ di chuyển, −${Math.round((1-SUPPLY_ATTACK_SPEED_FACTOR)*100)}% tốc độ đánh.`);}}
+ if(supply.status==='ok'&&!paid){supply.status='warning';supply.grace=SUPPLY_GRACE_SECONDS;if(mine)addLog(`Kho lúa đã cạn! Sau ${SUPPLY_GRACE_SECONDS} giây quân sẽ bị chậm lại nếu không xây thêm nông trại.`,'danger');}
+ else if(supply.status==='warning'){supply.grace-=1;if(supply.grace<=0){supply.status='starving';supply.grace=0;if(mine)addLog(`Quân thiếu tiếp tế: −${Math.round((1-SUPPLY_SPEED_FACTOR)*100)}% tốc độ di chuyển, −${Math.round((1-SUPPLY_ATTACK_SPEED_FACTOR)*100)}% tốc độ đánh.`,'danger');}}
 }

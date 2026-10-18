@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const MODULES = ['config/map', 'config/balance', 'config/visuals', 'core/game', 'core/view', 'core/match', 'core/actions',
+const MODULES = ['config/map', 'config/balance', 'config/theme', 'config/visuals', 'ui/theme', 'core/game', 'core/view', 'core/match', 'core/actions',
   'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat',
   'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
   'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/paths', 'render/draw', 'ui/panels', 'ui/hotkeys'];

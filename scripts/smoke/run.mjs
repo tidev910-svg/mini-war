@@ -1,6 +1,6 @@
 // Browser smoke tests for Mini War. Needs the dev server running (pnpm dev), then: pnpm smoke [name…]
 // Names: boot ui hotkeys maps path capture vision economy training ai pvp (default: all). Screenshots go to scripts/smoke/out/.
-import { launch, startAI, checker, sleep } from './lib.mjs';
+import { URL, launch, startAI, checker, sleep } from './lib.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -21,6 +21,18 @@ if (solo.length) {
       const info = await c.game(`return {regions:state.regions.length,units:state.units.length,started:gameStarted,mode}`);
       t.ok(info.started && info.mode === 'ai', 'đã vào trận AI', info);
       await sleep(600); await c.shot(OUT, 'boot');
+      // No unstyled flash: the stylesheet is a <link> before the game script and the theme tokens are inlined in the HTML.
+      const html = await (await fetch(URL)).text();
+      t.ok(html.includes('id="theme-tokens"') && html.indexOf('/src/style.css') < html.indexOf('/src/main.ts'), 'CSS và token màu có sẵn trong HTML trước khi chạy JS');
+      // Lobby: guide opens above it, Esc closes, Enter starts an AI match.
+      await c.game(`leaveMatch();return 1`);
+      await c.page("document.getElementById('lobbyGuide').click()");
+      const guideOnTop = await c.page("(()=>{const r=document.querySelector('#guideModal .modal-panel').getBoundingClientRect();return !!document.elementFromPoint(r.left+r.width/2,r.top+20)?.closest('#guideModal')})()");
+      t.ok(guideOnTop, 'sảnh: nút Hướng dẫn mở hộp hướng dẫn nằm trên sảnh');
+      await c.page("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))");
+      t.ok(await c.page("document.getElementById('guideModal').hidden"), 'sảnh: Esc đóng hướng dẫn');
+      await c.page("document.activeElement?.blur();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))");
+      t.ok(await c.game(`return gameStarted&&mode==='ai'`) && await c.page("document.getElementById('modeScreen').classList.contains('hidden')"), 'sảnh: Enter vào trận với AI');
       t.ok(!c.errors.length, 'không lỗi JavaScript', c.errors);
       results.push(t.report());
     }
@@ -29,7 +41,7 @@ if (solo.length) {
       const t = checker('ui: HUD kiểu kingdom, bảng huấn luyện/xây dựng, minimap');
       const ids = ['food', 'wood', 'stone', 'gold', 'foodRate', 'territory', 'territoryIncome', 'time', 'phaseHint', 'unitCount', 'unitBreakdown', 'trainQueue', 'feed',
         'scout', 'infantry', 'archer', 'spearman', 'cavalry', 'attack', 'farm', 'upgradeFarm', 'upgradeOutpost', 'buildTower', 'turret', 'pause', 'toggleTerritory',
-        'fullscreen', 'toggleSideHud', 'openTrain', 'openBuild', 'openGuide', 'minimap', 'overlay', 'overlayRestart'];
+        'fullscreen', 'toggleSideHud', 'openTrain', 'openBuild', 'openGuide', 'minimap', 'overlay', 'overlayRestart', 'menuBtn', 'gameMenu', 'leaveMatch', 'confirmModal', 'tooltip'];
       const missing = await c.page(`${JSON.stringify(ids)}.filter(id=>!document.getElementById(id))`);
       t.ok(!missing.length, 'mọi id mà code dùng đều có', missing);
       await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources[0]={food:500,wood:500,stone:300,gold:300};return 1`);
@@ -58,6 +70,31 @@ if (solo.length) {
       await c.page("document.getElementById('chatToggle').click()");
       t.ok(await c.page("document.getElementById('chatStrip').classList.contains('open')"), 'bấm 📜 mở rộng nhật ký');
       await c.page("document.getElementById('chatToggle').click()");
+      // Heraldic HUD: tooltips, menu, shortfall flash, notice fade, leave confirmation, minimum text size, no overlaps.
+      t.ok(await c.page("getComputedStyle(document.documentElement).getPropertyValue('--faction-primary').trim()==='#2F5DB8'"), 'token màu phe được ghi lên :root');
+      const tipFor = sel => c.page(`(()=>{const el=document.querySelector('${sel}');el.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const t=document.getElementById('tooltip');return t.hidden?null:t.textContent})()`);
+      t.ok(/ranh giới/i.test(await tipFor('#toggleTerritory') || ''), 'nút chỉ có icon có tooltip');
+      t.ok(/Nuôi quân/.test(await tipFor('#resFood') || ''), 'tooltip lúa có chi tiết thu/chi');
+      const noTip = await c.page("[...document.querySelectorAll('.hud-layer button')].filter(b=>!b.textContent.trim()&&!b.closest('[data-tip]')).map(b=>b.id||b.className)");
+      t.ok(!noTip.length, 'mọi nút chỉ có icon đều có tooltip', noTip);
+      await c.page("document.getElementById('menuBtn').click()");
+      t.ok(!(await hidden('gameMenu')), 'nút ☰ mở menu');
+      await c.page("document.getElementById('pause').click()");
+      t.ok(await c.game('return paused') && await hidden('gameMenu'), 'Tạm dừng trong menu, menu tự đóng');
+      t.ok(/tạm dừng/.test(await tipFor('.dock-slot') || ''), 'nút bị khoá nêu lý do trong tooltip');
+      await c.page("document.getElementById('pause').click()");
+      await c.game(`state.resources[0].food=0;requestBuy('infantry');return 1`);
+      t.ok(await c.page("document.getElementById('resFood').classList.contains('short')"), 'thiếu lúa → ô lúa nháy đỏ');
+      await c.game(`state.resources[0]={food:500,wood:500,stone:300,gold:300};addLog('Thử cảnh báo','danger');return 1`);
+      t.ok(await c.page("document.getElementById('chatStrip').classList.contains('alert')"), 'thông báo nguy hiểm có viền đỏ');
+      await c.page("document.getElementById('leaveMatch').click()");
+      t.ok(!(await hidden('confirmModal')) && await c.game('return gameStarted'), 'Rời trận hỏi xác nhận trước');
+      await c.page("document.getElementById('confirmNo').click()");
+      t.ok(await hidden('confirmModal') && await c.game('return gameStarted'), 'bấm Ở lại → trận tiếp tục');
+      const small = await c.page(`[...document.querySelectorAll('.hud-layer *')].filter(e=>e.offsetParent&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())&&parseFloat(getComputedStyle(e).fontSize)<12).map(e=>e.id||e.className)`);
+      t.ok(!small.length, 'không chữ nào trên HUD nhỏ hơn 12px', small);
+      const overlaps = await c.page(`(()=>{const r=['.commander','.resource-bar','.side-rail','.minimap-frame','.chat-strip','.action-dock'].map(s=>[s,document.querySelector(s).getBoundingClientRect()]),out=[];for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++){const a=r[i][1],b=r[j][1];if(a.width&&b.width&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom)out.push(r[i][0]+'×'+r[j][0]);}return out})()`);
+      t.ok(!overlaps.length, 'các khối HUD không đè lên nhau', overlaps);
       const perf = await c.game(`const t0=performance.now();for(let i=0;i<30;i++)draw();return {ms:+((performance.now()-t0)/30).toFixed(1),canvas:[VIEW_W,VIEW_H]}`);
       results.push(t.report({ 'draw() mỗi frame (ms)': perf.ms, canvas: perf.canvas }));
     }
@@ -77,8 +114,8 @@ if (solo.length) {
       await key('2', { code: 'Digit2' });
       const g2 = await sel();
       t.ok(g2.length === 3 && g2.every(x => x === 'archer'), 'Ctrl+2 gán nhóm, 2 chọn lại nhóm', g2);
-      await c.game(`setCamX(0);setCamY(0);return 1`);
-      await key('2', { code: 'Digit2' });
+      // Both taps inside one evaluation: separate CDP round trips can exceed the 400 ms double-tap window on a busy machine.
+      await c.game(`const tap=()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'2',code:'Digit2',bubbles:true}));tap();setCamX(0);setCamY(0);tap();return 1`);
       const cam = await c.game(`const a=state.units.filter(u=>u.selected);const cx=a.reduce((s,u)=>s+u.x,0)/a.length;return Math.abs(camX+VIEW_W/zoom/2-cx)<200||camX>0`);
       t.ok(cam, 'bấm số hai lần liền: camera tới nhóm');
       await key('s');
@@ -256,6 +293,9 @@ if (want('pvp')) {
       t.ok(q[0] === 'infantry' && /Lính/.test(line[0] || ''), 'khách mua lính → vào hàng đợi của chủ phòng, khách thấy thẻ tiến độ', { q, line });
       const badge = await guest.page("[document.getElementById('sideName').textContent,document.getElementById('crest').classList.contains('red')]");
       t.ok(badge[0] === 'QUÂN ĐỎ' && badge[1], 'khách thấy huy hiệu QUÂN ĐỎ', badge);
+      const faction = await guest.page("getComputedStyle(document.documentElement).getPropertyValue('--faction-primary').trim()");
+      t.ok(faction === '#B03030', 'giao diện khách đổi sang màu phe đỏ (--faction-primary)', faction);
+      await guest.shot(OUT, 'pvp-guest');
       await sleep(5500);
       const units = await guest.game(`return state.units.filter(u=>u.team===1).map(u=>u.type)`);
       t.ok(units.includes('infantry'), 'lính ra quân ở cả máy khách', units);

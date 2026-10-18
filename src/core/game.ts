@@ -37,5 +37,8 @@ export function costText(cost){return Object.entries(cost).map(([key,amount])=>a
 export function formatAmount(value){return String(Math.round(value*10)/10).replace('.',',');}
 export function missingText(team,cost){const res=teamResources(team);return Object.entries(cost).filter(([key,amount])=>res[key]<amount).map(([key,amount])=>Math.ceil(amount-res[key])+' '+RESOURCE_NAMES[key]).join(', ');}
 export function normalizeUnitType(type){return type==='tank'?'spearman':type;}
-export function addLog(msg){const el=document.createElement('div');el.textContent=msg;$('feed').prepend(el);while($('feed').children.length>12)$('feed').lastChild.remove();}
+// Battle log line. tone 'danger' marks alerts (under attack, losses): red in the history, red rim on the notice banner.
+export function addLog(msg,tone=''){const el=document.createElement('div');el.textContent=msg;if(tone)el.className='tone-'+tone;$('feed').prepend(el);while($('feed').children.length>12)$('feed').lastChild.remove();}
+// The local player tried something they cannot pay for: the HUD flashes the missing resources (ui/hud.ts listens).
+export function notifyShortfall(team,cost){if(team!==localTeam()||!state)return;const res=teamResources(team),keys=Object.entries(cost).filter(([key,amount])=>res[key]<amount).map(([key])=>key);if(keys.length)document.dispatchEvent(new CustomEvent('resource-shortfall',{detail:keys}));}
 export function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}

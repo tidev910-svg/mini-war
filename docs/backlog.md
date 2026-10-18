@@ -44,6 +44,10 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-18 (sảnh chính + nạp CSS):** sảnh huy hiệu (tiêu đề, menu dải cờ: Chơi với AI/Enter, Solo với bạn bè, Hướng dẫn, Toàn màn hình; cờ hai phe; sương trôi); hết chớp HTML trần khi tải: CSS là `<link>`, token chèn vào HTML qua `vite.config.ts`.
+
+**2026-10-18 (giao diện huy hiệu & cờ hiệu):** design tokens một nơi (`config/theme.ts` → biến CSS, đổi phe chỉ đổi `--faction-*`); sương mù gần đen có vân; panel khiên + dải cờ phe + hàng icon quân; dải cờ tài nguyên với tooltip thu/chi, icon khác hình, nháy đỏ khi thiếu; menu ☰ gộp tạm dừng/hướng dẫn/ẩn giao diện/rời trận (có xác nhận); thông báo tự mờ 5 giây + lịch sử + viền đỏ khi bị tấn công; minimap góc huy hiệu, mỏ/cầu chỉ hiện khi đã khám phá, địch màu đỏ; 3 nút khiên có phím tắt và lý do khi bị khoá; nhãn pháo đài trên dải cờ, thanh máu 6 px xanh→đỏ, chữ bản đồ ≥ 12 px; đường biên lãnh thổ mềm; camera đầu trận đặt pháo đài giữa vùng không bị HUD che.
+
 **2026-10-18 (phím tắt kiểu Đế Chế):** nhóm quân Ctrl+số / số, H chọn pháo đài + Q W E R T huấn luyện, B + F T O U P xây, dấu phẩy chọn quân rảnh, Ctrl+A, nhấp đúp chọn cùng loại, S dừng, Delete loại bỏ, Space tới nhóm đang chọn, F3 tạm dừng, F1 hướng dẫn; nhãn phím trên thẻ.
 
 **2026-10-18:** bỏ ranh giới trên sông/hồ và giữa hai vùng trung lập (chỉ vẽ viền vùng có chủ); tầm nhìn trinh sát 145 → 260.

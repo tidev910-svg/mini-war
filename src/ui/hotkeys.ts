@@ -7,7 +7,7 @@ import { specs } from '../config/balance';
 import { requestAction } from '../core/actions';
 import { requestBuy } from '../sim/units';
 import { endPlacement } from './input';
-import { closePanels, openPanel, openPanelName, togglePanel } from './panels';
+import { closeMenu, closePanels, menuOpen, openPanel, openPanelName, togglePanel } from './panels';
 import { setShowTerritory, showTerritory } from './hud';
 
 // Key table (also rendered into the guide). `ctx`: when the key applies — always, with the fortress selected or the
@@ -33,7 +33,8 @@ export const HOTKEYS = [
   ['T', 'Ẩn/hiện ranh giới vùng (khi không dùng làm phím huấn luyện/xây)'],
   ['F3 · Pause', 'Tạm dừng / tiếp tục'],
   ['F1', 'Mở hướng dẫn'],
-  ['Esc', 'Huỷ đặt công trình → đóng bảng → bỏ chọn'],
+  ['Enter (ở sảnh)', 'Vào trận với AI'],
+  ['Esc', 'Đóng menu → huỷ đặt công trình → đóng bảng → bỏ chọn'],
 ];
 
 // The guide's shortcut table is built from HOTKEYS so it never drifts from the handlers.
@@ -91,7 +92,13 @@ canvas.addEventListener('dblclick', e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (typing() || modeScreenOpen()) return;
+  if (typing()) return;
+  // Lobby: Enter starts a match against the AI, Esc closes the guide opened from the lobby.
+  if (modeScreenOpen()) {
+    if (e.key === 'Escape' && openPanelName) closePanels();
+    else if (e.key === 'Enter' && !openPanelName && $('modeHome').style.display !== 'none' && !document.activeElement?.closest?.('button')) { e.preventDefault(); $('modeAI').click(); }
+    return;
+  }
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   // Camera keys work anywhere (not only with the canvas focused).
   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-', '_'].includes(key)) {
@@ -103,10 +110,13 @@ document.addEventListener('keydown', e => {
     if (key === 'ArrowUp') setCamY(camY - step); if (key === 'ArrowDown') setCamY(camY + step);
     clampCamera(); return;
   }
+  // While the leave-match confirmation is open only Esc (above order: closes it) and its buttons act.
+  if (openPanelName === 'confirm' && key !== 'Escape') return;
   if (key === 'F3' || key === 'Pause') { e.preventDefault(); $('pause').click(); return; }
   if (key === 'F1') { e.preventDefault(); togglePanel('guide'); return; }
   if (key === 'Escape') {
-    if (placement) { endPlacement(); addLog('Đã hủy đặt công trình.'); }
+    if (menuOpen()) closeMenu();
+    else if (placement) { endPlacement(); addLog('Đã hủy đặt công trình.'); }
     else if (openPanelName) closePanels();
     else { selectUnits([]); }
     return;

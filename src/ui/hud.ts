@@ -1,47 +1,97 @@
 // @ts-nocheck
-// HUD over the battlefield: commander badge, resource bar, queue panel, side-rail buttons (docs/features/hud-ui.md).
+// HUD over the battlefield: player panel, resource banners, queue panel, side rail and menu (docs/features/hud-ui.md).
 import { gameApp, syncWorldMetrics, toggleSideHud } from '../core/view';
-import { $, costText, ended, formatAmount, gameTime, localTeam, paused, selectedBuilding, state, teamResources } from '../core/game';
+import { $, addLog, costText, ended, formatAmount, gameTime, localTeam, paused, selectedBuilding, state, teamResources } from '../core/game';
 import { BUILDING_TYPES, FARM_LEVELS, FORTRESS_INCOME_PER_MINUTE, RESOURCE_NAMES, TRAIN_QUEUE_MAX, specs } from '../config/balance';
+import { TEAM_COLORS } from '../config/theme';
 import { trainQueueOf } from '../sim/units';
 import { foodPerMinute, upkeepPerMinute } from '../sim/economy';
 import { activeFortressGuns } from '../map/bases';
 import { buildingDef, buildingDone, upgradeCost, upgradeTarget } from '../sim/buildings';
-import { updateUnitCards } from './panels';
+import { refreshTooltip, updateUnitCards } from './panels';
+import { setFactionTheme } from './theme';
+
+const icon = name => `<svg class="ico"><use href="#i-${name}"/></svg>`;
+// Rail / menu buttons: icon + label (+ key). The tooltip text lives in data-tip.
+function setButton(el, iconName, label, key = '') {
+  if (!el) return;
+  const html = icon(iconName) + (el.classList.contains('menu-item') ? `<span>${label}</span>${key ? `<kbd>${key}</kbd>` : ''}` : '');
+  if (el.innerHTML !== html) el.innerHTML = html;
+  el.dataset.tip = label + (key ? ' · ' + key : '');
+}
 
 export let showTerritory=true;
-export function setShowTerritory(on){showTerritory=on;const el=$('toggleTerritory');if(el){el.querySelector('span').textContent=(on?'Ranh giới: đang hiện':'Ranh giới: đang ẩn')+' · T';el.classList.toggle('placing',!on);}}
-// Pause button label (rail button: icon + tooltip).
-export function setPauseButton(){$('pause').innerHTML=paused?'<i>▶</i><span>Tiếp tục · F3</span>':'<i>Ⅱ</i><span>Tạm dừng · F3</span>';}
+export function setShowTerritory(on){showTerritory=on;const el=$('toggleTerritory');if(el){el.dataset.tip=(on?'Ranh giới vùng: đang hiện':'Ranh giới vùng: đang ẩn')+' · T';el.classList.toggle('placing',!on);}}
+// Pause item in the menu (F3 clicks it even while the menu is closed).
+export function setPauseButton(){setButton($('pause'),paused?'play':'pause',paused?'Tiếp tục':'Tạm dừng','F3');}
 export function updateMatchClockHUD(){const sec=Math.floor(gameTime);$('time').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');setText($('phaseHint'),gameTime<300?'Giai đoạn phát triển kinh tế':gameTime<600?'Giai đoạn mở rộng':'Giai đoạn giao tranh');}
+
+// Army row: one icon + count per unit type, plus units waiting in the muster yard.
+const ARMY_ICONS={scout:'eye',infantry:'sword',archer:'bow',spearman:'spear',cavalry:'horse'};
+function armyRow(ours,queued){
+ return Object.entries(ARMY_ICONS).map(([type,ico])=>{const n=ours.filter(u=>u.type===type).length;return `<span class="army-chip${n?'':' zero'}" data-tip="${specs[type].name}: ${n}">${icon(ico)}<b>${n}</b></span>`;}).join('')
+  +(queued?`<span class="army-chip" data-tip="Quân chờ ở sân tập kết">${icon('hourglass')}<b>${queued}</b></span>`:'');
+}
+
 export function updateHUD(){
- const team=localTeam(),res=teamResources(team);for(const key of Object.keys(RESOURCE_NAMES))$(key).textContent=Math.floor(res[key]);
+ const team=localTeam(),res=teamResources(team);for(const key of Object.keys(RESOURCE_NAMES))setText($(key),String(Math.floor(res[key])));
+ // Banners show only the amount and the net rate; the breakdown is in the tooltip.
  const produced=foodPerMinute(team),eaten=upkeepPerMinute(team),net=produced-eaten,supply=state.supply[team],foodRate=$('foodRate');
- foodRate.textContent=supply.status==='warning'?`Thiếu lúa · chậm sau ${supply.grace}s`:supply.status==='starving'?'Thiếu tiếp tế · quân chậm':`+${formatAmount(produced)} −${formatAmount(eaten)} = ${net>=0?'+':''}${formatAmount(net)}/phút`;
+ setText(foodRate,supply.status==='warning'?`Thiếu lúa · ${supply.grace}s`:supply.status==='starving'?'Thiếu tiếp tế':`${net>=0?'+':''}${formatAmount(net)}/phút`);
  foodRate.className=supply.status!=='ok'?'supply-bad':net<0?'supply-warn':'';
- // Wood, stone and gold per minute: fortress income plus held mines (food has its own line with upkeep).
+ $('resFood').dataset.tip=`Lúa: ${Math.floor(res.food)}\nSản xuất +${formatAmount(produced)}/phút (pháo đài, nông trại, mỏ)\nNuôi quân −${formatAmount(eaten)}/phút\nCòn lại ${net>=0?'+':''}${formatAmount(net)}/phút`+(supply.status==='warning'?`\nHết lúa: quân bị chậm sau ${supply.grace} giây`:supply.status==='starving'?'\nĐang thiếu tiếp tế: quân chậm hơn':'');
+ // Wood, stone and gold per minute: fortress income plus held mines.
  const minePerMinute={};for(const m of state.mines)if(state.regions[m.regionId]?.owner===team)minePerMinute[m.resource]=(minePerMinute[m.resource]||0)+m.income*60;
  const fortress=state.bases.some(b=>b.team===team&&b.hp>0);
- for(const k of ['wood','stone','gold'])setText($(k+'Rate'),`+${formatAmount((fortress?FORTRESS_INCOME_PER_MINUTE[k]:0)+(minePerMinute[k]||0))}/phút`);
+ for(const k of ['wood','stone','gold']){
+  const base=fortress?FORTRESS_INCOME_PER_MINUTE[k]:0,mine=minePerMinute[k]||0,cap=k[0].toUpperCase()+k.slice(1);
+  setText($(k+'Rate'),`+${formatAmount(base+mine)}/phút`);
+  $('res'+cap).dataset.tip=`${RESOURCE_NAMES[k][0].toUpperCase()+RESOURCE_NAMES[k].slice(1)}: ${Math.floor(res[k])}\nPháo đài +${formatAmount(base)}/phút\nMỏ trong vùng đã chiếm +${formatAmount(mine)}/phút`;
+ }
  updateMatchClockHUD();
- const ours=state.units.filter(u=>u.team===team);
- const infantry=ours.filter(u=>u.type==='infantry').length,archers=ours.filter(u=>u.type==='archer').length,scouts=ours.filter(u=>u.type==='scout').length,spearmen=ours.filter(u=>u.type==='spearman').length,cavalry=ours.filter(u=>u.type==='cavalry').length;
- const queued=state.pendingSpawns.filter(u=>u.team===team);updateTrainQueueHUD(team);$('unitCount').textContent=ours.length+queued.length;$('unitBreakdown').textContent=`Lính ${infantry} · Cung ${archers} · Lính giáo ${spearmen} · Kỵ binh ${cavalry}${queued.length?` · Chờ ${queued.length}`:''}`;const spearmanCounter=$('spearmanCount');if(spearmanCounter)spearmanCounter.textContent=spearmen;
- setText($('sideName'),team===0?'QUÂN XANH':'QUÂN ĐỎ');$('crest').classList.toggle('red',team===1);
+ const ours=state.units.filter(u=>u.team===team),queued=state.pendingSpawns.filter(u=>u.team===team).length;
+ updateTrainQueueHUD(team);setText($('unitCount'),String(ours.length+queued));
+ const row=armyRow(ours,queued),breakdown=$('unitBreakdown');if(breakdown.innerHTML!==row)breakdown.innerHTML=row;
+ const spearmanCounter=$('spearmanCount');if(spearmanCounter)spearmanCounter.textContent=ours.filter(u=>u.type==='spearman').length;
+ setText($('sideName'),TEAM_COLORS[team].name);$('crest').classList.toggle('red',team===1);
+ if(document.documentElement.dataset.faction!==String(team))setFactionTheme(team);
  const home=state.bases.find(b=>b.team===team);$('turret').disabled=paused||ended||activeFortressGuns(home)>=2;
+ // Disabled main buttons explain why in their tooltip (data-why, read by the tooltip in ui/panels.ts).
+ const why=ended?'Trận đấu đã kết thúc':paused?'Trận đấu đang tạm dừng':'';
  for(const id of ['scout','infantry','archer','spearman','cavalry','attack','openTrain','openBuild','upgradeFarm','upgradeOutpost',...Object.values(BUILDING_TYPES).map(d=>d.button).filter(Boolean)])$(id).disabled=paused||ended;
+ for(const id of ['openTrain','openBuild','attack'])$(id).parentElement.dataset.why=why;
  // The farm upgrade button shows the next level's price.
  for(const type of Object.keys(specs))setText($(type).querySelector('span'),costText(specs[type].cost)+' · '+specs[type].train+'s · nuôi '+formatAmount(specs[type].upkeep)+' lúa/phút');
  updateUnitCards();
  const farmTarget=upgradeTarget(team,'farm',selectedBuilding?.kind==='farm'&&selectedBuilding.team===team?selectedBuilding.id:null)||upgradeTarget(team,'farm',null);
  setText($('upgradeFarm').querySelector('span'),farmTarget?`lên cấp ${farmTarget.level+1}: ${costText(upgradeCost(farmTarget))} · ${FARM_LEVELS[farmTarget.level+1].food} lúa/phút`:'cấp 2: 80 gỗ · 40 đá · cấp 3: 120 gỗ · 80 đá');
- const owned=state.regions.filter(r=>r.owner===team),income={};
- for(const m of state.mines)if(state.regions[m.regionId]?.owner===team)income[m.resource]=(income[m.resource]||0)+m.income*60;
+ // Territory banner: regions held and how many mines they hold; per-resource income in the tooltip.
+ const owned=state.regions.filter(r=>r.owner===team),income={};let mines=0;
+ for(const m of state.mines)if(state.regions[m.regionId]?.owner===team){income[m.resource]=(income[m.resource]||0)+m.income*60;mines++;}
  setText($('territory'),String(owned.length));
- setText($('territoryIncome'),Object.keys(income).length?Object.entries(income).map(([k,v])=>`+${Math.round(v)} ${RESOURCE_NAMES[k]}`).join(' · ')+'/phút':'Chưa có mỏ');
+ setText($('territoryIncome'),mines?`${mines} mỏ đang khai thác`:'Chưa có mỏ');
+ $('resTerritory').dataset.tip=`Lãnh thổ: ${owned.length}/${state.regions.length} vùng\nChiếm cột cờ của một vùng để khai thác mỏ trong vùng đó và nhìn thấy toàn vùng.\n`+(mines?'Mỏ đang sinh: '+Object.entries(income).map(([k,v])=>`+${Math.round(v)} ${RESOURCE_NAMES[k]}`).join(' · ')+'/phút':'Chưa có mỏ nào: hãy đưa quân tới cột cờ của vùng có mỏ.');
  $('pause').disabled=ended;
  setPauseButton();
+ watchHomeUnderAttack(home);
+ refreshTooltip();
 }
+
+// Notice when the local fortress loses health (display only; at most once per HOME_ALERT_SECONDS).
+const HOME_ALERT_SECONDS=15;let homeHp=null,homeAlertAt=-Infinity;
+function watchHomeUnderAttack(home){
+ if(!home){homeHp=null;return;}
+ if(gameTime<homeAlertAt)homeAlertAt=-Infinity; // a new match started
+ if(homeHp!==null&&home.hp<homeHp-.5&&!ended&&gameTime-homeAlertAt>HOME_ALERT_SECONDS){homeAlertAt=gameTime;addLog('Pháo đài đang bị tấn công!','danger');}
+ homeHp=home.hp;
+}
+
+// Missing resources flash their banner red for half a second (event from notifyShortfall in core/game.ts).
+document.addEventListener('resource-shortfall',e=>{
+ for(const key of e.detail){const el=document.querySelector(`.res[data-res="${key}"]`);if(!el)continue;el.classList.remove('short');void el.offsetWidth;el.classList.add('short');}
+});
+document.addEventListener('animationend',e=>{if(e.target.classList?.contains('short'))e.target.classList.remove('short');});
+
 // Queue panel: the unit in training, the units waiting, then buildings under construction or upgrade, each with a bar.
 const UNIT_ICONS={scout:'🔭',infantry:'🪖',archer:'🏹',spearman:'🗡️',cavalry:'🐎'},BUILDING_ICONS={farm:'🌾',outpost:'🛡️',tower:'🗼'};
 export function updateTrainQueueHUD(team){
@@ -58,5 +108,5 @@ export function updateTrainQueueHUD(team){
  const html=rows.join('');if(el.innerHTML!==html)el.innerHTML=html;
 }
 export function setText(el,text){if(el&&el.textContent!==text)el.textContent=text;}
-// Hide every HUD panel except the side rail (so the button to bring them back stays visible).
-export function setSidebarCollapsed(collapsed){gameApp.classList.toggle('panel-collapsed',collapsed);toggleSideHud.innerHTML=collapsed?'<i>▢</i><span>Hiện giao diện</span>':'<i>▣</i><span>Ẩn giao diện</span>';toggleSideHud.setAttribute('aria-label',collapsed?'Hiện giao diện':'Ẩn giao diện');setTimeout(()=>syncWorldMetrics(),0);}
+// Hide every HUD panel except the side rail (its menu holds the item that brings them back).
+export function setSidebarCollapsed(collapsed){gameApp.classList.toggle('panel-collapsed',collapsed);setButton(toggleSideHud,collapsed?'eye':'eye-off',collapsed?'Hiện giao diện':'Ẩn giao diện');toggleSideHud.setAttribute('aria-label',collapsed?'Hiện giao diện':'Ẩn giao diện');setTimeout(()=>syncWorldMetrics(),0);}

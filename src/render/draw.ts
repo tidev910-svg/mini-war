@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Frame composition: draw() calls every layer in order (docs/features/rendering.md).
+import { THEME } from '../config/theme';
 import { VIEW_H, VIEW_W, camX, camY, ctx, drawUprightAt, renderView, setRenderView, viewOffsets, zoom } from '../core/view';
 import { H, W } from '../config/map';
 import { terrainCanvas, terrainPadding, terrainSmoothCanvas } from '../map/terrain';
@@ -25,7 +26,7 @@ export function draw(){
  ctx.clearRect(0,0,VIEW_W,VIEW_H);
 // The orthographic viewport's matte uses the same dark tone as unexplored fog,
 // so no green page/background corners appear around the square world.
-ctx.fillStyle='#0b1411';ctx.fillRect(0,0,VIEW_W,VIEW_H);
+ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  ctx.save();
  ctx.translate(offsetX,offsetY);
  ctx.scale(viewScale,viewScale);

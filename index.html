@@ -4,35 +4,81 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mini War — Kingdom Command</title>
+<link rel="stylesheet" href="/src/style.css">
 
   <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
 
+<!-- Monochrome outline icon set (stroke = currentColor). Resource icons differ by silhouette, not only colour. -->
+<svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5zM9 4v13.5M15 6.5V20"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.3-2.7 4.3M12 17.6v.1"/></symbol>
+  <symbol id="i-exit" viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6zM4 4l16 16"/></symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7zM7 4a2 2 0 0 0-2 2v1h2M10 9h6M10 13h6M10 17h3"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-food" viewBox="0 0 24 24"><path d="M12 21.5V8M12 8c-1.8-.9-2.6-2.6-2.4-4.6 1.8.4 2.6 2.1 2.4 4.6zM12 8c1.8-.9 2.6-2.6 2.4-4.6-1.8.4-2.6 2.1-2.4 4.6zM12 12.8c-2-.4-3.6-1.7-3.9-3.7 2 .1 3.6 1.5 3.9 3.7zM12 12.8c2-.4 3.6-1.7 3.9-3.7-2 .1-3.6 1.5-3.9 3.7zM12 17.6c-2-.4-3.6-1.7-3.9-3.7 2 .1 3.6 1.5 3.9 3.7zM12 17.6c2-.4 3.6-1.7 3.9-3.7-2 .1-3.6 1.5-3.9 3.7z"/></symbol>
+  <symbol id="i-wood" viewBox="0 0 24 24"><path d="M17 7H6.5a3 5 0 0 0 0 10H17"/><ellipse cx="17" cy="12" rx="3" ry="5"/><ellipse cx="17" cy="12" rx="1" ry="1.8"/><path d="M8 10h5M7 14h4"/></symbol>
+  <symbol id="i-stone" viewBox="0 0 24 24"><path d="M3.5 17.5l2.2-7.2 5-4.3 6.3 1.6 3.5 6.2-2 4.7zM10.7 6l1.1 5.3 5.6 1.4M5.7 10.3l6.1 1"/></symbol>
+  <symbol id="i-gold" viewBox="0 0 24 24"><path d="M2.5 18.5h19l-3.3-7.5H5.8zM7.5 11l1.7-4h5.6l1.7 4M9 15h6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21.5V3.5M5 4.5h12l-2.5 4 2.5 4H5"/></symbol>
+  <symbol id="i-sword" viewBox="0 0 24 24"><path d="M14.5 3.5H20v5.5L9.5 19.5l-5-5zM6 13l5 5M4.5 18l1.5 1.5M3 21l3-3"/></symbol>
+  <symbol id="i-bow" viewBox="0 0 24 24"><path d="M6 3c8.5 1.2 14 6.9 15 15M6 3l15 15M3 13L13 3M13 3H9M13 3v4"/></symbol>
+  <symbol id="i-spear" viewBox="0 0 24 24"><path d="M3.5 20.5L15 9M15 9l-1-4.5L20 4l-.5 6zM6.5 14.5l3 3"/></symbol>
+  <symbol id="i-horse" viewBox="0 0 24 24"><path d="M7 20.5V11a5 5 0 0 1 10 0v9.5M4.5 20.5h5M14.5 20.5h5M8.6 14h.1M8.6 17.5h.1M15.4 14h.1M15.4 17.5h.1"/></symbol>
+  <symbol id="i-units" viewBox="0 0 24 24"><path d="M12 3l7 2.5v6c0 4.5-3 7.5-7 9.5-4-2-7-5-7-9.5v-6z"/><path d="M9 11.5l2 2 4-4"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 5 8 5 8 8.5s-8 3.5-8 8.5M16 3.5c0 5-8 5-8 8.5s8 3.5 8 8.5"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><path d="M4.5 15.5a7.5 7.5 0 0 1 15 0v3h-15zM12 8V3.5M9.2 15.5v3M14.8 15.5v3M4.5 15.5h15"/></symbol>
+  <symbol id="i-build" viewBox="0 0 24 24"><path d="M13 5.5l5.5 5.5-2.5 2.5L10.5 8zM11.8 9.3L3.5 17.6l2.9 2.9 8.3-8.3M15.5 3l5.5 5.5"/></symbol>
+  <symbol id="i-attack" viewBox="0 0 24 24"><path d="M4 4l10 10M4 4h3.5l10 10M20 4l-10 10M20 4h-3.5l-3.2 3.2M6 14.5l3.5 3.5M18 14.5L14.5 18M7.6 16.4L4 20M16.4 16.4L20 20"/></symbol>
+  <symbol id="i-castle" viewBox="0 0 24 24"><path d="M3.5 20.5v-11h3v2h2.5v-2h6v2h2.5v-2h3v11zM10 20.5v-4a2 2 0 0 1 4 0v4M3.5 9.5V6h3v3.5M17.5 9.5V6h3v3.5"/></symbol>
+  <!-- Shield silhouette shared by the crest and the three main action buttons. -->
+  <symbol id="shield" viewBox="0 0 80 92"><path d="M40 3.5L75.5 12.5v31.5c0 22-14.5 36.5-35.5 44.5C19 80.5 4.5 66 4.5 44V12.5z"/></symbol>
+</svg>
+
 <div id="modeScreen" class="mode-screen">
+  <div class="lobby-sky" aria-hidden="true"><i class="mist m1"></i><i class="mist m2"></i></div>
+  <div class="lobby-banner team0" aria-hidden="true"><svg class="ico"><use href="#i-castle"/></svg></div>
+  <div class="lobby-banner team1" aria-hidden="true"><svg class="ico"><use href="#i-attack"/></svg></div>
+
   <section class="mode-panel" aria-live="polite">
-    <div id="modeHome">
-      <div style="font-size:12px;font-weight:900;letter-spacing:.18em;color:#72c3ff;margin-bottom:10px">MINI WAR · CHỌN CHẾ ĐỘ</div>
-      <h2>⚔️ Bạn muốn chơi kiểu nào?</h2>
-      <p class="intro">Chọn đấu với AI như hiện tại hoặc tạo phòng riêng để solo 1 đấu 1 với bạn bè.</p>
-      <div class="mode-options">
-        <button class="mode-choice" id="modeAI"><strong>🤖 Chơi với AI</strong><span>Chế độ hiện tại, chiến đấu với máy. Không cần kết nối Internet.</span></button>
-        <button class="mode-choice friend" id="modeFriends"><strong>👥 Solo với bạn bè</strong><span>Tạo phòng riêng, gửi mã hoặc link mời để chơi 1 đấu 1 qua Internet.</span></button>
-      </div>
-      <p class="mode-note">Chế độ chơi với bạn bè cần mở game từ một địa chỉ web (ví dụ GitHub Pages), không chỉ mở file trên máy. Cần Internet để kết nối.</p>
+    <div id="modeHome" class="lobby-home">
+      <header class="lobby-title">
+        <div class="lobby-crest" aria-hidden="true"><svg class="crest-shield"><use href="#shield"/></svg><svg class="ico"><use href="#i-attack"/></svg></div>
+        <div>
+          <div class="mode-eyebrow">CHIẾN LƯỢC THỜI GIAN THỰC · 1 ĐẤU 1</div>
+          <h1>MINI WAR</h1>
+          <p class="intro">Chiếm cờ, giữ mỏ, luyện quân và phá pháo đài đối phương.</p>
+        </div>
+      </header>
+      <nav class="lobby-menu" aria-label="Sảnh chính">
+        <button class="lobby-btn primary" id="modeAI" type="button"><svg class="ico"><use href="#i-sword"/></svg><span><strong>Chơi với AI</strong><small>Đấu với máy · không cần Internet</small></span><kbd>Enter</kbd></button>
+        <button class="lobby-btn" id="modeFriends" type="button"><svg class="ico"><use href="#i-units"/></svg><span><strong>Solo với bạn bè</strong><small>Tạo phòng hoặc nhập mã · kết nối P2P</small></span></button>
+        <button class="lobby-btn ghost" id="lobbyGuide" type="button"><svg class="ico"><use href="#i-help"/></svg><span><strong>Hướng dẫn &amp; phím tắt</strong><small>Luật chơi, tài nguyên, lãnh thổ</small></span></button>
+        <button class="lobby-btn ghost" id="lobbyFullscreen" type="button"><svg class="ico"><use href="#i-expand"/></svg><span><strong>Toàn màn hình</strong><small>Bật/tắt chế độ toàn màn hình</small></span></button>
+      </nav>
+      <p class="mode-note">Chơi với bạn bè cần mở game từ một địa chỉ web (ví dụ GitHub Pages), không chỉ mở file trên máy, và cần Internet để kết nối.</p>
     </div>
     <div id="friendPanel" class="lobby">
-      <button class="mode-back" id="modeBack">← Quay lại chọn chế độ</button>
-      <h2>👥 Solo với bạn bè</h2>
-      <p class="intro">Tạo phòng để làm chủ phòng, hoặc nhập mã do bạn bè gửi.</p>
+      <button class="mode-back" id="modeBack" type="button">← Quay lại sảnh chính</button>
+      <h2>Solo với bạn bè</h2>
+      <p class="intro">Tạo phòng để làm chủ phòng (quân xanh), hoặc nhập mã do bạn bè gửi (quân đỏ).</p>
       <div id="friendActions">
         <div class="mode-actions"><button class="btn primary" id="createRoom">＋ Tạo phòng mới</button></div>
-        <label for="roomInput" style="display:block;margin-top:18px;font-size:13px;color:#b7cbe0">Mã phòng của bạn bè</label>
+        <label for="roomInput" class="mode-label">Mã phòng của bạn bè</label>
         <input class="mode-field" id="roomInput" maxlength="8" inputmode="text" autocomplete="off" placeholder="Ví dụ: A7K2Q9">
         <div class="mode-actions"><button class="btn" id="joinRoom">Tham gia phòng</button></div>
       </div>
       <div id="roomWaiting" class="lobby">
-        <p style="margin:16px 0 6px;color:#bed0e1;text-align:center">Gửi mã này cho bạn của bạn</p>
+        <p class="mode-label center">Gửi mã này cho bạn của bạn</p>
         <div id="roomCode" class="room-code">------</div>
         <div class="mode-actions"><button class="btn primary" id="copyRoomLink">⧉ Sao chép link mời</button><button class="btn" id="copyRoomCode">Sao chép mã</button></div>
       </div>
@@ -40,42 +86,46 @@
       <p class="mode-note">Chủ phòng nên giữ tab này mở trong suốt trận. Kết nối P2P phụ thuộc vào mạng hai người; một số mạng có thể chặn kết nối trực tiếp.</p>
     </div>
   </section>
+  <footer class="lobby-foot"><span><i class="dot blue"></i>Quân xanh</span><span>đấu</span><span><i class="dot red"></i>Quân đỏ</span></footer>
 </div>
 
 <div class="game-app" id="gameApp">
   <canvas id="game" width="960" height="540" tabindex="0" aria-label="Chiến trường Mini War — nhấp vào bản đồ để dùng phím mũi tên và dấu cộng/trừ"></canvas>
 
   <div class="hud-layer">
-    <!-- Top left: commander badge -->
+    <!-- Top left: player panel — shield crest, faction ribbon, clock, phase, army row (border tier 2) -->
     <section class="commander" aria-label="Chỉ huy">
-      <div class="crest" id="crest"><span>⚔️</span></div>
+      <div class="crest" id="crest"><svg class="crest-shield"><use href="#shield"/></svg><svg class="ico crest-ico"><use href="#i-castle"/></svg></div>
       <div class="commander-info">
-        <div class="commander-name"><b id="sideName">QUÂN XANH</b><span class="clock">⏱ <b id="time">00:00</b></span></div>
-        <div class="commander-sub" id="modeStatus">Chưa bắt đầu</div>
+        <div class="commander-name"><b class="faction-ribbon" id="sideName">QUÂN XANH</b><span class="clock" data-tip="Thời gian trận"><svg class="ico"><use href="#i-clock"/></svg><b id="time">00:00</b></span><span class="mode-tag" id="modeStatus">Chưa bắt đầu</span></div>
         <div class="commander-stats">
-          <span title="Tổng quân (gồm quân chờ ở sân tập kết)"><small id="unitLabel">🪖 Quân</small> <b id="unitCount">0</b></span>
-          <span id="phaseHint">Giai đoạn phát triển kinh tế</span>
+          <span class="army-total" data-tip="Tổng quân (gồm quân chờ ở sân tập kết)"><svg class="ico"><use href="#i-units"/></svg><b id="unitCount">0</b></span>
+          <span class="phase" id="phaseHint">Giai đoạn phát triển kinh tế</span>
         </div>
-        <div class="commander-army" id="unitBreakdown">Lính 0 · Cung 0 · Lính giáo 0 · Kỵ binh 0</div>
+        <div class="commander-army" id="unitBreakdown"></div>
       </div>
     </section>
 
-    <!-- Top: resources -->
+    <!-- Top right: resources as short hanging banners (border tier 3). Details live in the tooltips. -->
     <section class="resource-bar" aria-label="Tài nguyên">
-      <div class="res" id="resFood"><i>🌾</i><div><b id="food">150</b><small id="foodRate">+0 −0 = +0/phút</small></div></div>
-      <div class="res" id="resWood"><i>🪵</i><div><b id="wood">400</b><small id="woodRate">+0/phút</small></div></div>
-      <div class="res" id="resStone"><i>🪨</i><div><b id="stone">50</b><small id="stoneRate">+0/phút</small></div></div>
-      <div class="res" id="resGold"><i>🪙</i><div><b id="gold">50</b><small id="goldRate">+0/phút</small></div></div>
-      <div class="res territory" title="Số vùng đang giữ và thu nhập từ mỏ"><i>🚩</i><div><b id="territory">0</b><small id="territoryIncome">Chưa có mỏ</small></div></div>
+      <div class="res" id="resFood" data-res="food"><svg class="ico res-ico"><use href="#i-food"/></svg><div><b id="food">150</b><small id="foodRate">+0/phút</small></div></div>
+      <div class="res" id="resWood" data-res="wood"><svg class="ico res-ico"><use href="#i-wood"/></svg><div><b id="wood">400</b><small id="woodRate">+0/phút</small></div></div>
+      <div class="res" id="resStone" data-res="stone"><svg class="ico res-ico"><use href="#i-stone"/></svg><div><b id="stone">50</b><small id="stoneRate">+0/phút</small></div></div>
+      <div class="res" id="resGold" data-res="gold"><svg class="ico res-ico"><use href="#i-gold"/></svg><div><b id="gold">50</b><small id="goldRate">+0/phút</small></div></div>
+      <div class="res territory" id="resTerritory"><svg class="ico res-ico"><use href="#i-flag"/></svg><div><b><span id="territory">0</span> <em>vùng</em></b><small id="territoryIncome">Chưa có mỏ</small></div></div>
     </section>
 
-    <!-- Right: small round buttons -->
+    <!-- Right: map and fullscreen buttons, plus one menu for pause / guide / hide HUD / leave (border tier 3) -->
     <nav class="side-rail" aria-label="Tuỳ chọn">
-      <button class="rail-btn" id="pause" type="button"><i>Ⅱ</i><span>Tạm dừng · F3</span></button>
-      <button class="rail-btn" id="toggleTerritory" type="button"><i>🗺️</i><span>Ranh giới · T</span></button>
-      <button class="rail-btn" id="fullscreen" type="button"><i>⛶</i><span>Toàn màn hình</span></button>
-      <button class="rail-btn" id="openGuide" type="button"><i>❓</i><span>Hướng dẫn · F1</span></button>
-      <button class="rail-btn" id="toggleSideHud" type="button" aria-label="Ẩn giao diện"><i>▣</i><span>Ẩn giao diện</span></button>
+      <button class="rail-btn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false" data-tip="Menu: tạm dừng, hướng dẫn, rời trận" data-tip-side="left"><svg class="ico"><use href="#i-menu"/></svg></button>
+      <button class="rail-btn" id="toggleTerritory" type="button" data-tip="Ẩn/hiện ranh giới vùng · T" data-tip-side="left"><svg class="ico"><use href="#i-map"/></svg></button>
+      <button class="rail-btn" id="fullscreen" type="button" data-tip="Toàn màn hình" data-tip-side="left"><svg class="ico"><use href="#i-expand"/></svg></button>
+      <div class="game-menu" id="gameMenu" role="menu" hidden>
+        <button class="menu-item" id="pause" type="button" role="menuitem"><svg class="ico"><use href="#i-pause"/></svg><span>Tạm dừng</span><kbd>F3</kbd></button>
+        <button class="menu-item" id="openGuide" type="button" role="menuitem"><svg class="ico"><use href="#i-help"/></svg><span>Hướng dẫn</span><kbd>F1</kbd></button>
+        <button class="menu-item" id="toggleSideHud" type="button" role="menuitem" aria-label="Ẩn giao diện"><svg class="ico"><use href="#i-eye-off"/></svg><span>Ẩn giao diện</span></button>
+        <button class="menu-item danger" id="leaveMatch" type="button" role="menuitem"><svg class="ico"><use href="#i-exit"/></svg><span>Rời trận</span></button>
+      </div>
     </nav>
 
     <!-- Left: queues -->
@@ -84,27 +134,28 @@
       <div class="queue-list" id="trainQueue" aria-live="polite"></div>
     </section>
 
-    <!-- Bottom left: minimap -->
+    <!-- Bottom left: minimap with heraldic corners (border tier 3) -->
     <section class="minimap-frame" aria-label="Bản đồ thu nhỏ — nhấp để di chuyển camera">
       <canvas id="minimap" width="200" height="200"></canvas>
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     </section>
 
-    <!-- Bottom: battle log strip -->
-    <section class="chat-strip" id="chatStrip" aria-label="Nhật ký chiến trường">
-      <button class="chat-toggle" id="chatToggle" type="button" aria-label="Mở rộng nhật ký">📜</button>
-      <div class="feed" id="feed"><div>Chào chỉ huy! Hãy huấn luyện quân rồi đưa tới cột cờ để chiếm vùng.</div><div>Pháo đài sinh tài nguyên mỗi phút. Xây nông trại để có thêm lúa nuôi quân.</div></div>
+    <!-- Bottom centre: notice banner. The newest message fades after 5 s; the scroll button opens the history. -->
+    <section class="chat-strip idle" id="chatStrip" aria-label="Nhật ký chiến trường">
+      <div class="feed" id="feed" aria-live="polite"><div>Chào chỉ huy! Hãy huấn luyện quân rồi đưa tới cột cờ để chiếm vùng.</div><div>Pháo đài sinh tài nguyên mỗi phút. Xây nông trại để có thêm lúa nuôi quân.</div></div>
+      <button class="chat-toggle" id="chatToggle" type="button" aria-label="Lịch sử thông báo" data-tip="Lịch sử thông báo"><svg class="ico"><use href="#i-scroll"/></svg></button>
     </section>
 
-    <!-- Bottom right: main actions -->
+    <!-- Bottom right: three heraldic shields (border tier 1). The slot carries the tooltip so it also shows when disabled. -->
     <nav class="action-dock" aria-label="Lệnh chính">
-      <button class="dock-btn" id="openTrain" type="button" title="Huấn luyện quân (phím H)"><i>🛡️</i><span>Huấn luyện</span></button>
-      <button class="dock-btn" id="openBuild" type="button" title="Xây dựng (phím B)"><i>🔨</i><span>Xây dựng</span></button>
-      <button class="dock-btn warn" id="attack" type="button" title="Nhóm quân đang chọn tấn công (phím A)"><i>⚔️</i><span>Tấn công</span></button>
+      <span class="dock-slot" data-tip="Huấn luyện quân tại pháo đài · H"><button class="dock-btn" id="openTrain" type="button" aria-label="Huấn luyện"><svg class="shield-bg"><use href="#shield"/></svg><svg class="ico"><use href="#i-train"/></svg><span class="ribbon">Huấn luyện</span><kbd class="hotkey">H</kbd></button></span>
+      <span class="dock-slot" data-tip="Xây dựng và nâng cấp · B"><button class="dock-btn" id="openBuild" type="button" aria-label="Xây dựng"><svg class="shield-bg"><use href="#shield"/></svg><svg class="ico"><use href="#i-build"/></svg><span class="ribbon">Xây dựng</span><kbd class="hotkey">B</kbd></button></span>
+      <span class="dock-slot" data-tip="Nhóm quân đang chọn tấn công · A"><button class="dock-btn warn" id="attack" type="button" aria-label="Tấn công"><svg class="shield-bg"><use href="#shield"/></svg><svg class="ico"><use href="#i-attack"/></svg><span class="ribbon">Tấn công</span><kbd class="hotkey">A</kbd></button></span>
     </nav>
 
     <!-- Drawers -->
     <section class="drawer controls" id="trainDrawer" aria-label="Huấn luyện quân" hidden>
-      <header><h2>Huấn luyện tại pháo đài</h2><button class="drawer-close" type="button" data-close aria-label="Đóng">✕</button></header>
+      <header><h2>Huấn luyện tại pháo đài</h2><button class="drawer-close" type="button" data-close aria-label="Đóng" data-tip="Đóng · Esc"><svg class="ico"><use href="#i-close"/></svg></button></header>
       <div class="cards">
         <button class="card-btn unit-card" id="scout" type="button"><kbd class="hotkey">Q</kbd><canvas class="portrait" data-unit="scout" width="96" height="96"></canvas><strong>Trinh sát</strong><span>30 lúa</span></button>
         <button class="card-btn unit-card" id="infantry" type="button"><kbd class="hotkey">W</kbd><canvas class="portrait" data-unit="infantry" width="96" height="96"></canvas><strong>Lính</strong><span>45 lúa</span></button>
@@ -116,7 +167,7 @@
     </section>
 
     <section class="drawer controls" id="buildDrawer" aria-label="Xây dựng" hidden>
-      <header><h2>Xây dựng & nâng cấp</h2><button class="drawer-close" type="button" data-close aria-label="Đóng">✕</button></header>
+      <header><h2>Xây dựng & nâng cấp</h2><button class="drawer-close" type="button" data-close aria-label="Đóng" data-tip="Đóng · Esc"><svg class="ico"><use href="#i-close"/></svg></button></header>
       <div class="cards">
         <button class="card-btn" id="farm" type="button"><kbd class="hotkey">F</kbd><i class="card-icon">🌾</i><strong>Nông trại</strong><span>100 gỗ · +20 lúa/phút</span></button>
         <button class="card-btn" id="buildTower" type="button"><kbd class="hotkey">T</kbd><i class="card-icon">🗼</i><strong>Tháp phòng thủ</strong><span>100 gỗ · 200 đá · 50 vàng</span></button>
@@ -126,34 +177,46 @@
       </div>
       <p class="drawer-note">Chọn công trình rồi nhấp lên bản đồ để đặt · nhấp phải hoặc Esc để huỷ · tiền đồn và nâng cấp: chọn cờ/nông trại trước.</p>
     </section>
-  </div>
 
-  <!-- Guide -->
-  <div class="modal" id="guideModal" hidden>
-    <section class="modal-panel" role="dialog" aria-labelledby="guideTitle">
-      <header><h2 id="guideTitle">Mục tiêu & hướng dẫn</h2><button class="drawer-close" type="button" data-close aria-label="Đóng">✕</button></header>
-      <div class="modal-body">
-        <p class="legend"><span><i class="dot blue"></i>Quân xanh</span><span><i class="dot red"></i>Quân đỏ</span><span>🚩 Cột cờ: đưa quân vào vòng quanh cờ để chiếm</span></p>
-        <h3>Thắng trận</h3>
-        <p>Phá hủy pháo đài đối phương; bảo vệ pháo đài của mình.</p>
-        <h3>Tài nguyên</h3>
-        <p>Pháo đài luôn sinh 25 lúa, 20 gỗ, 8 đá, 8 vàng mỗi phút; nông trại sinh thêm lúa; mỏ trong các vùng đã chiếm cờ sinh loại tài nguyên của vùng. Quân nào cũng ăn lúa mỗi phút; hết lúa quá 30 giây thì quân bị chậm. Vùng lúa sinh 25 lúa/phút và tăng 25% lúa cho nông trại của bạn xây trong vùng đó.</p>
-        <h3>Lãnh thổ & cột cờ</h3>
-        <p>Bản đồ chia thành 20 vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện), mỗi vùng có sẵn một cột cờ lớn ở giữa; gần nhà luôn có đủ vùng lúa, gỗ, đá, vàng. Đưa quân chiến đấu vào vòng quanh cờ để chiếm (trinh sát không chiếm được): 1 quân khoảng 60 giây, càng đông càng nhanh, từ 10 quân trở lên khoảng 15 giây. Hai phe cùng đứng trong vòng thì tiến độ dừng; bỏ trống cờ 5 giây thì tiến độ giảm dần về 0 (không đổi chủ). Cờ của địch chiếm qua 2 giai đoạn: hạ cờ về trung lập rồi mới chiếm. Giữ cờ thì thấy toàn bộ vùng. Xây tiền đồn cạnh cờ đã chiếm để có súng và giữ cờ: còn tiền đồn thì đối phương không chiếm được cờ.</p>
-        <h3>Quân đội</h3>
-        <p>Mọi loại quân tuyển tại pháo đài (nút <b>Huấn luyện</b>, phím H rồi Q W E R T): trả tiền khi xếp hàng, mỗi lần huấn luyện một quân (4–12 giây), hàng đợi tối đa 5 quân. Quân mới tập kết tại sân cạnh pháo đài và tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> (phím A) chỉ ra lệnh cho nhóm đang chọn.</p>
-        <h3>Công trình</h3>
-        <p>Nút <b>Xây dựng</b> (phím B): chọn công trình, đặt ở chỗ xanh trên vùng đã khám phá bằng chuột trái; nhấp phải hoặc Esc để huỷ. Không xây trên nước, đá hoặc chồng lên công trình/đơn vị; kéo được nông trại đã xây. Tháp chỉ xây trong lãnh thổ của mình. Nhấp công trình của mình để chọn rồi bấm nâng cấp. Pháo đài có tối đa 2 khẩu pháo; khẩu thứ hai tốn 100 đá.</p>
-        <h3>Điều khiển</h3>
-        <p>Lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ; nhấp vào bản đồ thu nhỏ để nhảy tới đó. Nhấp phải để ra lệnh đi.</p>
-        <h3>Phím tắt (kiểu Đế Chế)</h3>
-        <table class="hotkey-table" id="hotkeyTable"></table>
-      </div>
-    </section>
   </div>
 
   <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div>
 </div>
 
+<!-- Guide -->
+<div class="modal" id="guideModal" hidden>
+  <section class="modal-panel" role="dialog" aria-labelledby="guideTitle">
+    <header><h2 id="guideTitle">Mục tiêu & hướng dẫn</h2><button class="drawer-close" type="button" data-close aria-label="Đóng" data-tip="Đóng · Esc"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <div class="modal-body">
+      <p class="legend"><span><i class="dot blue"></i>Quân xanh</span><span><i class="dot red"></i>Quân đỏ</span><span>🚩 Cột cờ: đưa quân vào vòng quanh cờ để chiếm</span></p>
+      <h3>Thắng trận</h3>
+      <p>Phá hủy pháo đài đối phương; bảo vệ pháo đài của mình.</p>
+      <h3>Tài nguyên</h3>
+      <p>Pháo đài luôn sinh 25 lúa, 20 gỗ, 8 đá, 8 vàng mỗi phút; nông trại sinh thêm lúa; mỏ trong các vùng đã chiếm cờ sinh loại tài nguyên của vùng. Quân nào cũng ăn lúa mỗi phút; hết lúa quá 30 giây thì quân bị chậm. Vùng lúa sinh 25 lúa/phút và tăng 25% lúa cho nông trại của bạn xây trong vùng đó. Rê chuột lên ô tài nguyên để xem chi tiết thu/chi.</p>
+      <h3>Lãnh thổ & cột cờ</h3>
+      <p>Bản đồ chia thành 20 vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện), mỗi vùng có sẵn một cột cờ lớn ở giữa; gần nhà luôn có đủ vùng lúa, gỗ, đá, vàng. Đưa quân chiến đấu vào vòng quanh cờ để chiếm (trinh sát không chiếm được): 1 quân khoảng 60 giây, càng đông càng nhanh, từ 10 quân trở lên khoảng 15 giây. Hai phe cùng đứng trong vòng thì tiến độ dừng; bỏ trống cờ 5 giây thì tiến độ giảm dần về 0 (không đổi chủ). Cờ của địch chiếm qua 2 giai đoạn: hạ cờ về trung lập rồi mới chiếm. Giữ cờ thì thấy toàn bộ vùng. Xây tiền đồn cạnh cờ đã chiếm để có súng và giữ cờ: còn tiền đồn thì đối phương không chiếm được cờ.</p>
+      <h3>Quân đội</h3>
+      <p>Mọi loại quân tuyển tại pháo đài (nút <b>Huấn luyện</b>, phím H rồi Q W E R T): trả tiền khi xếp hàng, mỗi lần huấn luyện một quân (4–12 giây), hàng đợi tối đa 5 quân. Quân mới tập kết tại sân cạnh pháo đài và tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> (phím A) chỉ ra lệnh cho nhóm đang chọn.</p>
+      <h3>Công trình</h3>
+      <p>Nút <b>Xây dựng</b> (phím B): chọn công trình, đặt ở chỗ xanh trên vùng đã khám phá bằng chuột trái; nhấp phải hoặc Esc để huỷ. Không xây trên nước, đá hoặc chồng lên công trình/đơn vị; kéo được nông trại đã xây. Tháp chỉ xây trong lãnh thổ của mình. Nhấp công trình của mình để chọn rồi bấm nâng cấp. Pháo đài có tối đa 2 khẩu pháo; khẩu thứ hai tốn 100 đá.</p>
+      <h3>Điều khiển</h3>
+      <p>Lăn chuột để phóng to/thu nhỏ; giữ chuột phải hoặc giữa rồi kéo để di chuyển bản đồ; nhấp vào bản đồ thu nhỏ để nhảy tới đó. Nhấp phải để ra lệnh đi. Nút menu (☰) bên phải chứa tạm dừng, hướng dẫn, ẩn giao diện và rời trận.</p>
+      <h3>Phím tắt (kiểu Đế Chế)</h3>
+      <table class="hotkey-table" id="hotkeyTable"></table>
+    </div>
+  </section>
+</div>
+
+<!-- Leave-match confirmation -->
+<div class="modal" id="confirmModal" hidden>
+  <section class="modal-panel confirm-panel" role="alertdialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+    <h2 id="confirmTitle">Rời trận?</h2>
+    <p id="confirmText">Trận đấu hiện tại sẽ kết thúc và bạn quay về màn chọn chế độ.</p>
+    <div class="confirm-actions"><button class="btn" id="confirmNo" type="button">Ở lại</button><button class="btn danger" id="confirmYes" type="button">Rời trận</button></div>
+  </section>
+</div>
+
+
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
 </body>
 </html>

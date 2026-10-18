@@ -18,7 +18,7 @@ Bản đồ vuông lớn, nhìn từ trên xuống: đồng cỏ, rừng dày, m
 Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions`, `goldRegions` (toạ độ tỉ lệ 0–1, `src/config/map.ts`). Thứ tự gán: sông (5.243 ô có điểm "nước" thấp nhất) → hồ `lakeRegions` (elip có mép lượn sóng, chỉ lấy ô cỏ) → đá → ruộng → rừng, nên hồ không bị biome khác ghi đè. Hồ đặt trên đồng cỏ giữa các biome, cách sông.
 
 **Lớp vẽ trong `draw()`** (theo thứ tự):
-1. Nền tối `#0b1411`, rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
+1. Nền `--ui-fog` (`THEME['ui-fog']`), rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
 2. `drawTerrainDetail()`, đường chính (bezier ngang ~y=0.55H, cắt theo khung bản đồ để không thò ra ngoài) và đường phụ phía trên.
 3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô dày theo pixel màn hình; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
 4. Lá súng (phẳng, dưới mọi vật đứng), rồi danh sách `sceneActors` sắp theo Y: cây/bụi, đá, cỏ lau, pháo đài (+ sân tập kết), cột cờ (`drawFlag()`, chỗ đã khám phá), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân. Khi zoom < `DECOR_LAYER_SCALE` (0,2) mọi vật trang trí lấy từ một ảnh lớp vẽ sẵn (`decorLayerCanvas()`) thay vì vẽ từng cái.
@@ -53,11 +53,19 @@ Clip `walk` dùng khi `u.moving`; riêng lính giáo chọn hàng theo `u.facing
 | `lily` | ô nước có 4 phía đều là nước | 2 / 0,09 / 34 | ~166 |
 Chừa trống: quanh pháo đài (nửa kích thước + 150), sân tập kết (+40), mỏ (95), cột cờ (120), đường chính. Sprite vẽ sẵn bằng canvas: `makePineSprite()` (5 kiểu), `makeBroadleafSprite()` (3, kiểu 2 màu thu), `makeBushSprite()` (2, một kiểu có hoa), `drawRockClusterSprite()`, `makeStoneSprite()` (3), `makeReedSprite()` (2), `makeLilySprite()` (2, một kiểu có hoa). `decorSprite(item)` trả về ảnh + khung cho mỗi loại (`kind`); `drawDecor(item)` vẽ một vật. Dựng toàn bộ mất ~80 ms mỗi trận.
 
-Màu phe: `teamPalette(team)` — xanh lá-lam cho team 0, đỏ đất cho team 1; thanh máu `#4baeff` / `#ff626b`.
+Màu phe của sprite: `teamPalette(team)`, xanh lá-lam cho team 0 và đỏ đất cho team 1.
+
+**Lớp phủ trên bản đồ** (màu và cỡ từ [src/config/theme.ts](../../src/config/theme.ts), cùng nguồn với HUD):
+- **Thanh máu quân** `bar()`: màu sáng của phe (`TEAM_COLORS[team].light`), viền tối.
+- **Thanh máu pháo đài và công trình** `healthBar()`: cao `MAP_UI.healthBarPx` = 6 px trên màn hình, viền `--text-on-map-stroke`. Màu chuyển từ `--success` (đầy) qua `--resource` (một nửa) sang `--danger` (gần hết) theo `healthColor()`.
+- **Nhãn pháo đài** `mapBanner()`: "PHÁO ĐÀI XANH/ĐỎ" trên dải cờ đuôi én màu phe, viền `--gold-muted`, chữ `--text-main` serif.
+- **Nhãn khác** `mapText()`: "SÂN TẬP KẾT" (15 px thế giới, đậm) và tên công trình, viền chữ `--text-on-map-stroke` để đọc được trên mọi nền.
+- Mọi chữ trên bản đồ tối thiểu `MAP_UI.labelMinPx` = 12 px trên màn hình (`mapFontPx()`).
+- Tên công trình và sân tập kết ẩn khi `renderView.scale` < `MAP_LABEL_MIN_SCALE` = 0,28, để không phủ kín bản đồ khi thu nhỏ hết.
 
 ## Code liên quan
 - [src/map/terrain.ts](../../src/map/terrain.ts), [src/render/terrain.ts](../../src/render/terrain.ts), [src/render/buildings.ts](../../src/render/buildings.ts), [src/render/units.ts](../../src/render/units.ts), [src/render/draw.ts](../../src/render/draw.ts): `buildTerrain()`, `buildWorldDecor()`, `DECOR_PASSES`, `decorSprite()`, `drawDecor()`, `decorLayerCanvas()`, `DECOR_LAYER_SCALE`, `makePineSprite()`, `makeBroadleafSprite()`, `makeBushSprite()`, `makeStoneSprite()`, `makeReedSprite()`, `makeLilySprite()`, `drawRockClusterSprite()`; danh sách `treeDecor`, `rockDecor`, `shoreDecor`, `waterDecor`; `drawGrassPatch()`, `drawTerrainDetail()`, `drawBase()`, `drawMusterYard()`, `drawUnit()`, `drawUnitHealthBar()`, `drawUnitSelection()`, `drawFarm()`, `drawBuilding()`, `drawBuildingOverlay()`, `draw()`.
-- Tiện ích: `drawUprightAt()`, `roundRect()`, `bar()`, `pill()`, `teamPalette()`, `unitTargetHeight()`, `zoomLerp()`, `decorRandom()`.
+- Tiện ích: `drawUprightAt()`, `roundRect()`, `bar()`, `healthBar()`, `mapText()`, `mapBanner()`, `mapFontPx()`, `pill()`, `teamPalette()`, `unitTargetHeight()`, `zoomLerp()`, `decorRandom()`.
 - Toạ độ & camera: xem [architecture.md](../architecture.md).
 
 ## Tương tác

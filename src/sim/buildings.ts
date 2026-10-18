@@ -2,7 +2,7 @@
 // Farms, outposts, towers: placement, construction, upgrades, destruction (docs/features/buildings.md, farms.md).
 import { H, TILE_SIZE, W } from '../config/map';
 import { tilePassable } from '../map/terrain';
-import { addLog, canAfford, costText, draggingFarm, ended, localTeam, missingText, mode, nextId, paused, selectedBuilding, setDraggingFarm, setNextId, setSelectedBuilding, spend, state } from '../core/game';
+import { addLog, canAfford, costText, draggingFarm, ended, localTeam, missingText, mode, nextId, notifyShortfall, paused, selectedBuilding, setDraggingFarm, setNextId, setSelectedBuilding, spend, state } from '../core/game';
 import { BUILDER_RADIUS_TILES, BUILDING_TYPES, FARM_LEVELS, FARM_UPGRADE_SECONDS, FORTRESS_GUN_COST, specs } from '../config/balance';
 import { isTeamAreaExplored, teamCanSee } from './fog';
 import { activeFortressGuns, musterYard } from '../map/bases';
@@ -55,7 +55,7 @@ export function placeBuilding(team,kind,x,y){
  const def=BUILDING_TYPES[kind],mine=team===localTeam();
  const problem=buildingPlacementProblem(team,kind,x,y);
  if(problem){if(mine)addLog(def.name+': '+problem);return null;}
- if(!canAfford(team,def.cost)){if(mine)addLog(`Không đủ tài nguyên để xây ${def.name}: thiếu ${missingText(team,def.cost)}.`);return null;}
+ if(!canAfford(team,def.cost)){if(mine){addLog(`Không đủ tài nguyên để xây ${def.name}: thiếu ${missingText(team,def.cost)}.`);notifyShortfall(team,def.cost);}return null;}
  spend(team,def.cost);
  const b={id:(setNextId(nextId+1)-1),kind,team,x,y,hp:def.hp*.2,max:def.hp,level:1,progress:0,upgrade:null,cool:0,regionId:def.where==='flag'?regionAt(x,y).id:null,waiting:false};
  state.buildings.push(b);
@@ -75,7 +75,7 @@ export function startUpgrade(team,kind,id=null){
  const mine=team===localTeam(),b=upgradeTarget(team,kind,id);
  if(!b){if(mine)addLog('Không có nông trại nào nâng cấp được (phải xây xong, chưa đạt cấp 3, không đang nâng cấp).');return false;}
  const cost=upgradeCost(b);
- if(!canAfford(team,cost)){if(mine)addLog(`Không đủ tài nguyên để nâng cấp nông trại: thiếu ${missingText(team,cost)}.`);return false;}
+ if(!canAfford(team,cost)){if(mine){addLog(`Không đủ tài nguyên để nâng cấp nông trại: thiếu ${missingText(team,cost)}.`);notifyShortfall(team,cost);}return false;}
  spend(team,cost);b.upgrade={progress:0,time:FARM_UPGRADE_SECONDS};
  if(mine)addLog(`Đang nâng nông trại lên cấp ${b.level+1} (${FARM_UPGRADE_SECONDS} giây).`);
  updateHUD();return true;
@@ -87,7 +87,7 @@ export function startOutpost(team,regionId=null){
  const mine=team===localTeam(),def=BUILDING_TYPES.outpost,base=state.bases[team];
  const options=outpostRegions(team).filter(r=>regionId===null||r.id===regionId).sort((a,b)=>Math.hypot(a.cp.x-base.x,a.cp.y-base.y)-Math.hypot(b.cp.x-base.x,b.cp.y-base.y));
  if(!options.length){if(mine)addLog(regionId===null?'Không có vùng nào xây được tiền đồn (phải chiếm cờ của vùng và vùng chưa có tiền đồn).':'Vùng này chưa thuộc về bạn hoặc đã có tiền đồn.');return null;}
- if(!canAfford(team,def.cost)){if(mine)addLog(`Không đủ tài nguyên để xây tiền đồn: thiếu ${missingText(team,def.cost)}.`);return null;}
+ if(!canAfford(team,def.cost)){if(mine){addLog(`Không đủ tài nguyên để xây tiền đồn: thiếu ${missingText(team,def.cost)}.`);notifyShortfall(team,def.cost);}return null;}
  for(const r of options){const spot=findBuildSpot(team,'outpost',r.cp.x,r.cp.y,TILE_SIZE*1.8,TILE_SIZE*3.5,80);if(spot)return placeBuilding(team,'outpost',spot.x,spot.y);}
  if(mine)addLog('Không tìm được chỗ trống cạnh cột cờ để xây tiền đồn.');return null;
 }
@@ -101,7 +101,7 @@ export function hasBuilder(b){const r=BUILDER_RADIUS_TILES*TILE_SIZE;return stat
 export function destroyBuilding(b){
  state.buildings=state.buildings.filter(x=>x!==b);
  if(selectedBuilding===b)setSelectedBuilding(null);if(draggingFarm===b)setDraggingFarm(null);
- if(b.team===localTeam())addLog(`${buildingName(b)} đã bị phá hủy.`);
+ if(b.team===localTeam())addLog(`${buildingName(b)} đã bị phá hủy.`,'danger');
  else if(b.kind==='outpost')addLog('Đã phá tiền đồn địch: có thể chiếm cờ của vùng đó.');
 }
 // Construction, farm upgrades, flag capture and building guns (towers, outposts). Called every simulation step.
@@ -131,7 +131,7 @@ export function updateBuildings(dt){
 export function buildTurret(team=localTeam()){
  if(ended||paused)return;const base=state.bases.find(b=>b.team===team);if(!base)return;
  if(activeFortressGuns(base)>=2){if(team===localTeam())addLog('Pháo đài đã có đủ 2 khẩu pháo tích hợp.');return;}
- if(!canAfford(team,FORTRESS_GUN_COST)){if(team===localTeam())addLog('Cần '+costText(FORTRESS_GUN_COST)+' để mở khóa pháo thứ hai: thiếu '+missingText(team,FORTRESS_GUN_COST)+'.');return;}
+ if(!canAfford(team,FORTRESS_GUN_COST)){if(team===localTeam())addLog('Cần '+costText(FORTRESS_GUN_COST)+' để mở khóa pháo thứ hai: thiếu '+missingText(team,FORTRESS_GUN_COST)+'.');notifyShortfall(team,FORTRESS_GUN_COST);return;}
  const next=base.guns.findIndex(g=>!g.active);if(next<0)return;spend(team,FORTRESS_GUN_COST);
  base.guns[next].active=true;base.guns[next].cool=.2;base.max+=230;base.hp+=230;
  if(team===localTeam())addLog('Pháo thứ hai đã được tích hợp vào pháo đài; máu công trình tăng thêm 230.');updateHUD();

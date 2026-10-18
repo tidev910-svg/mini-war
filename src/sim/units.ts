@@ -2,7 +2,7 @@
 // Unit purchase, training queue and deployment in the muster yard (docs/features/units.md).
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
-import { addLog, canAfford, ended, gameTime, localTeam, missingText, mode, netRole, nextId, normalizeUnitType, paused, setNextId, spend, state } from '../core/game';
+import { addLog, canAfford, ended, gameTime, localTeam, missingText, mode, notifyShortfall, netRole, nextId, normalizeUnitType, paused, setNextId, spend, state } from '../core/game';
 import { BUILDING_TYPES, SCOUT_VISION, TRAIN_QUEUE_MAX, specs } from '../config/balance';
 import { requestAction } from '../core/actions';
 import { baseDir, musterYard } from '../map/bases';
@@ -53,7 +53,7 @@ export function buyProblem(type,team){
 }
 export function buy(type,team=localTeam()){
  const problem=buyProblem(type,team);
- if(problem){if(team===localTeam()&&Object.hasOwn(specs,type))addLog(problem);return;}
+ if(problem){if(team===localTeam()&&Object.hasOwn(specs,type)){addLog(problem);notifyShortfall(team,specs[type].cost);}return;}
  const s=specs[type];spend(team,s.cost);queueTraining(team,type);
  if(team===localTeam())addLog(`Đã xếp ${s.name} vào hàng huấn luyện (${s.train} giây).`);updateHUD();
 }
@@ -71,7 +71,7 @@ export function updateTraining(dt){
  }
 }
 // Unit buttons: the guest checks locally first so it sees the reason; the host re-validates every purchase.
-export function requestBuy(type){if(mode==='pvp'&&netRole==='guest'){const problem=buyProblem(type,localTeam());if(problem){addLog(problem);return;}}requestAction('buy',{unit:type});}
+export function requestBuy(type){if(mode==='pvp'&&netRole==='guest'){const problem=buyProblem(type,localTeam());if(problem){addLog(problem);if(Object.hasOwn(specs,type))notifyShortfall(localTeam(),specs[type].cost);return;}}requestAction('buy',{unit:type});}
 export function commandAttack(team=localTeam(),ids=null){if(ended||paused)return;const wanted=ids?new Set(ids):new Set(state.units.filter(u=>u.team===team&&u.selected).map(u=>u.id));const chosen=state.units.filter(u=>u.team===team&&wanted.has(u.id));for(const u of chosen){u.order='attack';u.dest=null;u.target=null;u.path=null;u.goal=null;}if(team===localTeam())addLog(chosen.length?`${chosen.length} đơn vị được chọn nhận lệnh tấn công!`:'Chưa chọn quân. Hãy chọn lính trước.');}
 // Stop (S): the chosen units drop their order and path and hold where they are.
 export function stopUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);for(const u of state.units)if(u.team===team&&want.has(u.id)){u.order='hold';u.dest=null;u.target=null;u.path=null;u.goal=null;u.moveGroup=null;}}

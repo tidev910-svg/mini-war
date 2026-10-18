@@ -2,7 +2,6 @@
 // Canvas, view size, camera and zoom, world ↔ screen transforms (docs/features/controls.md, rendering.md).
 import { H, TILE_SIZE, W } from '../config/map';
 import { localTeam, state } from './game';
-import { baseDir } from '../map/bases';
 
 export const canvas=document.getElementById('game');
 export const gameApp=document.getElementById('gameApp');
@@ -39,5 +38,16 @@ export function drawUprightAt(x,y,drawFn){const p=worldToScreenPlane(x,y);ctx.sa
 export function clampCamera(){camX=Math.max(0,Math.min(Math.max(0,MAP_WORLD_W-VIEW_W/zoom),camX));camY=Math.max(0,Math.min(Math.max(0,MAP_WORLD_H-VIEW_H/zoom),camY));}
 // Centre the camera on a world point (hotkeys, minimap).
 export function centerCameraAt(x,y){camX=x-VIEW_W/zoom/2;camY=y-VIEW_H/zoom/2;clampCamera();}
-// Frame the local side's fortress (blue for AI mode and the host, red for the guest).
-export function centerCameraOnHome(){const base=state.bases[localTeam()]||state.bases[0],p=worldToScreenPlane(base.x,base.y);camX=p.x-VIEW_W/zoom*(baseDir(base)>0?.30:.70);camY=p.y-VIEW_H/zoom*.58;clampCamera();}
+// Canvas pixels covered by the HUD at the top (player panel) and bottom (action shields), for framing the camera.
+export function hudInsets(){
+  const r=canvas.getBoundingClientRect();if(!r.height)return {top:0,bottom:0};
+  const s=VIEW_H/r.height,top=document.querySelector('.commander')?.getBoundingClientRect(),dock=document.querySelector('.action-dock')?.getBoundingClientRect();
+  return {top:top?.height?Math.max(0,top.bottom-r.top)*s:0,bottom:dock?.height?Math.max(0,r.bottom-dock.top)*s:0};
+}
+// Frame the local side's fortress (blue for AI mode and the host, red for the guest) in the middle of the part of the
+// screen the HUD leaves free. HOME_FRAME_LIFT: the fortress art and its label sit above its anchor point.
+const HOME_FRAME_LIFT=40;
+export function centerCameraOnHome(){
+  const base=state.bases[localTeam()]||state.bases[0],p=worldToScreenPlane(base.x,base.y),inset=hudInsets();
+  camX=p.x-VIEW_W/zoom/2;camY=p.y-HOME_FRAME_LIFT-(inset.top+(VIEW_H-inset.top-inset.bottom)/2)/zoom;clampCamera();
+}

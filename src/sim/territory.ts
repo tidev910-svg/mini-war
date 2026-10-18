@@ -45,7 +45,7 @@ export function updateCaptures(dt){
    else if(teamCanSee(me,r.cp.x,r.cp.y))addLog(`Đối phương đã chiếm ${regionLabel(r)}.`);
   }else{
    const lost=r.owner;r.owner=-1;r.stage2=team;
-   if(lost===me)addLog(`Mất ${regionLabel(r)}: cờ đã bị hạ về trung lập.`);
+   if(lost===me)addLog(`Mất ${regionLabel(r)}: cờ đã bị hạ về trung lập.`,'danger');
    else if(team===me)addLog(`Giai đoạn 2/2 · đã hạ cờ địch ở ${regionLabel(r)}: vùng về trung lập, tiếp tục đứng để chiếm.`);
   }
  }

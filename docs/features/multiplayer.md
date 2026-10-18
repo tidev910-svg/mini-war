@@ -3,9 +3,9 @@
 > Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
-Màn hình đầu (`#modeScreen`) có 2 lựa chọn:
-- **🤖 Chơi với AI**: `startAIMode()`, không cần mạng.
-- **👥 Solo với bạn bè**: 1 đấu 1 qua PeerJS (WebRTC). Chủ phòng tạo phòng, nhận mã 6 ký tự và link mời `?room=CODE`; bạn nhập mã hoặc mở link để vào. Chủ phòng là phe xanh, khách là phe đỏ.
+Sảnh chính (`#modeScreen`, xem [hud-ui.md](hud-ui.md)) có 2 chế độ chơi:
+- **Chơi với AI** (phím Enter): `startAIMode()`, không cần mạng.
+- **Solo với bạn bè**: 1 đấu 1 qua PeerJS (WebRTC). Chủ phòng tạo phòng, nhận mã 6 ký tự và link mời `?room=CODE`; bạn nhập mã hoặc mở link để vào. Chủ phòng là phe xanh, khách là phe đỏ. Bản online để gửi link mời: https://tidev910-svg.github.io/mini-war/ (link mời có dạng `…/mini-war/?room=CODE`).
 
 Không có tài khoản/đăng nhập; ai có mã phòng đều vào được.
 

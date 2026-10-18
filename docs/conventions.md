@@ -1,6 +1,6 @@
 # Quy ước & nguyên tắc sửa đổi
 
-> Cập nhật lần cuối: 2026-10-17
+> Cập nhật lần cuối: 2026-10-18
 
 ## Nguyên tắc khi sửa code
 1. Giữ chế độ **Chơi với AI** chạy được khi sửa multiplayer, và ngược lại.
@@ -19,6 +19,7 @@
 12. Không chạy logic trận lúc nạp module; code cấp module chỉ tạo canvas/sprite, dựng địa hình và gán sự kiện. Trận đầu do `main.ts` khởi động.
 13. Hạn chế import ngược hướng `config` ← `core` ← `map`/`sim` ← `ai`/`net` ← `render`/`ui`; các ngoại lệ hiện có liệt kê ở [architecture.md](architecture.md).
 14. Sửa luật hoặc số cân bằng đã chốt → sửa test tương ứng trong `tests/` và `scripts/smoke/run.mjs`.
+15. Màu, cỡ chữ, khoảng cách của giao diện chỉ khai báo trong `src/config/theme.ts` (`THEME`, `TEAM_COLORS`, `MAP_UI`). CSS dùng `var(--tên-token)`, không viết mã màu trong `style.css`, `index.html` hay `style="…"`. Code vẽ lớp phủ trên bản đồ (nhãn, thanh máu, đường biên, minimap) lấy màu từ `config/theme.ts`. Đồ của người chơi dùng `--faction-*` (theo `localTeam()`), không viết cứng xanh/đỏ. Chữ trên giao diện và bản đồ tối thiểu 12 px; nút chỉ có icon phải có `data-tip`.
 
 ## Quy ước dữ liệu
 - **Team 0 = phe xanh**: người chơi ở chế độ AI, chủ phòng (host) ở PvP.

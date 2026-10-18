@@ -5,9 +5,11 @@
 ## Công nghệ & file
 | File / thư mục | Vai trò |
 |---|---|
-| [index.html](../index.html) | Khung giao diện: màn hình chọn chế độ/phòng (`#modeScreen`), canvas `#game` toàn màn hình và lớp HUD nổi (huy hiệu, tài nguyên, hàng đợi, minimap, nhật ký, nút lệnh, bảng trượt, hướng dẫn), overlay kết quả. |
+| [index.html](../index.html) | Khung giao diện: sảnh chính và phòng (`#modeScreen`), canvas `#game` toàn màn hình và lớp HUD nổi (huy hiệu, tài nguyên, hàng đợi, minimap, nhật ký, nút lệnh, bảng trượt, hướng dẫn), overlay kết quả. |
 | [src/](../src/) | Logic game, chia module theo tính năng (bảng bên dưới). Mọi file có `// @ts-nocheck`. |
-| [src/style.css](../src/style.css) | Giao diện kiểu vương quốc (xanh đậm, viền vàng đồng), bố cục HUD, responsive, lobby. |
+| [src/style.css](../src/style.css) | Giao diện huy hiệu & cờ hiệu, bố cục HUD, sảnh chính, responsive. Nạp bằng `<link>` trong `index.html` (không `import` từ JS) để có CSS ngay lần vẽ đầu. |
+| [vite.config.ts](../vite.config.ts) | `base` = `/mini-war/` khi build/preview (GitHub Pages), `/` khi dev; ảnh nạp qua `import.meta.env.BASE_URL` (`render/sprites.ts`). Plugin `mini-war-theme-tokens`: chèn design tokens từ `src/config/theme.ts` vào `<head>` thành `<style id="theme-tokens">`, cả lúc dev lẫn build. |
+| [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) | Mỗi lần push lên `main`: `pnpm install` + `pnpm build`, đăng `dist/` lên GitHub Pages: https://tidev910-svg.github.io/mini-war/ |
 | [public/assets/](../public/assets/) | Spritesheet quân, sprite pháo đài & nông trại (đường dẫn `/assets/...`). Ảnh nguồn ở [art/](../art/). |
 | [tests/](../tests/) | Unit test (vitest + jsdom) chạy chính các module game: sinh bản đồ, chiếm cờ, tầm nhìn vùng, thu nhập, hàng đợi huấn luyện. `pnpm test`. |
 | [scripts/smoke/](../scripts/smoke/) | Smoke test trên Chrome headless (cần `pnpm dev` đang chạy): `pnpm smoke` hoặc `pnpm smoke maps pvp`. Ảnh chụp ở `scripts/smoke/out/`. |
@@ -21,7 +23,7 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 | Thư mục | File | Nội dung | Tài liệu |
 |---|---|---|---|
 | — | `main.ts` | Điểm vào: import mọi module, rồi `fresh()` và chạy `loop()` | [match-flow.md](features/match-flow.md) |
-| `config/` | `map.ts`, `balance.ts`, `visuals.ts` | **Chỉ hằng số**: kích thước bản đồ & sinh vùng; bảng cân bằng (`specs`, `BUILDING_TYPES`, `MINE_TYPES`, thu nhập, chiếm cờ, AI); màu/kích thước viền, cờ, sương mù | [economy.md](features/economy.md), [units.md](features/units.md), [territory.md](features/territory.md) |
+| `config/` | `map.ts`, `balance.ts`, `theme.ts`, `visuals.ts` | **Chỉ hằng số**: kích thước bản đồ & sinh vùng; bảng cân bằng (`specs`, `BUILDING_TYPES`, `MINE_TYPES`, thu nhập, chiếm cờ, AI); design tokens của giao diện (`THEME`, `TEAM_COLORS`, `MAP_UI`, nơi duy nhất chứa màu/cỡ chữ/khoảng cách); màu/kích thước viền, cờ, sương mù (lấy màu phe và sương mù từ `theme.ts`) | [economy.md](features/economy.md), [units.md](features/units.md), [territory.md](features/territory.md) |
 | `core/` | `game.ts` | Trạng thái dùng chung: `state`, `mode`, `netRole`, `paused`, `ended`, lựa chọn, `nextId`; tiện ích `localTeam()`, `canAfford()`, `spend()`, `addLog()`, `$()` | — |
 | | `view.ts` | Canvas, khung nhìn, camera/zoom, đổi toạ độ | [controls.md](features/controls.md) |
 | | `match.ts` | `fresh()`, `update(dt)`, `finish()`, `loop()`; bộ đếm `aiTimer`, `incomeTimer`… | [match-flow.md](features/match-flow.md) |
@@ -31,7 +33,7 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 | `ai/` | `enemy.ts` | `runEnemyAI()` | [ai-opponent.md](features/ai-opponent.md) |
 | `net/` | `peer.ts`, `snapshot.ts` | Phòng PeerJS; gửi/nhận snapshot | [multiplayer.md](features/multiplayer.md) |
 | `render/` | `draw.ts`, `sprites.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts`, `minimap.ts`, `paths.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự (gồm cầu, đường đi của quân đang chọn), cuối cùng là minimap | [rendering.md](features/rendering.md), [minimap.md](features/minimap.md) |
-| `ui/` | `hud.ts`, `panels.ts`, `hotkeys.ts`, `input.ts`, `modeScreen.ts` | HUD nổi trên bản đồ; bảng Huấn luyện/Xây dựng, hướng dẫn, chân dung quân; phím tắt kiểu Đế Chế (`hotkeys.ts`); chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
+| `ui/` | `theme.ts`, `hud.ts`, `panels.ts`, `hotkeys.ts`, `input.ts`, `modeScreen.ts` | Ghi token lên `:root` thành biến CSS, `setFactionTheme()`; HUD nổi trên bản đồ; bảng Huấn luyện/Xây dựng, hướng dẫn, xác nhận rời trận, menu, tooltip, thông báo, chân dung quân; phím tắt kiểu Đế Chế (`hotkeys.ts`); chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
 
 Quy ước giữa các module (chi tiết ở [conventions.md](conventions.md)):
 - **Biến dùng chung**: mỗi biến `let` có một module sở hữu. Module khác đọc trực tiếp (ES module luôn thấy giá trị mới nhất), nhưng muốn gán thì gọi setter của module sở hữu, vd. `setPaused(true)`, `setState(packet.state)`, `setZoom(z)`, `setNextId(nextId+1)`.

@@ -2,7 +2,7 @@
 // Mouse, touch and keyboard: selection, orders, camera pan/zoom, building placement, button wiring (docs/features/controls.md).
 import { MAP_WORLD_H, MAP_WORLD_W, MAX_ZOOM, MIN_ZOOM, VIEW_H, VIEW_W, camX, camY, canvas, clampCamera, gameApp, screenPlaneToWorld, setCamX, setCamY, setZoom, syncWorldMetrics, toggleSideHud, viewOffsets, worldToCanvas, zoom } from '../core/view';
 import { H, W } from '../config/map';
-import { $, addLog, canAfford, conn, costText, draggingFarm, ended, formatAmount, localSelectedIds, localTeam, missingText, mode, netRole, paused, peer, placement, selected, selectedBuilding, selectedFlag, selectedFortress, setDraggingFarm, setPaused, setPlacement, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setSuppressNextCanvasClick, state, suppressNextCanvasClick } from '../core/game';
+import { $, addLog, canAfford, conn, costText, draggingFarm, ended, formatAmount, localSelectedIds, localTeam, missingText, mode, notifyShortfall, netRole, paused, peer, placement, selected, selectedBuilding, selectedFlag, selectedFortress, setDraggingFarm, setPaused, setPlacement, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setSuppressNextCanvasClick, state, suppressNextCanvasClick } from '../core/game';
 import { fresh } from '../core/match';
 import { BUILDING_TYPES, FARM_LEVELS, FLAG_CAPTURE_MAX_UNITS, FLAG_DECAY_DELAY_SECONDS, FOOD_REGION_FARM_BONUS, FORTRESS_GUN_COST, specs } from '../config/balance';
 import { requestBuy } from '../sim/units';
@@ -19,14 +19,14 @@ import { captureSeconds } from '../sim/territory';
 import { unitHitRadius } from '../render/units';
 import { flagHit } from '../render/flags';
 import { minimapCanvas, minimapToWorld } from '../render/minimap';
-import { closePanels } from './panels';
+import { closePanels, openPanel } from './panels';
 import { showMoveMarker } from '../render/paths';
 
 export function endPlacement(){setPlacement(null);document.querySelectorAll('.controls .placing').forEach(el=>el.classList.remove('placing'));canvas.style.cursor='';}
 export function beginPlacement(kind){
  if(ended||paused)return;
  const def=BUILDING_TYPES[kind];
- if(!canAfford(localTeam(),def.cost)){addLog(`Không đủ tài nguyên để xây ${def.name}: thiếu ${missingText(localTeam(),def.cost)}.`);return;}
+ if(!canAfford(localTeam(),def.cost)){addLog(`Không đủ tài nguyên để xây ${def.name}: thiếu ${missingText(localTeam(),def.cost)}.`);notifyShortfall(localTeam(),def.cost);return;}
  endPlacement();
  const home=state.bases.find(b=>b.team===localTeam());setPlacement({kind,x:home?.x||W/2,y:home?.y||H/2,valid:false,problem:''});
  $(def.button).classList.add('placing');
@@ -55,8 +55,12 @@ $('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBui
 $('upgradeOutpost').onclick=()=>requestAction('outpost',{regionId:selectedFlag});
 $('turret').onclick=()=>requestAction('turret');
 $('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
-$('fullscreen').onclick=async()=>{const app=$('gameApp');try{if(document.fullscreenElement){await document.exitFullscreen();}else{await app.requestFullscreen();}}catch{addLog('Trình duyệt không cho phép bật toàn màn hình.');}};
-document.addEventListener('fullscreenchange',()=>{$('fullscreen').innerHTML=document.fullscreenElement?'<i>⤢</i><span>Thoát toàn màn hình</span>':'<i>⛶</i><span>Toàn màn hình</span>';});
+// Fullscreen on the whole page (not #gameApp) so the lobby, guide and dialogs stay visible in fullscreen too.
+async function toggleFullscreen(){try{if(document.fullscreenElement){await document.exitFullscreen();}else{await document.documentElement.requestFullscreen();}}catch{addLog('Trình duyệt không cho phép bật toàn màn hình.');}}
+$('fullscreen').onclick=toggleFullscreen;
+$('lobbyFullscreen').onclick=toggleFullscreen;
+$('lobbyGuide').onclick=()=>openPanel('guide');
+document.addEventListener('fullscreenchange',()=>{const on=!!document.fullscreenElement,el=$('fullscreen');el.innerHTML=`<svg class="ico"><use href="#i-${on?'shrink':'expand'}"/></svg>`;el.dataset.tip=on?'Thoát toàn màn hình':'Toàn màn hình';});
 toggleSideHud.onclick=()=>setSidebarCollapsed(!gameApp.classList.contains('panel-collapsed'));
 window.addEventListener('resize',()=>{syncWorldMetrics();});
 $('pause').onclick=()=>{if(ended)return;if(mode==='pvp'&&netRole==='guest'){requestAction('pause',{paused:!paused});return;}setPaused(!paused);setPauseButton();addLog(paused?'Đã tạm dừng trận đấu.':'Trận đấu tiếp tục.');updateHUD();};

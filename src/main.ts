@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Entry point: loads every module (their top-level code wires the page), then starts the first match.
-import './style.css';
+// style.css is a <link> in index.html (render-blocking, so no unstyled flash); tokens are inlined by vite.config.ts.
+import './ui/theme';
 import { gameStarted, setGameStarted } from './core/game';
 import { fresh, loop } from './core/match';
 import './core/view';
