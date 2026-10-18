@@ -10,7 +10,7 @@ import { BUILDING_TYPES, MINE_TYPES } from '../config/balance';
 import { isTeamAreaExplored, teamCanSee } from '../sim/fog';
 import { fortressGunPosition } from '../map/bases';
 import { drawTerritory } from './territory';
-import { drawUnit, drawUnitHealthBar, drawUnitSelection, flushMapLabels, mapText, queueMapLabel, teamPalette, unitTargetHeight } from './units';
+import { drawFallenUnit, drawUnit, drawUnitHealthBar, drawUnitSelection, flushMapLabels, mapText, queueMapLabel, teamPalette, unitTargetHeight } from './units';
 import { MAP_LABEL_MIN_SCALE, drawBase, drawBuilding, drawMusterYard } from './buildings';
 import { DECOR_LAYER_SCALE, decorLayerCanvas, drawDecor, drawTerrainDetail, rockDecor, shoreDecor, treeDecor, waterDecor } from './terrain';
 import { drawFlag } from './flags';
@@ -87,6 +87,8 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const r of state.regions){if(!r.cp||!inView(r.cp)||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(r));}
  for(const b of state.buildings){if(!inView(b)||(b.team!==localTeam()&&!currentlyVisible(b.x,b.y)))continue;enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));}
  for(const g of state.guards){if(g.hp<=0||!currentlyVisible(g.x,g.y))continue;enqueue(g.y+9,()=>drawUprightAt(g.x,g.y,()=>{ctx.fillStyle='#24412f45';ctx.beginPath();ctx.ellipse(g.x+2,g.y+8,14,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d4ba9';ctx.beginPath();ctx.arc(g.x,g.y,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#eed8ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#f9ecff';ctx.beginPath();ctx.arc(g.x-3,g.y-2,2.2,0,Math.PI*2);ctx.arc(g.x+3,g.y-2,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#26152f';ctx.fillRect(g.x-11,g.y-16,22,4);ctx.fillStyle='#ef5350';ctx.fillRect(g.x-10,g.y-15,20*Math.max(0,g.hp/g.max),2);}));}
+ // Fallen units lie in the depth-sorted scene (enemy ones only where the local side sees).
+ for(const e of state.effects)if(e.kind==='fall'&&inView(e)&&(e.team===localTeam()||currentlyVisible(e.x,e.y)))enqueue(e.y,()=>drawFallenUnit(e));
  for(const u of state.units){if(!inView(u)||(u.team!==localTeam()&&!currentlyVisible(u.x,u.y)))continue;enqueue(u.y+unitTargetHeight(u.type)*.48,()=>drawUnit(u));}
  sceneActors.sort((a,b)=>a.y-b.y);for(const actor of sceneActors)actor.draw();
  // Labels and building health bars queued during the scene, above every sprite.
@@ -97,7 +99,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const u of state.units)if((selected===u||u.selected)&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
  // Projectiles and effects stay on their own foreground layer.
  for(const b of state.bullets){if(!inView(b))continue;drawUprightAt(b.x,b.y,()=>{ctx.strokeStyle=b.team===0?'#a8e2ff':'#ffadb0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-5,b.y+3);ctx.stroke();});}
- for(const e of state.effects){if(!inView(e))continue;drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
+ for(const e of state.effects){if(e.kind||!inView(e))continue;drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
  drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');

@@ -44,6 +44,8 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-18 (8 hướng + đánh nhau):** quân dựng bằng con rối 3-D chiếu theo góc quay: 8 hướng (5 góc dựng + 3 lật), đi 6 khung, tấn công 4 khung (lấy đà / ra đòn / theo đà / thu về) riêng cho kiếm, dao, giáo, cung, thương; trúng đòn chớp đỏ; chết thì ngã rồi mờ; hướng 8 cung có độ trễ.
+
 **2026-10-18 (quân vẽ bằng code, 4 hướng):** cả 5 loại quân vẽ lại bằng vector (`render/unitArt.ts`): nhìn thẳng / quay lưng / nghiêng (trái = lật), đứng yên, đi 4 khung, động tác tấn công; màu phe từ theme; khung lưu đệm; chân dung thẻ Huấn luyện dùng hình mới; hướng có độ trễ chống lật.
 
 **2026-10-18 (tông màu "sắt & máu"):** thay nền xanh navy bằng da thuộc nâu sẫm / than lò rèn, viền đồng thau, chữ giấy da, nhấn đỏ máu; sảnh có quầng lửa than; màu hai phe giữ xanh/đỏ.

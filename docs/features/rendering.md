@@ -31,30 +31,41 @@ Cầu gỗ `drawBridges()` vẽ ngay trước lớp lãnh thổ; đường đi c
 
 Canvas `#game` phủ toàn màn hình; `syncWorldMetrics()` giới hạn độ phân giải nền ở `MAX_CANVAS_PIXELS` = 2,1 triệu điểm ảnh (CSS phóng lên).
 
-**Quân (vẽ bằng code, từ 2026-10-18)** — [src/render/unitArt.ts](../../src/render/unitArt.ts), thay cho các spritesheet `public/assets/units/*` (không còn được tải):
-- **Góc nhìn theo `u.facing`:**
-  - `down`: nhìn thẳng, thấy mặt; tay phải cầm vũ khí ở bên trái màn hình, khiên/cung bên phải.
-  - `up`: quay lưng, thấy mặt sau khiên, áo choàng ngắn, ống tên.
-  - `right`: nghiêng sang phải.
-  - `left`: bản lật của góc nghiêng, lật lúc vẽ (`ctx.scale(-1, 1)`), không dựng khung riêng.
-- **Động tác** (`unitArtPose(u)`):
-  - `walk`: 4 khung khi `u.moving`, tốc độ `UNIT_ANIM.walkFps` = 7 (kỵ binh `cavalryWalkFps` = 8), chân bước, tay vung, thân nhún.
-  - `idle`: 4 khung thở nhẹ, `UNIT_ANIM.idleFps` = 1,25.
-  - `strike`: 1 khung trong `UNIT_ANIM.strikeSeconds` = 0,22 giây sau mỗi đòn, ước từ `u.attackTimer` và `specs[type].cooldown`. Lính và trinh sát giơ kiếm/dao, lính giáo và kỵ binh đâm ngang, cung thủ kéo dây cung.
+**Quân (vẽ bằng code, 8 hướng)** — [src/render/unitArt.ts](../../src/render/unitArt.ts). Các spritesheet `public/assets/units/*` không còn được tải.
+- **Con rối 3-D:**
+  - Khớp và trang bị đặt trong không gian quanh quân: R sang phải quân, F ra trước, H lên trên, chân ở 0.
+  - Chiếu theo góc quay θ (0 = nhìn thẳng vào người xem, 90 = quay phải, 180 = quay lưng): x = −R·cosθ + F·sinθ; độ sâu = R·sinθ + F·cosθ; y = −H + độ sâu·`K` (`K` = 0,3, độ nghiêng mặt đất).
+  - Các phần vẽ từ xa đến gần. Khiên co theo góc nhìn: mặt trước màu phe, mặt sau gỗ.
+- **8 hướng:**
+  - `u.facing` ∈ `down`, `down-right`, `right`, `up-right`, `up`, `up-left`, `left`, `down-left`.
+  - Chỉ dựng 5 góc quay 0/45/90/135/180°. Ba hướng bên trái lật bản bên phải lúc vẽ (`DIR_VIEW`).
+- **Động tác** (`POSE_FRAMES`, `unitArtPose(u)`; thời gian trong `UNIT_ANIM`, `config/visuals.ts`). Thứ tự ưu tiên:
+  1. **Tấn công** (khi `u.engaged` và đứng yên), 4 khung:
+     - lấy đà trong `windupSeconds` = 0,16 giây cuối trước đòn (`attackTimer`);
+     - ra đòn, theo đà, thu về, mỗi khung `attackFrameSeconds` = 0,1 giây sau đòn.
+     - Kiếm chém từ trên xuống, dao đâm, giáo và thương kỵ binh đâm ngang (hơi chếch lên để vẫn thấy khi đâm thẳng về phía người xem), cung thủ kéo dây rồi thả.
+  2. **Trúng đòn**: giật người ra sau, chớp đỏ (`tint` `'hit'`) trong `hurtSeconds` = 0,18 giây kể từ `u.hitAt`.
+  3. **Đi**: 6 khung, `walkFps` = 8 (kỵ binh 9). Chân bước, tay vung, thân nhún; ngựa phi 4 chân lệch pha.
+  4. **Đứng yên**: 4 khung thở, `idleFps` = 1,25.
+- **Chết**: hiệu ứng `{kind: 'fall'}` trong `state.effects`, vẽ trong cảnh theo chiều sâu bằng `drawFallenUnit()`. Quân chớp đỏ, ngã ngửa trong một phần ba đầu, rồi mờ dần trong `fallSeconds` = 1,4 giây. Quân địch chết chỉ hiện ở chỗ phe mình đang nhìn thấy.
 - **Trang bị:**
 
 | Quân | Trang bị |
 |---|---|
 | Lính | Mũ sắt có lông nhỏ, kiếm, khiên tròn màu phe viền vàng |
 | Lính giáo | Mũ trụ có khe nhìn, chùm lông lớn, giáo dài, khiên diều màu phe |
-| Cung thủ | Mũ trùm màu phe đậm, cung, ống tên sau lưng |
+| Cung thủ | Mũ trùm màu phe đậm, cung (nghiêng nhẹ để không thành một đường khi nhìn thẳng), ống tên sau lưng |
 | Trinh sát | Áo choàng có mũ trùm màu rêu, khăn quàng màu phe, dao găm |
-| Kỵ binh | Ngựa nâu phủ vải màu phe viền vàng, yên; người cưỡi mũ trụ, thương, khiên diều. Ngựa phi 4 chân lệch pha; nhìn thẳng thấy đầu ngựa, quay lưng thấy mông và đuôi |
+| Kỵ binh | Ngựa phủ vải màu phe viền vàng, yên; người cưỡi mũ trụ, thương có cờ đuôi nheo màu phe, khiên diều |
 
-- **Màu:** màu phe lấy từ `TEAM_COLORS` (`config/theme.ts`); màu vật liệu (da, thép, gỗ, ngựa, mực viền) lấy từ `UNIT_ART` trong `config/visuals.ts`.
-- **Bộ đệm:** mỗi khung (loại × phe × góc nhìn × động tác × khung) chỉ vẽ một lần vào canvas nhỏ, siêu lấy mẫu `SS` = 1,6 (`unitArtFrame()`), lần đầu cần thì mới dựng.
-- **Kích thước:** `drawUnit()` co khung theo `unitTargetHeight(type)` / `FIGURE_H[type]` (chiều cao chân → đỉnh mũ trong đơn vị thiết kế). Thanh máu quân (`drawUnitHealthBar()`) nằm ngay trên mũ, rộng 30 (kỵ binh 46).
-- **Chân dung** trên thẻ Huấn luyện (`drawPortraits()` trong `ui/panels.ts`) là khung `down` / `idle` của phe mình.
+- **Màu:** màu phe từ `TEAM_COLORS` (`config/theme.ts`); màu vật liệu từ `UNIT_ART` (`config/visuals.ts`).
+- **Bộ đệm:**
+  - Mỗi khung (loại × phe × góc quay × động tác × khung × tint) chỉ vẽ một lần vào canvas, 1 điểm ảnh cho mỗi đơn vị thiết kế (`SS` = 1), lần đầu cần thì mới dựng (`unitArtFrame()`).
+  - Dựng đủ mọi khung của cả hai phe: 800 khung, khoảng 34 MB, khoảng 0,2 giây (chia nhỏ theo lúc cần).
+- **Kích thước:**
+  - `drawUnit()` co theo `unitTargetHeight(type)` / `FIGURE_H[type]`.
+  - Thanh máu quân nằm ngay trên mũ, rộng 30 (kỵ binh 46).
+- **Chân dung** thẻ Huấn luyện: khung `idle` quay `PORTRAIT_YAW` = 25° (`ui/panels.ts`).
 
 **Sprite công trình:**
 | Đối tượng | File | Ghi chú |

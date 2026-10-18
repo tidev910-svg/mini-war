@@ -36,12 +36,13 @@ export function updateUnitCards() {
   }
 }
 
-// Portrait = the unit's code-drawn idle frame facing the viewer, in the local side's colours, framed on head and torso.
+// Portrait = the unit's code-drawn idle frame turned PORTRAIT_YAW degrees towards the right, in the local side's colours.
+const PORTRAIT_YAW = 25;
 export function drawPortraits() {
   const team = localTeam();
   for (const el of document.querySelectorAll('canvas.portrait')) {
     const type = el.dataset.unit; if (!type) continue;
-    const f = unitArtFrame(type, team, 'down', 'idle', 0), k = el.height * (type === 'cavalry' ? .95 : 1.25) / f.figureH;
+    const f = unitArtFrame(type, team, PORTRAIT_YAW, 'idle', 0), k = el.height * (type === 'cavalry' ? .95 : 1.25) / f.figureH;
     const pctx = el.getContext('2d'); pctx.clearRect(0, 0, el.width, el.height);
     pctx.drawImage(f.canvas, el.width / 2 - f.ax * k, el.height * (type === 'cavalry' ? 1.02 : 1.12) - f.ay * k, f.w * k, f.h * k);
   }

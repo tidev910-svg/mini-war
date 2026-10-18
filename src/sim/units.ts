@@ -9,13 +9,14 @@ import { baseDir, musterYard } from '../map/bases';
 import { updateHUD } from '../ui/hud';
 
 // Dominant axis wins so diagonal movement still picks one of the four painted directions.
-// Facing for drawing. With the previous facing, the other axis must dominate by FACING_HYSTERESIS before the view turns,
-// so a unit walking diagonally does not flip between side and front views every frame.
-const FACING_HYSTERESIS=1.35;
+// Facing for drawing, one of eight 45° sectors (screen y grows downwards). With a previous facing, the heading must leave
+// that sector by FACING_HYSTERESIS radians before the unit turns, so walking along a sector edge does not flicker.
+export const FACINGS=['right','down-right','down','down-left','left','up-left','up','up-right'];
+const FACING_HYSTERESIS=Math.PI/18;
 export function facingFrom(dx,dy,prev){
- const ax=Math.abs(dx),ay=Math.abs(dy);
- const horizontal=prev==='left'||prev==='right'?ax*FACING_HYSTERESIS>=ay:prev==='up'||prev==='down'?ax>=ay*FACING_HYSTERESIS:ax>ay;
- return horizontal?(dx<0?'left':'right'):(dy<0?'up':'down');
+ const a=Math.atan2(dy,dx),step=Math.PI/4,p=FACINGS.indexOf(prev);
+ if(p>=0){let d=Math.abs(a-p*step)%(Math.PI*2);if(d>Math.PI)d=Math.PI*2-d;if(d<=step/2+FACING_HYSTERESIS)return prev;}
+ return FACINGS[((Math.round(a/step)%8)+8)%8];
 }
 export function unitVisionRadius(type){switch(normalizeUnitType(type)){case 'spearman':return 150;case 'archer':return 130;case 'scout':return SCOUT_VISION;default:return 105;}}
 export function spawn(team,type,x,y,queueIfBlocked=true,pendingOrder='hold'){

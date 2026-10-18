@@ -34,5 +34,7 @@ export const UNIT_ART={
  cloak:'#56603a',cloakDark:'#373d24',gold:'#d9a441',string:'#efe6cf',
  horse:'#8a5a36',horseDark:'#5c3b23',horseLight:'#ab7a4d',mane:'#2d2019',hoof:'#2a211c',
 };
-// Walk / idle animation speed (frames per second of the 4-frame cycles) and how long the strike pose shows after an attack.
-export const UNIT_ANIM={walkFps:7,cavalryWalkFps:8,idleFps:1.25,strikeSeconds:.22};
+// Unit animation timing: walk / idle frames per second (6-frame walk, 4-frame idle); attack = windup in the last
+// windupSeconds before a blow, then strike, follow-through and recover frames of attackFrameSeconds each; the hit flash
+// lasts hurtSeconds; a fallen unit stays fallSeconds (falls, then fades).
+export const UNIT_ANIM={walkFps:8,cavalryWalkFps:9,idleFps:1.25,windupSeconds:.16,attackFrameSeconds:.1,hurtSeconds:.18,fallSeconds:1.4};

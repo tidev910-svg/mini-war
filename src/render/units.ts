@@ -3,9 +3,9 @@
 import { ctx, drawUprightAt, renderView } from '../core/view';
 import { MAP_UI, TEAM_COLORS, THEME, hexA, healthColor } from '../config/theme';
 import { TILE_SIZE } from '../config/map';
-import { normalizeUnitType } from '../core/game';
+import { gameTime, normalizeUnitType } from '../core/game';
 import { specs } from '../config/balance';
-import { unitArtFrame } from './unitArt';
+import { DIR_VIEW, POSE_FRAMES, unitArtFrame } from './unitArt';
 import { UNIT_ANIM } from '../config/visuals';
 
 export function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
@@ -51,19 +51,33 @@ export function unitTargetHeight(type){
  return TILE_SIZE*tileHeight;
 }
 export function unitHitRadius(u){return Math.max((specs[u.type]?.r||8)*2+9,unitTargetHeight(u.type)*.65);}
-// Code-drawn soldier (render/unitArt.ts): the view follows u.facing ('left' is the mirrored side view), the pose the walk
-// clock (u.walk), u.moving and the attack timer (strike pose for UNIT_ANIM.strikeSeconds after each attack).
+// Code-drawn soldier (render/unitArt.ts) in eight directions: u.facing picks the baked yaw (left-facing = mirrored).
+// Pose priority: attack (windup just before a blow, then strike / follow-through / recover after it), hit flash, walk, idle.
 export function unitArtPose(u){
- const cd=specs[u.type]?.cooldown||1,since=cd-(u.attackTimer??-1);
- if(u.target&&since>=0&&since<UNIT_ANIM.strikeSeconds)return {pose:'strike',frame:0};
- if(u.moving)return {pose:'walk',frame:Math.floor((u.walk||0)*(u.type==='cavalry'?UNIT_ANIM.cavalryWalkFps:UNIT_ANIM.walkFps))%4};
- return {pose:'idle',frame:Math.floor((u.walk||0)*UNIT_ANIM.idleFps)%4};
+ const A=UNIT_ANIM,cd=specs[u.type]?.cooldown||1,since=cd-(u.attackTimer??-1);
+ if(u.engaged&&!u.moving){
+  if(since>=0&&since<A.attackFrameSeconds*3)return {pose:'attack',frame:1+Math.floor(since/A.attackFrameSeconds)};
+  if(u.attackTimer>0&&u.attackTimer<=A.windupSeconds)return {pose:'attack',frame:0};
+ }
+ if(u.hitAt!=null&&gameTime-u.hitAt>=0&&gameTime-u.hitAt<A.hurtSeconds)return {pose:'hurt',frame:0,tint:'hit'};
+ if(u.moving)return {pose:'walk',frame:Math.floor((u.walk||0)*(u.type==='cavalry'?A.cavalryWalkFps:A.walkFps))%POSE_FRAMES.walk};
+ return {pose:'idle',frame:Math.floor((u.walk||0)*A.idleFps)%POSE_FRAMES.idle};
+}
+function drawArt(x,y,type,team,facing,pose,frame,tint,extra){
+ const [yaw,mirror]=DIR_VIEW[facing]||DIR_VIEW.down,f=unitArtFrame(type,team,yaw,pose,frame,tint),k=unitTargetHeight(type)/f.figureH;
+ ctx.save();ctx.translate(x,y);if(extra)extra(mirror);if(mirror)ctx.scale(-1,1);
+ ctx.drawImage(f.canvas,-f.ax*k,-f.ay*k,f.w*k,f.h*k);
+ ctx.restore();
 }
 export function drawUnit(u){return drawUprightAt(u.x,u.y,()=>{
- const type=normalizeUnitType(u.type),dir=u.facing||'down',view=dir==='left'||dir==='right'?'side':dir;
- const {pose,frame}=unitArtPose(u),f=unitArtFrame(type,u.team,view,pose,frame),k=unitTargetHeight(type)/f.figureH;
- ctx.save();ctx.translate(u.x,u.y);if(dir==='left')ctx.scale(-1,1);
- ctx.drawImage(f.canvas,-f.ax*k,-f.ay*k,f.w*k,f.h*k);
+ const {pose,frame,tint}=unitArtPose(u);
+ drawArt(u.x,u.y,normalizeUnitType(u.type),u.team,u.facing||'down',pose,frame,tint||'');
+});}
+// A unit that just died (effect kind 'fall'): flashes, topples backwards over the first third, then fades out.
+export function drawFallenUnit(e){return drawUprightAt(e.x,e.y,()=>{
+ const p=1-e.life/e.max,turn=Math.min(1,p/.35),alpha=p<.6?1:Math.max(0,1-(p-.6)/.4);
+ ctx.save();ctx.globalAlpha=alpha;
+ drawArt(e.x,e.y,normalizeUnitType(e.type),e.team,e.facing||'down','hurt',0,p<.12?'hit':'',mirror=>{const side=(DIR_VIEW[e.facing]||DIR_VIEW.down)[0]===90?-1:1;ctx.rotate(turn*Math.PI/2*side*(mirror?-1:1));});
  ctx.restore();
 });}
 // Health bar just above the helmet, wider for cavalry.

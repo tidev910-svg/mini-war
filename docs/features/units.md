@@ -44,7 +44,11 @@ Lệnh dừng và loại bỏ (phím S / Delete, [controls.md](controls.md)): `s
 
 Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('hold'|'move'|'attack'|'explore'), target, dest, selected, walk, moving, facing?, path?, goal?, repath?, moveGroup?}` (đường đi: [pathfinding.md](pathfinding.md)).
 
-Hướng quay `facing` (`'down'|'left'|'up'|'right'`, mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy, prev)`: trục lớn hơn thắng, nhưng khi đã có hướng thì trục kia phải lớn hơn `FACING_HYSTERESIS` = 1,35 lần mới đổi, để quân đi chéo không lật qua lật lại. Mọi loại quân vẽ theo hướng này ([rendering.md](rendering.md)). Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
+Hướng quay `facing` (8 hướng: `down`, `down-right`, `right`, `up-right`, `up`, `up-left`, `left`, `down-left`; mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy, prev)`. Hướng là cung 45° gần nhất; khi đã có hướng, phải lệch khỏi cung cũ thêm `FACING_HYSTERESIS` = 10° mới đổi, để quân đi dọc mép hai cung không lật qua lật lại. Mọi loại quân vẽ theo hướng này ([rendering.md](rendering.md)).
+
+Trường chỉ để hiển thị, cũng gửi trong snapshot:
+- `engaged`: đang trong tầm đánh mục tiêu lượt này; dùng cho tư thế tấn công.
+- `hitAt`: `gameTime` lúc bị đánh trúng; dùng cho chớp đỏ. Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
 
 ## Code liên quan
 - [src/config/balance.ts](../../src/config/balance.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/map/bases.ts](../../src/map/bases.ts), [src/core/game.ts](../../src/core/game.ts): `specs`, `TRAIN_QUEUE_MAX`, `trainQueueOf()`, `buyProblem()`, `buy()`, `requestBuy()`, `queueTraining()`, `updateTraining()`, `updateTrainQueueHUD()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
