@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Trees, rocks, grass and terrain detail (docs/features/rendering.md).
-import { ctx, drawUprightAt } from '../core/view';
+import { ctx, drawUprightAt, renderView } from '../core/view';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
 import { state } from '../core/game';
@@ -234,9 +234,14 @@ export function decorLayerCanvas(){
 export function drawGrassPatch(x,y,rx,ry,color){
  ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();
 }
-export function drawTerrainDetail(){
- const cols=MAP_TILES,rows=MAP_TILES;
- const microDetails=[];
+// Ground speckles (grass tufts, pebbles, sand grains): ~8,000 items, each a coloured ellipse plus a small highlight.
+// The terrain never changes during a session, so they are generated once and bucketed by tile row; each frame only the
+// rows and columns inside the camera are drawn, one path per colour (a fill per colour instead of one per ellipse).
+// Zoomed out below DETAIL_LAYER_SCALE the speckles are a pixel or two wide, so a pre-rendered layer is blitted instead.
+export const DETAIL_LAYER_SCALE=.3,DETAIL_LAYER_RES=.25;
+let detailRows=null,detailLayer=null;
+function buildTerrainDetail(){
+ const cols=MAP_TILES,rows=MAP_TILES;detailRows=Array.from({length:rows},()=>[]);
  for(let i=0;i<8200;i++){
   const seed=i*97.3+19.7;
   const x=(seed % (cols*3)) * (TILE_SIZE * 0.42) + ((i % 7) * 8);
@@ -246,23 +251,43 @@ export function drawTerrainDetail(){
   if(tileType===2)continue;
   const worldX=(tx+.5)*TILE_SIZE + (i%5-2)*2.2;
   const worldY=(ty+.5)*TILE_SIZE + (i%7-3)*2.7;
+  let d;
   if(tileType===1){
    const patchColors=['#8bc96b','#a5d67d','#6ea75d','#788f5b'];
-   microDetails.push({x:worldX,y:worldY,rx:5+(i%4)*1.6,ry:3.1+(i%3)*1.1,color:patchColors[i%patchColors.length]+'99',shadow:'#dfeeb8'+'6f',shadowX:2.2,shadowY:-2.1,shadowRx:3.2,shadowRy:1.5,angle:(i%9)*0.35});
+   d={rx:5+(i%4)*1.6,ry:3.1+(i%3)*1.1,color:patchColors[i%patchColors.length]+'99',shadow:'#dfeeb8'+'6f',shadowX:2.2,shadowY:-2.1,shadowRx:3.2,shadowRy:1.5,angle:(i%9)*0.35};
   }else if(tileType===3){
    const stoneColors=['#928873','#7b715f','#b3a28c','#a08974'];
-   microDetails.push({x:worldX,y:worldY,rx:4.8+(i%3)*1.5,ry:3.3+(i%2)*1.2,color:stoneColors[i%stoneColors.length]+'8a',shadow:'#d9d0be'+'55',shadowX:-2.4,shadowY:1.8,shadowRx:2.8,shadowRy:1.7,angle:(i%7)*0.24});
+   d={rx:4.8+(i%3)*1.5,ry:3.3+(i%2)*1.2,color:stoneColors[i%stoneColors.length]+'8a',shadow:'#d9d0be'+'55',shadowX:-2.4,shadowY:1.8,shadowRx:2.8,shadowRy:1.7,angle:(i%7)*0.24};
   }else if(tileType===4){
-   microDetails.push({x:worldX,y:worldY,rx:4.4,ry:2.8,color:'#f3d45d'+'7d',shadow:'#e9c867'+'88',shadowX:2.6,shadowY:-1.8,shadowRx:2.7,shadowRy:1.8,angle:(i%5)*0.33});
+   d={rx:4.4,ry:2.8,color:'#f3d45d'+'7d',shadow:'#e9c867'+'88',shadowX:2.6,shadowY:-1.8,shadowRx:2.7,shadowRy:1.8,angle:(i%5)*0.33};
   }else{
    const verdant=['#8ccf72','#79b95d','#9cd67d','#a9d86d'];
-   microDetails.push({x:worldX,y:worldY,rx:5.6+(i%4)*0.9,ry:3.1+(i%3)*0.9,color:verdant[i%verdant.length]+'70',shadow:'#dfeeb8'+'55',shadowX:1.8,shadowY:-1.6,shadowRx:2.9,shadowRy:1.2,angle:(i%9)*0.27});
+   d={rx:5.6+(i%4)*0.9,ry:3.1+(i%3)*0.9,color:verdant[i%verdant.length]+'70',shadow:'#dfeeb8'+'55',shadowX:1.8,shadowY:-1.6,shadowRx:2.9,shadowRy:1.2,angle:(i%9)*0.27};
   }
+  d.x=worldX;d.y=worldY;detailRows[ty].push(d);
  }
- for(const item of microDetails){
-  ctx.fillStyle=item.color;
-  ctx.beginPath();ctx.ellipse(item.x,item.y,item.rx,item.ry,item.angle,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=item.shadow;
-  ctx.beginPath();ctx.ellipse(item.x+item.shadowX,item.y+item.shadowY,item.shadowRx,item.shadowRy,item.angle*0.8,0,Math.PI*2);ctx.fill();
+}
+// Paints the speckles of tile rows ty0..ty1 whose x lies in [x0, x1] into context c: one path and one fill per colour,
+// base speckles first, then their highlights on top.
+function paintTerrainDetail(c,ty0,ty1,x0,x1){
+ const base=new Map(),high=new Map(),push=(m,k,d)=>{const l=m.get(k);if(l)l.push(d);else m.set(k,[d]);};
+ for(let ty=ty0;ty<=ty1;ty++)for(const d of detailRows[ty])if(d.x>=x0&&d.x<=x1){push(base,d.color,d);push(high,d.shadow,d);}
+ for(const [color,list] of base){c.fillStyle=color;c.beginPath();for(const d of list){c.moveTo(d.x+d.rx,d.y);c.ellipse(d.x,d.y,d.rx,d.ry,d.angle,0,Math.PI*2);}c.fill();}
+ for(const [color,list] of high){
+  c.fillStyle=color;c.beginPath();
+  for(const d of list){const sx=d.x+d.shadowX,sy=d.y+d.shadowY;c.moveTo(sx+d.shadowRx,sy);c.ellipse(sx,sy,d.shadowRx,d.shadowRy,d.angle*0.8,0,Math.PI*2);}
+  c.fill();
  }
+}
+function terrainDetailLayer(){
+ if(detailLayer)return detailLayer;
+ detailLayer=document.createElement('canvas');detailLayer.width=Math.round(W*DETAIL_LAYER_RES);detailLayer.height=Math.round(H*DETAIL_LAYER_RES);
+ const c=detailLayer.getContext('2d');c.scale(DETAIL_LAYER_RES,DETAIL_LAYER_RES);paintTerrainDetail(c,0,MAP_TILES-1,-Infinity,Infinity);
+ return detailLayer;
+}
+export function drawTerrainDetail(viewLeft=0,viewTop=0,viewRight=W,viewBottom=H){
+ if(!detailRows)buildTerrainDetail();
+ if((renderView.scale||1)<DETAIL_LAYER_SCALE){ctx.drawImage(terrainDetailLayer(),0,0,W,H);return;}
+ const pad=12,ty0=Math.max(0,Math.floor((viewTop-pad)/TILE_SIZE)),ty1=Math.min(MAP_TILES-1,Math.floor((viewBottom+pad)/TILE_SIZE));
+ paintTerrainDetail(ctx,ty0,ty1,viewLeft-pad,viewRight+pad);
 }

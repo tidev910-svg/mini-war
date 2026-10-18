@@ -42,4 +42,3 @@ export const FOOD_REGION_FARM_BONUS=.25;
 // Every standing fortress pays this much per minute from the first second, with or without territory (no growth over time).
 export const FORTRESS_INCOME_PER_MINUTE={food:25,wood:20,stone:8,gold:8};
 export const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:25/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:30/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:20/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:20/60,crystal:'#ffca5e'}};
-export const RICH_MINE_MULTIPLIER=1.5;

@@ -3,7 +3,7 @@
 import { H, HOME_TERRITORY_TILES, MAP_TILES, MIN_LAND_PATCH_TILES, REGION_COUNT, REGION_MIN_BASE_TILES, REGION_SEED_SPACING_TILES, REGION_TYPES, TILE_SIZE, W, forestRegions, goldRegions, rockRegions } from '../config/map';
 import { landPatchSizes, terrainType, walkDistances } from './terrain';
 import { state } from '../core/game';
-import { FLAG_ENEMY_BASE_MIN_TILES, MINE_TYPES, RESOURCE_NAMES, RICH_MINE_MULTIPLIER } from '../config/balance';
+import { FLAG_ENEMY_BASE_MIN_TILES, MINE_TYPES, RESOURCE_NAMES } from '../config/balance';
 import { baseDir, stateBaseTooClose } from './bases';
 
 export let regionMap=null,regionMapKey='',regionEdges=[],regionTintKey='';
@@ -90,8 +90,8 @@ export function generateRegions(blueBase,redBase){
  for(const r of neutral)if(!r.resource)r.resource=REGION_TYPES[Math.floor(Math.random()*REGION_TYPES.length)];
  for(const r of regions){
   const spot=spots.get(r.id);if(!spot||!r.resource)continue;
-  const rich=r.home===null&&Math.abs(r.sgx/MAP_TILES-.5)<.15&&Math.abs(r.sgy/MAP_TILES-.5)<.15;
-  mines.push({...spot,resource:r.resource,rich,regionId:r.id,income:MINE_TYPES[r.resource].perSecond*(rich?RICH_MINE_MULTIPLIER:1),owner:r.owner});
+  // Every region of a type yields the same fixed rate (25 food / 30 wood / 20 stone / 20 gold per minute), wherever it lies.
+  mines.push({...spot,resource:r.resource,regionId:r.id,income:MINE_TYPES[r.resource].perSecond,owner:r.owner});
  }
  // Fairness: for every type, compare each side's walking distance to its nearest flag of that type.
  let diff=0,total=0;

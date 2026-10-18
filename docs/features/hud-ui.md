@@ -3,7 +3,7 @@
 > Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
-Giao diện theo phong cách **huy hiệu & cờ hiệu**: bản đồ phủ toàn màn hình, các bảng nổi có hình khiên và dải cờ đuôi én. **Màu phe** là điểm nhấn chính. Vàng đồng chỉ dùng làm viền cho thành phần quan trọng. Hình khối vẽ bằng CSS/SVG (bộ icon đơn sắc nét viền trong `index.html`), không thêm ảnh bitmap. Toàn bộ chữ tiếng Việt.
+Giao diện theo phong cách **huy hiệu & cờ hiệu**, tông màu "sắt & máu": bản đồ phủ toàn màn hình, các bảng nổi có hình khiên và dải cờ đuôi én. **Màu phe** là điểm nhấn chính. Vàng đồng chỉ dùng làm viền cho thành phần quan trọng. Hình khối vẽ bằng CSS/SVG (bộ icon đơn sắc nét viền trong `index.html`), không thêm ảnh bitmap. Toàn bộ chữ tiếng Việt.
 
 ```
 [⛨] QUÂN XANH▶ ⏱03:12 (Chơi với AI)      ▼🌾 ▼🪵 ▼🪨 ▼🪙 ▼🚩   ← panel người chơi · dải cờ tài nguyên
@@ -23,14 +23,17 @@ Giao diện theo phong cách **huy hiệu & cờ hiệu**: bản đồ phủ to�
 - `src/style.css` không chứa mã màu nào, chỉ dùng `var(--…)`.
 - Canvas (nhãn, thanh máu, đường biên, sương mù, minimap) đọc cùng giá trị từ `config/theme.ts`.
 
+Bảng màu **"sắt & máu"** (đổi ngày 2026-10-18, thay cho tông xanh navy): nền da thuộc nâu sẫm và màu than lò rèn, kim loại đồng thau, chữ màu giấy da, điểm nhấn đỏ máu. Màu hai phe vẫn là xanh/đỏ để phân biệt quân.
+
 | Token | Giá trị | Dùng cho |
 |---|---|---|
-| `--ui-bg-panel` / `-glass` / `-soft` | #16213A / 92% / #1E2C4A | Panel chính, panel nổi, ô tài nguyên |
-| `--ui-fog` | #0A0E16 | Sương mù và nền ngoài bản đồ, tối hơn mọi panel |
+| `--ui-bg-panel` / `-glass` / `-soft` / `-deep` | #241A15 / 93% / #35271F / #17100C | Panel chính, panel nổi, ô tài nguyên, ô nhập |
+| `--ui-fog` | #0E0A08 | Sương mù và nền ngoài bản đồ, tối hơn mọi panel |
+| `--ui-ember` | #5C1D12 | Quầng lửa than đỏ trên nền sảnh chính |
 | `--faction-*` | Xanh #2F5DB8/#6F95E0/#1A3570 · Đỏ #B03030/#E07070/#6E1818 | Khiên, dải cờ, nền nút |
-| `--gold` / `--gold-muted` | #D8B45A / #8A7445 | Viền cấp 1–2 / viền cấp 3 |
-| `--text-main` / `--text-sub` | #FFF5DC / #C8D4F0 | Chữ chính / chữ phụ (tương phản trên `--ui-bg-panel` ≈ 10:1) |
-| `--danger` / `--success` / `--resource` | #D94A3A / #4FB36A / #F2C94C | Tấn công, thiếu, máu thấp / hoàn thành / tài nguyên |
+| `--gold` / `--gold-muted` | #D29A45 / #8A6236 | Viền đồng thau cấp 1–2 / viền cấp 3 |
+| `--text-main` / `--text-sub` | #F6EAD6 / #D8C5AA | Chữ chính / chữ phụ (tương phản trên `--ui-bg-panel` ≈ 14:1 / 10:1) |
+| `--danger` / `--success` / `--resource` / `--warning` | #C9372A / #5FA84E / #E9B949 / #E0882E | Tấn công, thiếu, máu thấp / hoàn thành / tài nguyên / cảnh báo |
 
 **Phân cấp viền:**
 - **Cấp 1:** 3 nút khiên lệnh chính, viền `--gold` 3px.
@@ -46,7 +49,7 @@ Giao diện theo phong cách **huy hiệu & cờ hiệu**: bản đồ phủ to�
 | Vùng | Phần tử | Nội dung |
 |---|---|---|
 | Panel người chơi (trên trái, cấp 2) | `#crest`, `#sideName`, `#time`, `#modeStatus`, `#unitCount`, `#phaseHint`, `#unitBreakdown` | Khiên màu phe có icon lâu đài (class `red` cho phe đỏ); dải cờ tên phe "QUÂN XANH/ĐỎ"; đồng hồ `mm:ss`; thẻ nhỏ chế độ ("Chơi với AI · Offline", "Solo với bạn bè · Chủ phòng/Khách"); tổng quân gồm hàng chờ; giai đoạn ("phát triển kinh tế" < 5 phút, "mở rộng" < 10 phút, "giao tranh"); hàng icon + số cho từng loại quân (`armyRow()`: trinh sát 👁, lính 🗡, cung 🏹, giáo, kỵ binh, quân chờ ⏳), mỗi icon có tooltip |
-| Dải cờ tài nguyên (trên phải, cấp 3) | `#resFood` `#resWood` `#resStone` `#resGold` (`data-res`), `#food`… `#foodRate`…; `#resTerritory` > `#territory`, `#territoryIncome` | Mỗi ô là dải cờ treo có đáy đuôi én. Chỉ hiện số lượng và tốc độ ròng "+N/phút" (lúa: sản xuất − nuôi quân; class `supply-warn` khi âm, `supply-bad` khi thiếu: "Thiếu lúa · Ns" / "Thiếu tiếp tế"). Chi tiết thu/chi nằm trong tooltip. Icon khác nhau cả về hình: bông lúa, khúc gỗ, tảng đá góc cạnh, thỏi vàng, lá cờ. Ô cờ: "N vùng" + "N mỏ đang khai thác" / "Chưa có mỏ"; tooltip giải thích công dụng của vùng/mỏ và thu nhập theo loại |
+| Dải cờ tài nguyên (trên phải, cấp 3) | `#resFood` `#resWood` `#resStone` `#resGold` (`data-res`), `#food`… `#foodRate`…; `#resTerritory` > `#territory`, `#territoryIncome` | Mỗi ô là dải cờ treo có đáy đuôi én. Hiện số lượng và tốc độ "+N/phút". Riêng lúa hiện đủ **thu nhập gộp − tiêu hao quân đội = ròng** ("+50 −12 = +38/phút", theo mục 7.8 của tài liệu "Cơ chế sinh tài nguyên lãnh thổ"). Class `supply-warn` khi ròng âm, `supply-bad` khi thiếu ("Thiếu lúa · Ns" / "Thiếu tiếp tế" thay cho dòng số). Tooltip ghi nguồn của từng khoản. Icon khác nhau cả về hình: bông lúa, khúc gỗ, tảng đá góc cạnh, thỏi vàng, lá cờ. Ô cờ: "N vùng" + "N mỏ đang khai thác" / "Chưa có mỏ"; tooltip giải thích công dụng của vùng/mỏ và thu nhập theo loại |
 | Cột nút + menu (phải, cấp 3) | `#menuBtn` > `#gameMenu` (`#pause`, `#openGuide`, `#toggleSideHud`, `#leaveMatch`); `#toggleTerritory`, `#fullscreen` | Nút tròn icon đơn sắc, đều có tooltip. Menu ☰ gộp: Tạm dừng/Tiếp tục (F3, `setPauseButton()`), Hướng dẫn (F1), Ẩn/Hiện giao diện (class `panel-collapsed` trên `#gameApp`; cột nút vẫn hiện), **Rời trận** (hộp xác nhận `#confirmModal` → `leaveMatch()`). Menu đóng khi chọn một mục, bấm ra ngoài hoặc Esc. Ranh giới (class `placing` khi đang ẩn) và toàn màn hình là nút riêng |
 | Hàng đợi (trái) | `.queue-panel` > `#trainQueue` | `updateTrainQueueHUD()`: quân đang huấn luyện (thanh `--success` + giây còn lại), quân chờ ("chờ n/4"), công trình đang xây ("Đang xây …", hoặc "cần quân đứng cạnh" khi tiền đồn chưa có thợ), nông trại đang nâng cấp (thanh `--resource`). Ẩn khi trống |
 | Minimap (dưới trái, cấp 3) | `#minimap` + 4 `.corner` | Khung có góc trang trí kiểu huy hiệu. Xem [minimap.md](minimap.md) |
@@ -62,7 +65,7 @@ Giao diện theo phong cách **huy hiệu & cờ hiệu**: bản đồ phủ to�
 
 **Bảng trượt** (`src/ui/panels.ts`; mỗi lúc chỉ mở một bảng; `openPanel()`, `closePanels()`, `togglePanel()`):
 - `#trainDrawer`: 5 thẻ quân (`#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry`).
-  - Mỗi thẻ có ảnh chân dung vẽ từ khung đứng yên đầu tiên của spritesheet theo màu phe (`drawPortraits()`), tên, giá + thời gian huấn luyện + lúa nuôi, số quân đang có.
+  - Mỗi thẻ có ảnh chân dung là hình quân vẽ bằng code (khung nhìn thẳng, đứng yên) theo màu phe (`drawPortraits()`, `unitArtFrame()`), tên, giá + thời gian huấn luyện + lúa nuôi, số quân đang có.
   - Thẻ có class `cant` (giá chữ đỏ) khi thiếu tài nguyên; tooltip là lý do từ `buyProblem()`.
   - Bấm thẻ gọi `requestBuy()`; bảng vẫn mở để mua tiếp.
 - `#buildDrawer`: `#farm`, `#buildTower`, `#upgradeOutpost`, `#upgradeFarm`, `#turret`. Bấm công trình cần đặt thì đóng bảng rồi gọi `beginPlacement()`.
@@ -76,7 +79,7 @@ Giao diện theo phong cách **huy hiệu & cờ hiệu**: bản đồ phủ to�
 - ≤ 560px: khiên nhỏ hơn, ẩn dòng phụ, bảng trượt rộng hết màn hình.
 
 **Sảnh chính** (`#modeScreen`, lớp trên cùng khi chưa vào trận):
-- Nền sương mù với hai quầng mây trôi chậm (`.mist`). Hai lá cờ phe treo hai bên (`.lobby-banner.team0/.team1`): xanh có icon lâu đài, đỏ có icon kiếm; cờ đung đưa nhẹ, ẩn khi màn ≤ 820px. Khi trình duyệt bật giảm chuyển động (`prefers-reduced-motion`) thì không có hiệu ứng.
+- Nền tối có quầng lửa than đỏ (`--ui-ember`) và hai quầng khói trôi chậm (`.mist`). Hai lá cờ phe treo hai bên (`.lobby-banner.team0/.team1`): xanh có icon lâu đài, đỏ có icon kiếm; cờ đung đưa nhẹ, ẩn khi màn ≤ 820px. Khi trình duyệt bật giảm chuyển động (`prefers-reduced-motion`) thì không có hiệu ứng.
 - Khung giữa viền `--gold` 2px: khiên lớn màu phe kèm tiêu đề "MINI WAR" và dòng giới thiệu.
 - Menu dải cờ đuôi én (`.lobby-btn`):
   - **Chơi với AI** (`#modeAI`, nổi bật màu phe, phím **Enter**)

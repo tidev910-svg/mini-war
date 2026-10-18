@@ -23,12 +23,43 @@ describe('income', () => {
 
   it('pays a held mine to its owner only', () => {
     const state = quietMatch(g);
-    const mine = state.mines.find(m => !m.rich && m.resource === 'stone'), region = state.regions[mine.regionId];
+    const mine = state.mines.find(m => m.resource === 'stone'), region = state.regions[mine.regionId];
     region.owner = 0;
     const before = state.resources.map(r => r.stone);
     step(60);
     expect(state.resources[0].stone - before[0]).toBeCloseTo(8 + 20, 0);
     expect(state.resources[1].stone - before[1]).toBeCloseTo(8, 0);
+  });
+
+  it('gives every territory of a type the same fixed rate (no rich mines)', () => {
+    const rates = { food: 25, wood: 30, stone: 20, gold: 20 };
+    for (let k = 0; k < 5; k++) {
+      const state = quietMatch(g);
+      const flags = state.regions.filter(r => r.cp);
+      expect(flags).toHaveLength(20);
+      for (const r of flags) {
+        const ms = state.mines.filter(m => m.regionId === r.id);
+        expect(ms).toHaveLength(1);
+        expect(ms[0].income * 60).toBeCloseTo(rates[r.resource]);
+      }
+    }
+  });
+
+  it('matches the document example: 2 wood, 1 stone, 1 gold territories give 25 / 80 / 28 / 28 per minute', () => {
+    let state, owned = [];
+    for (let k = 0; k < 20 && owned.length < 4; k++) {
+      state = quietMatch(g);
+      const pick = (type, n) => state.mines.filter(m => m.resource === type).slice(0, n);
+      owned = [...pick('wood', 2), ...pick('stone', 1), ...pick('gold', 1)];
+    }
+    expect(owned).toHaveLength(4);
+    for (const r of state.regions) if (r.home == null) r.owner = -1;
+    for (const m of owned) state.regions[m.regionId].owner = 0;
+    state.resources[0] = { food: 0, wood: 0, stone: 0, gold: 0 };
+    step(60);
+    const res = state.resources[0];
+    expect(res.food).toBeCloseTo(25, 0); expect(res.wood).toBeCloseTo(80, 0);
+    expect(res.stone).toBeCloseTo(28, 0); expect(res.gold).toBeCloseTo(28, 0);
   });
 
   it('uses the v1 mine rates', () => {

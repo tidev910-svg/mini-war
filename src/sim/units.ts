@@ -9,7 +9,14 @@ import { baseDir, musterYard } from '../map/bases';
 import { updateHUD } from '../ui/hud';
 
 // Dominant axis wins so diagonal movement still picks one of the four painted directions.
-export function facingFrom(dx,dy){return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
+// Facing for drawing. With the previous facing, the other axis must dominate by FACING_HYSTERESIS before the view turns,
+// so a unit walking diagonally does not flip between side and front views every frame.
+const FACING_HYSTERESIS=1.35;
+export function facingFrom(dx,dy,prev){
+ const ax=Math.abs(dx),ay=Math.abs(dy);
+ const horizontal=prev==='left'||prev==='right'?ax*FACING_HYSTERESIS>=ay:prev==='up'||prev==='down'?ax>=ay*FACING_HYSTERESIS:ax>ay;
+ return horizontal?(dx<0?'left':'right'):(dy<0?'up':'down');
+}
 export function unitVisionRadius(type){switch(normalizeUnitType(type)){case 'spearman':return 150;case 'archer':return 130;case 'scout':return SCOUT_VISION;default:return 105;}}
 export function spawn(team,type,x,y,queueIfBlocked=true,pendingOrder='hold'){
  const spec=specs[type],left=team===0;

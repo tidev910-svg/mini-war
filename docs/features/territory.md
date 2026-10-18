@@ -33,7 +33,7 @@ Nguồn thiết kế:
 | Chỗ đặt mỏ | Chỉ vùng có cờ: ô gần cờ nhất mà cách cờ ≥ 6 ô (để nhãn không đè nhau). Mọi mỏ cách nhau ≥ 260 và ở trên khối đất lớn. Vùng nhà không có mỏ (bỏ ngày 2026-10-17) |
 | Giữ đúng 20 vùng | Vùng nào không đặt được cờ hoặc mỏ thì hạt giống của nó bị bỏ khỏi kho, hạt giống kế tiếp thế chỗ và bản đồ được chia lại (tối đa 6 lượt; nếu vẫn thiếu, lần sinh đó bị coi là không đạt). Việc này làm **trước** khi gán loại tài nguyên |
 | Loại tài nguyên | Với từng nhà (thứ tự ngẫu nhiên), xếp các vùng theo **chi phí đi bộ** tới cờ (`walkDistances()`). Loại nào chưa có trong 4 vùng gần nhất thì gán, theo thứ tự ngẫu nhiên, cho các vùng gần nhất chưa có loại. Các vùng còn lại gán ngẫu nhiên 1 trong 4 loại (`REGION_TYPES`) |
-| Mỏ | Một mỏ mỗi vùng (mỏ có sẵn từ trước, không thêm mỏ riêng), cùng loại với vùng. Vùng có hạt giống nằm trong 15% quanh giữa bản đồ có mỏ giàu (× 1,5). Mỏ lúa sinh 25/phút, mỏ vàng 20/phút (`MINE_TYPES`) |
+| Mỏ | Một mỏ mỗi vùng (mỏ có sẵn từ trước, không thêm mỏ riêng), cùng loại với vùng. Mọi vùng cùng loại sinh đúng một mức: lúa 25, gỗ 30, đá 20, vàng 20 mỗi phút (`MINE_TYPES`). Mỏ giàu × 1,5 ở giữa bản đồ đã bỏ ngày 2026-10-18 |
 | Công bằng | Với mỗi loại tài nguyên, lấy chi phí đi bộ từ mỗi nhà tới cờ gần nhất của loại đó. Độ lệch = Σ\|d₀ − d₁\| ÷ Σ max(d₀, d₁). Nếu lớn hơn `MAP_FAIRNESS_TOLERANCE` (0,3) thì chọn lại vị trí nhà, tối đa `MAP_GENERATION_TRIES` = 15 lần; nếu vẫn không đạt thì lấy lần công bằng nhất |
 
 "Đường đi thực tế": từ 2026-10-18 nước và đá chặn đường, sông chỉ qua được bằng 4 cầu ([pathfinding.md](pathfinding.md)). `walkDistances()` là quãng đường đi bộ thật (chỉ qua ô đi được, có cầu). Lần sinh bản đồ bị loại nếu từ sân tập kết xanh không đi bộ tới được sân tập kết đỏ, mọi cột cờ, mọi mỏ (`reachableFrom()`). (Trước đó, khi quân còn lội qua nước, hàm này dùng chi phí địa hình đất 1, đá 3, nước 6.)
@@ -111,12 +111,12 @@ Chưa chốt, đang làm tạm:
 - Hằng số:
   - Sinh bản đồ: `REGION_TYPES`, `REGION_COUNT`, `REGION_SEED_SPACING_TILES`, `REGION_MIN_BASE_TILES`, `MAP_FAIRNESS_TOLERANCE`, `MAP_GENERATION_TRIES`, `MIN_LAND_PATCH_TILES`, `BASE_SITE_MIN_CLEAR`, `BASE_MIN_SEPARATION`.
   - Chiếm cờ: `FLAG_ENEMY_BASE_MIN_TILES`, `FLAG_CAPTURE_RADIUS_TILES`, `FLAG_CAPTURE_BASE_SECONDS`, `FLAG_CAPTURE_EXPONENT`, `FLAG_CAPTURE_MAX_UNITS`, `FLAG_SCOUTS_CAPTURE`, `FLAG_DECAY_DELAY_SECONDS`, `FLAG_DECAY_SECONDS`; `FOOD_REGION_FARM_BONUS`.
-  - Hiển thị: `FLAG_COLORS`, `FLAG_MIN_SCREEN_ZOOM`, `FLAG_LABEL_MIN_PX`, `FLAG_RING_PX`, `RESOURCE_ICONS`, `TERRITORY_COLORS`, `TERRITORY_BORDER_PX`, `TERRITORY_GLOW`, `TERRITORY_GLOW_PX`.
+  - Hiển thị: `FLAG_COLORS`, `FLAG_MIN_SCREEN_ZOOM`, `FLAG_LABEL_MIN_PX`, `FLAG_SHORT_LABEL_ZOOM`, `FLAG_RING_PX`, `RESOURCE_ICONS`, `TERRITORY_COLORS`, `TERRITORY_BORDER_PX`, `TERRITORY_GLOW`, `TERRITORY_GLOW_PX`.
   - Khác: `HOME_TERRITORY_TILES`.
 - Tra cứu: `regionAt(x, y)`, `inOwnTerritory()`, `regionLabel()`. Khám phá: `revealHomeTerritory()`, `revealCircle()`, `tilePassable()`.
 - Dữ liệu:
   - `state.regions[] = {id, resource, sgx, sgy, home (null|0|1), owner (-1|0|1), cp: {x, y}|null, cap (0..1), capTeam (-1|0|1), contested, idle (giây không ai đứng), stage2 (-1|0|1: phe đã hạ cờ địch)}`.
-  - `state.mines[] = {x, y, resource, rich, regionId, income (mỗi giây), owner}`.
+  - `state.mines[] = {x, y, resource, regionId, income (mỗi giây), owner}`.
 - Biến giao diện `selectedFlag` (id vùng, chỉ ở máy người chơi). Nút `#toggleTerritory`; phím T trong `keydown`.
 
 ## Tương tác

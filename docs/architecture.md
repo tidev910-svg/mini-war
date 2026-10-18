@@ -32,7 +32,7 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 | `sim/` | `economy.ts`, `units.ts`, `movement.ts`, `fog.ts`, `buildings.ts`, `territory.ts`, `combat.ts` | Luật mô phỏng: lúa & tiếp tế; mua quân, hàng đợi huấn luyện, xuất quân; đi theo đường (`steerTo()`); sương mù & tầm nhìn; công trình; chiếm cờ; chọn mục tiêu & sát thương | file tính năng cùng tên |
 | `ai/` | `enemy.ts` | `runEnemyAI()` | [ai-opponent.md](features/ai-opponent.md) |
 | `net/` | `peer.ts`, `snapshot.ts` | Phòng PeerJS; gửi/nhận snapshot | [multiplayer.md](features/multiplayer.md) |
-| `render/` | `draw.ts`, `sprites.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts`, `minimap.ts`, `paths.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự (gồm cầu, đường đi của quân đang chọn), cuối cùng là minimap | [rendering.md](features/rendering.md), [minimap.md](features/minimap.md) |
+| `render/` | `draw.ts`, `sprites.ts`, `unitArt.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts`, `minimap.ts`, `paths.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự (gồm cầu, đường đi của quân đang chọn), cuối cùng là minimap | [rendering.md](features/rendering.md), [minimap.md](features/minimap.md) |
 | `ui/` | `theme.ts`, `hud.ts`, `panels.ts`, `hotkeys.ts`, `input.ts`, `modeScreen.ts` | Ghi token lên `:root` thành biến CSS, `setFactionTheme()`; HUD nổi trên bản đồ; bảng Huấn luyện/Xây dựng, hướng dẫn, xác nhận rời trận, menu, tooltip, thông báo, chân dung quân; phím tắt kiểu Đế Chế (`hotkeys.ts`); chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
 
 Quy ước giữa các module (chi tiết ở [conventions.md](conventions.md)):

@@ -215,7 +215,7 @@ button{font:inherit;color:inherit}
 /* ---------- Mode screen and lobby ---------- */
 /* Lobby: fog sky with drifting mist, the two sides' banners hanging from the top, title crest and a banner-style menu. */
 .mode-screen{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-4);padding:18px;overflow:hidden;
-  background:radial-gradient(ellipse 80% 60% at 50% 0%,var(--faction-dark),transparent 70%),radial-gradient(ellipse 70% 50% at 50% 110%,var(--ui-bg-panel),transparent 70%),var(--ui-fog)}
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,var(--ui-ember),transparent 70%),radial-gradient(ellipse 70% 50% at 50% 110%,var(--ui-bg-panel-soft),transparent 70%),var(--ui-fog)}
 .mode-screen.hidden{display:none}
 .lobby-sky{position:absolute;inset:0;pointer-events:none}
 .mist{position:absolute;width:70vmax;height:70vmax;border-radius:50%;background:radial-gradient(circle,var(--ui-bg-panel-soft),transparent 65%);opacity:.55;animation:drift 38s ease-in-out infinite alternate}

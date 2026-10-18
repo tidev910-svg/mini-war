@@ -10,28 +10,31 @@ export const TEAM_COLORS = {
 };
 
 export const THEME = {
+  // "Iron & blood" palette: dark tanned leather and forge-black surfaces, warm bronze metal, parchment text, blood-red
+  // accents. Side colours (TEAM_COLORS) stay blue / red so the two armies remain easy to tell apart.
   // Backgrounds and surfaces
-  'ui-bg-panel': '#16213A',
-  'ui-bg-panel-glass': 'rgba(22,33,58,.92)',
-  'ui-bg-panel-soft': '#1E2C4A',
-  'ui-bg-deep': '#0E1628',
-  'ui-backdrop': 'rgba(6,9,16,.66)',
-  'ui-shadow': 'rgba(0,0,0,.55)',
-  'ui-fog': '#0A0E16',
+  'ui-bg-panel': '#241A15',
+  'ui-bg-panel-glass': 'rgba(36,26,21,.93)',
+  'ui-bg-panel-soft': '#35271F',
+  'ui-bg-deep': '#17100C',
+  'ui-backdrop': 'rgba(12,7,5,.7)',
+  'ui-shadow': 'rgba(0,0,0,.6)',
+  'ui-fog': '#0E0A08',
+  'ui-ember': '#5C1D12',
   // Metal: --gold only rims the important parts (main actions, player panel); --gold-muted for thin ordinary rims.
-  'gold': '#D8B45A',
-  'gold-muted': '#8A7445',
-  'gold-ink': '#2A1E08',
+  'gold': '#D29A45',
+  'gold-muted': '#8A6236',
+  'gold-ink': '#2A1808',
   // Text
-  'text-main': '#FFF5DC',
-  'text-sub': '#C8D4F0',
-  'text-on-map-stroke': '#0A0E16',
+  'text-main': '#F6EAD6',
+  'text-sub': '#D8C5AA',
+  'text-on-map-stroke': '#0E0A08',
   // States
-  'danger': '#D94A3A',
-  'danger-dark': '#7A2018',
-  'success': '#4FB36A',
-  'resource': '#F2C94C',
-  'warning': '#E8A23A',
+  'danger': '#C9372A',
+  'danger-dark': '#6B1910',
+  'success': '#5FA84E',
+  'resource': '#E9B949',
+  'warning': '#E0882E',
   // Typography (fonts that ship every Vietnamese glyph on Windows / macOS / Linux, nothing downloaded)
   'font-title': '"Palatino Linotype","Book Antiqua","Noto Serif","Times New Roman",serif',
   'font-ui': 'system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif',

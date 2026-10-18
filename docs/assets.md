@@ -5,7 +5,7 @@
 ## Hai nơi chứa ảnh
 | Thư mục | Chứa gì | Có trong bản build? |
 |---|---|---|
-| `public/assets/units/<quân>/` | Ảnh **game tải thật** (spritesheet đã xử lý). Đường dẫn trong code: `/assets/units/<quân>/...` | Có: Vite copy nguyên `public/` vào `dist/` |
+| `public/assets/units/<quân>/` | **Không còn được game tải** từ 2026-10-18: quân vẽ bằng code ([src/render/unitArt.ts](../src/render/unitArt.ts)). Giữ lại để tham khảo (spritesheet đã xử lý). Đường dẫn trong code: `/assets/units/<quân>/...` | Có: Vite copy nguyên `public/` vào `dist/` |
 | `art/units/<quân>/` | Ảnh **nguồn**: tham chiếu, ảnh AI tạo, bản cũ | Không |
 
 Quy tắc: file nào code không tải thì **không** để trong `public/`, để bản build nhẹ.

@@ -74,7 +74,8 @@ if (solo.length) {
       t.ok(await c.page("getComputedStyle(document.documentElement).getPropertyValue('--faction-primary').trim()==='#2F5DB8'"), 'token màu phe được ghi lên :root');
       const tipFor = sel => c.page(`(()=>{const el=document.querySelector('${sel}');el.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const t=document.getElementById('tooltip');return t.hidden?null:t.textContent})()`);
       t.ok(/ranh giới/i.test(await tipFor('#toggleTerritory') || ''), 'nút chỉ có icon có tooltip');
-      t.ok(/Nuôi quân/.test(await tipFor('#resFood') || ''), 'tooltip lúa có chi tiết thu/chi');
+      t.ok(/Tiêu hao quân đội/.test(await tipFor('#resFood') || ''), 'tooltip lúa có chi tiết thu/chi');
+      t.ok(/^\+[\d,]+ −[\d,]+ = [+-][\d,]+\/phút$/.test(await c.page("document.getElementById('foodRate').textContent")), 'ô lúa hiện thu nhập gộp, tiêu hao và ròng');
       const noTip = await c.page("[...document.querySelectorAll('.hud-layer button')].filter(b=>!b.textContent.trim()&&!b.closest('[data-tip]')).map(b=>b.id||b.className)");
       t.ok(!noTip.length, 'mọi nút chỉ có icon đều có tooltip', noTip);
       await c.page("document.getElementById('menuBtn').click()");
@@ -116,7 +117,10 @@ if (solo.length) {
       t.ok(g2.length === 3 && g2.every(x => x === 'archer'), 'Ctrl+2 gán nhóm, 2 chọn lại nhóm', g2);
       // Both taps inside one evaluation: separate CDP round trips can exceed the 400 ms double-tap window on a busy machine.
       await c.game(`const tap=()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'2',code:'Digit2',bubbles:true}));tap();setCamX(0);setCamY(0);tap();return 1`);
-      const cam = await c.game(`const a=state.units.filter(u=>u.selected);const cx=a.reduce((s,u)=>s+u.x,0)/a.length;return Math.abs(camX+VIEW_W/zoom/2-cx)<200||camX>0`);
+      // Expected camera = centred on the group, clamped to the map (a group near the edge cannot be centred).
+      const cam = await c.game(`const a=state.units.filter(u=>u.selected),cx=a.reduce((s,u)=>s+u.x,0)/a.length,cy=a.reduce((s,u)=>s+u.y,0)/a.length;
+        const ex=Math.max(0,Math.min(Math.max(0,MAP_WORLD_W-VIEW_W/zoom),cx-VIEW_W/zoom/2)),ey=Math.max(0,Math.min(Math.max(0,MAP_WORLD_H-VIEW_H/zoom),cy-VIEW_H/zoom/2));
+        return Math.abs(camX-ex)<2&&Math.abs(camY-ey)<2&&(ex>0||ey>0)`);
       t.ok(cam, 'bấm số hai lần liền: camera tới nhóm');
       await key('s');
       t.ok(await c.game(`return state.units.filter(u=>u.selected).every(u=>u.order==='hold'&&!u.path)`), 'S: nhóm dừng lại');
@@ -221,12 +225,12 @@ if (solo.length) {
     if (want('economy')) {
       const t = checker('economy: thu nhập pháo đài và mỏ');
       const r = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources=[{food:0,wood:0,stone:0,gold:0},{food:0,wood:0,stone:0,gold:0}];
-        const rates={};for(const m of state.mines)if(!m.rich)rates[m.resource]=Math.round(m.income*60);
+        const rates={};for(const m of state.mines)(rates[m.resource]??=new Set()).add(Math.round(m.income*60));for(const k in rates)rates[k]=[...rates[k]].join('/');
         for(let i=0;i<120*20;i++)update(.05);
         return {res:state.resources.map(x=>Object.fromEntries(Object.entries(x).map(([k,v])=>[k,Math.round(v*100)/100]))),rates,food:foodPerMinute(0)};`);
       const want0 = { food: 50, wood: 40, stone: 16, gold: 16 };
       t.ok(r.res.every(x => Object.entries(want0).every(([k, v]) => Math.abs(x[k] - v) < 0.05)), '120 giây không lãnh thổ → 50 lúa / 40 gỗ / 16 đá / 16 vàng mỗi phe', r.res);
-      t.ok(r.rates.food === 25 && r.rates.wood === 30 && r.rates.stone === 20 && r.rates.gold === 20, 'mỏ thường 25 lúa / 30 gỗ / 20 đá / 20 vàng mỗi phút', r.rates);
+      t.ok(r.rates.food === '25' && r.rates.wood === '30' && r.rates.stone === '20' && r.rates.gold === '20', 'mọi vùng cùng loại sinh đúng 25 lúa / 30 gỗ / 20 đá / 20 vàng mỗi phút (không còn mỏ giàu)', r.rates);
       t.ok(r.food === 25, 'lúa/phút của pháo đài = 25', r.food);
       results.push(t.report());
     }

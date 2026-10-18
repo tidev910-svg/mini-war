@@ -6,19 +6,19 @@ import { BUILDING_TYPES } from '../config/balance';
 import { farmSprite, fortressSprite } from './sprites';
 import { musterYard } from '../map/bases';
 import { buildingDone, buildingName } from '../sim/buildings';
-import { healthBar, mapBanner, mapText, teamPalette } from './units';
+import { healthBar, mapBanner, mapText, queueMapLabel, teamPalette } from './units';
 import { TEAM_COLORS } from '../config/theme';
 
 // Building and muster-yard names are hidden when zoomed out this far (they would crowd the map at 12 px minimum).
-const MAP_LABEL_MIN_SCALE=.28;
-export function drawMusterYard(b){const yard=musterYard(b);drawUprightAt(yard.x,yard.y,()=>{ctx.save();ctx.fillStyle='#4f463738';ctx.beginPath();ctx.ellipse(yard.x+4,yard.y+8,yard.w*.52,yard.h*.52,-.08,0,Math.PI*2);ctx.fill();ctx.fillStyle=b.team===0?'#9c875c':'#826558';ctx.beginPath();ctx.ellipse(yard.x,yard.y,yard.w*.50,yard.h*.50,-.08,0,Math.PI*2);ctx.fill();ctx.strokeStyle=b.team===0?'#d0bd84':'#c89982';ctx.lineWidth=3;ctx.setLineDash([7,6]);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#554b3b66';ctx.lineWidth=5;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(yard.x-48,yard.y+i*28);ctx.quadraticCurveTo(yard.x,yard.y+i*28+5,yard.x+48,yard.y+i*28);ctx.stroke();}if(renderView.scale>=MAP_LABEL_MIN_SCALE)mapText('SÂN TẬP KẾT',yard.x,yard.y+yard.h*.36,15,900);ctx.restore();});}
+export const MAP_LABEL_MIN_SCALE=.28;
+export function drawMusterYard(b){const yard=musterYard(b);drawUprightAt(yard.x,yard.y,()=>{ctx.save();ctx.fillStyle='#4f463738';ctx.beginPath();ctx.ellipse(yard.x+4,yard.y+8,yard.w*.52,yard.h*.52,-.08,0,Math.PI*2);ctx.fill();ctx.fillStyle=b.team===0?'#9c875c':'#826558';ctx.beginPath();ctx.ellipse(yard.x,yard.y,yard.w*.50,yard.h*.50,-.08,0,Math.PI*2);ctx.fill();ctx.strokeStyle=b.team===0?'#d0bd84':'#c89982';ctx.lineWidth=3;ctx.setLineDash([7,6]);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#554b3b66';ctx.lineWidth=5;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(yard.x-48,yard.y+i*28);ctx.quadraticCurveTo(yard.x,yard.y+i*28+5,yard.x+48,yard.y+i*28);ctx.stroke();}if(renderView.scale>=MAP_LABEL_MIN_SCALE)queueMapLabel(yard.x,yard.y,()=>mapText('SÂN TẬP KẾT',yard.x,yard.y+yard.h*.36,15,900));ctx.restore();});}
 export function drawBase(b){return drawUprightAt(b.x,b.y,()=>{
  const w=238,h=200,blue=b.team===0;ctx.save();
  if(fortressSprite.complete&&fortressSprite.naturalWidth)ctx.drawImage(fortressSprite,b.x-w/2,b.y-h+16,w,h);
  else {ctx.fillStyle='#8995a0';ctx.fillRect(b.x-w*.42,b.y-h*.62,w*.84,h*.62);ctx.fillStyle='#2c5e9b';ctx.fillRect(b.x-w*.25,b.y-h*.9,w*.5,h*.34);}
  if(!blue){ctx.fillStyle='#b92f48';ctx.beginPath();ctx.moveTo(b.x+3,b.y-116);ctx.lineTo(b.x+28,b.y-108);ctx.lineTo(b.x+3,b.y-97);ctx.closePath();ctx.fill();}
  if(selectedFortress===b){ctx.strokeStyle=blue?'#74c8ff':'#ff777f';ctx.lineWidth=4;ctx.setLineDash([10,5]);ctx.beginPath();ctx.ellipse(b.x,b.y+2,102,48,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
- const barH=healthBar(b.x,b.y+40,104,b.hp,b.max);mapBanner('PHÁO ĐÀI '+TEAM_COLORS[b.team].name.replace('QUÂN ',''),b.x,b.y+40+barH+Math.max(14,12/(renderView.scale||1)),14,b.team);ctx.restore();
+ queueMapLabel(b.x,b.y,()=>{const barH=healthBar(b.x,b.y+40,104,b.hp,b.max);mapBanner('PHÁO ĐÀI '+TEAM_COLORS[b.team].name.replace('QUÂN ',''),b.x,b.y+40+barH+Math.max(14,12/(renderView.scale||1)),14,b.team);});ctx.restore();
 });}
 export function drawFarm(f,preview=false){return drawUprightAt(f.x,f.y,()=>{
  const x=f.x,y=f.y;ctx.save();
@@ -49,10 +49,11 @@ export function drawBuildingOverlay(b,preview){
  if(b.waiting)progressBar(b.upgrade?b.upgrade.progress:b.progress,'#8a8f97');
  else if(!buildingDone(b))progressBar(b.progress,'#f0c24f');
  else if(b.upgrade)progressBar(b.upgrade.progress,'#8be0ff');
- else if(b.hp<b.max)healthBar(x,barY,barW,b.hp,b.max);
+ else if(b.hp<b.max)queueMapLabel(x,y,()=>healthBar(x,barY,barW,b.hp,b.max));
  if(selectedBuilding===b){ctx.strokeStyle=b.team===0?'#74c8ff':'#ff777f';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.beginPath();ctx.ellipse(x,y+hh*.4,hw+14,hh*.75+10,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
  const label=(b.kind==='farm'?'NÔNG TRẠI'+(b.level>1?' CẤP '+b.level:''):buildingName(b).toUpperCase())+(b.waiting?' · CHỜ QUÂN XÂY':!buildingDone(b)?' · ĐANG XÂY':'');
- if(renderView.scale>=MAP_LABEL_MIN_SCALE)mapText(label,x,barY+20,11);
+ // Outposts stand right next to their flag, whose name sits below the pole: their own label goes above them instead.
+ if(renderView.scale>=MAP_LABEL_MIN_SCALE){const ly=b.kind==='outpost'?y-hh-Math.max(14,12/(renderView.scale||1)):barY+20;queueMapLabel(x,y,()=>mapText(label,x,ly,11));}
  ctx.restore();
 }
 export function drawBuilding(b,preview=false){

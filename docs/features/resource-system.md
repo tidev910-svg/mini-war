@@ -36,7 +36,7 @@ Không cho đổi trực tiếp 1:1 giữa các tài nguyên.
 | Mỏ gỗ thường | 30 gỗ | 0,5 |
 | Mỏ đá thường | 20 đá | 0,33 |
 | Mỏ vàng thường | 15 vàng | 0,25 |
-| Mỏ giàu | ≈ 1,5 × mỏ thường | |
+| Mỏ giàu | Đã bỏ (2026-10-18): mọi vùng cùng loại cùng sản lượng, xem [economy.md](economy.md) | |
 
 **Chi phí công trình**
 | Công trình | Gỗ | Đá | Vàng |

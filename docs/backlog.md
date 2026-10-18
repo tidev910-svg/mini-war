@@ -44,6 +44,14 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-18 (quân vẽ bằng code, 4 hướng):** cả 5 loại quân vẽ lại bằng vector (`render/unitArt.ts`): nhìn thẳng / quay lưng / nghiêng (trái = lật), đứng yên, đi 4 khung, động tác tấn công; màu phe từ theme; khung lưu đệm; chân dung thẻ Huấn luyện dùng hình mới; hướng có độ trễ chống lật.
+
+**2026-10-18 (tông màu "sắt & máu"):** thay nền xanh navy bằng da thuộc nâu sẫm / than lò rèn, viền đồng thau, chữ giấy da, nhấn đỏ máu; sảnh có quầng lửa than; màu hai phe giữ xanh/đỏ.
+
+**2026-10-18 (tối ưu FPS):** đốm địa hình dựng một lần, chỉ vẽ trong camera, gom theo màu, có ảnh dựng sẵn khi thu nhỏ (`draw()` 9,5 → ≈ 1 ms ở zoom mặc định, 84 → ≈ 0,8 ms khi thu nhỏ hết); lọc quân/công trình/cờ ngoài camera; HUD 10 lần/giây và chỉ ghi DOM khi đổi; sương mù chỉ làm mờ lại khi thay đổi, mép mềm tính bằng cửa sổ trượt.
+
+**2026-10-18 (đối chiếu "Cơ chế sinh tài nguyên lãnh thổ"):** code khớp tài liệu; bỏ mỏ giàu (× 1,5) để mọi vùng cùng loại sinh 25/30/20/20 mỗi phút; ô lúa hiện gộp − tiêu hao = ròng; nông trại giữ nguyên (nâng cấp + thưởng 25%).
+
 **2026-10-18 (sảnh chính + nạp CSS):** sảnh huy hiệu (tiêu đề, menu dải cờ: Chơi với AI/Enter, Solo với bạn bè, Hướng dẫn, Toàn màn hình; cờ hai phe; sương trôi); hết chớp HTML trần khi tải: CSS là `<link>`, token chèn vào HTML qua `vite.config.ts`.
 
 **2026-10-18 (giao diện huy hiệu & cờ hiệu):** design tokens một nơi (`config/theme.ts` → biến CSS, đổi phe chỉ đổi `--faction-*`); sương mù gần đen có vân; panel khiên + dải cờ phe + hàng icon quân; dải cờ tài nguyên với tooltip thu/chi, icon khác hình, nháy đỏ khi thiếu; menu ☰ gộp tạm dừng/hướng dẫn/ẩn giao diện/rời trận (có xác nhận); thông báo tự mờ 5 giây + lịch sử + viền đỏ khi bị tấn công; minimap góc huy hiệu, mỏ/cầu chỉ hiện khi đã khám phá, địch màu đỏ; 3 nút khiên có phím tắt và lý do khi bị khoá; nhãn pháo đài trên dải cờ, thanh máu 6 px xanh→đỏ, chữ bản đồ ≥ 12 px; đường biên lãnh thổ mềm; camera đầu trận đặt pháo đài giữa vùng không bị HUD che.

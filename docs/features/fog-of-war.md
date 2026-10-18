@@ -16,7 +16,7 @@ Bản đồ phủ sương xanh xám đục. Vùng quân mình từng đi qua đ�
 | Công trình | theo loại (nông trại 90, tiền đồn 14 ô, tháp 200); đang xây: 60. Cột cờ không cho tầm nhìn | `buildingVision()`, `visionOf()` |
 | Khu đất nhà | 14 ô quanh pháo đài, khám phá sẵn từ đầu trận (không phải "đang nhìn thấy") | `revealHomeTerritory()` |
 | Lưới sương mù | 256 × 256 ô (`MAP_TILES`) | — |
-| Màu ô chưa khám phá | Gần đen, **đục hoàn toàn**: `FOG_RGB` = `--ui-fog` #0A0E16 (10, 14, 22) trong `config/theme.ts`, tối hơn hẳn mọi panel HUD để giao diện không chìm vào sương. Mỗi ô lệch sáng tối ngẫu nhiên ± `MAP_UI.fogNoise` = 9 nên sau khi làm mờ trông như mây. Không nhìn thấy gì của địa hình bên dưới. Mép mềm khoảng 2 ô, nằm hoàn toàn ở phía đã khám phá | `refreshFog()`, `drawFog()` |
+| Màu ô chưa khám phá | Gần đen, **đục hoàn toàn**: `FOG_RGB` = `--ui-fog` #0E0A08 (14, 10, 8), đen ám nâu trong `config/theme.ts`, tối hơn hẳn mọi panel HUD để giao diện không chìm vào sương. Mỗi ô lệch sáng tối ngẫu nhiên ± `MAP_UI.fogNoise` = 9 nên sau khi làm mờ trông như mây. Không nhìn thấy gì của địa hình bên dưới. Mép mềm khoảng 2 ô, nằm hoàn toàn ở phía đã khám phá | `refreshFog()`, `drawFog()` |
 | Ô đã khám phá, không đang nhìn thấy | Cùng màu, alpha `FOG_MEMORY_ALPHA` = 115/255 (≈ 45%): địa hình vẫn thấy rõ | `teamVisibleTiles()`, `refreshFog()` |
 
 Hai khái niệm luôn tách riêng:
@@ -32,6 +32,10 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
 - Mặt nạ được đặt giữa một viền đục rộng `FOG_PAD` = 4 ô (`fogCanvas`), làm mờ (blur 4 px ≈ 1 ô) lên canvas gấp 4 lần (`fogSoftCanvas`, `FOG_BLUR_SCALE`), rồi cắt đúng phần bản đồ để vẽ phủ.
 - Nhờ vậy vùng chuyển mờ nằm trong mép vùng đã khám phá; ô chưa khám phá luôn bị che kín, kể cả ở mép bản đồ.
 - Dựng lại tối đa 5 lần/giây (vì tầm nhìn thay đổi theo quân), hoặc ngay khi đổi bản đồ sương.
+- Hiệu năng (2026-10-18):
+  - Mép mềm `fogMask` tính bằng hai lượt cửa sổ trượt (hàng rồi cột qua `fogRowMask`), cho kết quả giống hệt cách đánh dấu 25 ô cũ.
+  - Bước làm mờ (`filter: blur`) chỉ chạy khi có ô đổi độ phủ (`fogBlurred`).
+  - Mỗi lần dựng lại ≈ 0,7–1 ms (trước ≈ 3,8 ms, gây giật định kỳ).
 
 ## Code liên quan
 - [src/sim/fog.ts](../../src/sim/fog.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/core/match.ts](../../src/core/match.ts), [src/render/fog.ts](../../src/render/fog.ts), [src/config/visuals.ts](../../src/config/visuals.ts), [src/render/draw.ts](../../src/render/draw.ts): `teamCanSee()`, `aiCanSee()`, `unitVisionRadius()`, `revealTeamVision()`, `isTeamAreaExplored()`, các khối fog cuối `update()`, `teamVisibleTiles()`, `refreshFog()`, `drawFog()` (hằng số `FOG_RGB`, `FOG_EDGE_TILES`, `FOG_BLUR_SCALE`, `FOG_PAD`, `FOG_MEMORY_ALPHA`; `fogMask`, `fogVisible`, canvas `fogCanvas`, `fogSoftCanvas`), hàm lồng `currentlyVisible()` trong `draw()`.

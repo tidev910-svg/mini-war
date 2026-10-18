@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Frame composition: draw() calls every layer in order (docs/features/rendering.md).
-import { THEME } from '../config/theme';
+import { TEAM_COLORS, THEME } from '../config/theme';
 import { VIEW_H, VIEW_W, camX, camY, ctx, drawUprightAt, renderView, setRenderView, viewOffsets, zoom } from '../core/view';
 import { H, W } from '../config/map';
 import { terrainCanvas, terrainPadding, terrainSmoothCanvas } from '../map/terrain';
@@ -10,8 +10,8 @@ import { BUILDING_TYPES, MINE_TYPES } from '../config/balance';
 import { isTeamAreaExplored, teamCanSee } from '../sim/fog';
 import { fortressGunPosition } from '../map/bases';
 import { drawTerritory } from './territory';
-import { drawUnit, drawUnitHealthBar, drawUnitSelection, teamPalette, unitTargetHeight } from './units';
-import { drawBase, drawBuilding, drawMusterYard } from './buildings';
+import { drawUnit, drawUnitHealthBar, drawUnitSelection, flushMapLabels, mapText, queueMapLabel, teamPalette, unitTargetHeight } from './units';
+import { MAP_LABEL_MIN_SCALE, drawBase, drawBuilding, drawMusterYard } from './buildings';
 import { DECOR_LAYER_SCALE, decorLayerCanvas, drawDecor, drawTerrainDetail, rockDecor, shoreDecor, treeDecor, waterDecor } from './terrain';
 import { drawFlag } from './flags';
 import { drawFog, refreshFog } from './fog';
@@ -34,7 +34,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Precomputed 256 × 256 biome map with the requested area shares.
  ctx.drawImage(terrainSmoothCanvas,terrainPadding,terrainPadding,terrainCanvas.width,terrainCanvas.height,0,0,W,H);
  ctx.globalAlpha=.08;ctx.drawImage(terrainCanvas,0,0,W,H);ctx.globalAlpha=1;
- drawTerrainDetail();
+ drawTerrainDetail(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  // Main road crossing meadow and ford, about 2–3 tiles wide.
  // Roads start off-map; clip them to the world so their ends do not poke out past the fog into the margin.
  ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();ctx.lineCap='round';ctx.lineJoin='round';
@@ -49,8 +49,11 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  refreshFog(localTeam()===0?state.fogSeen:state.enemyFogSeen);
  drawBridges(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
+ // Everything below is culled to the camera (plus a margin that grows when zoomed out, where flags and labels get larger).
+ const cullPad=Math.max(260,130/viewScale),leftWorld=camX-cullPad,topWorld=camY-cullPad,rightWorld=camX+VIEW_W/viewScale+cullPad,bottomWorld=camY+VIEW_H/viewScale+cullPad;
+ const inView=o=>o.x>=leftWorld&&o.x<=rightWorld&&o.y>=topWorld&&o.y<=bottomWorld;
  for(const m of state.mines){
-  if(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y))continue;
+  if(!inView(m)||(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y)))continue;
   drawUprightAt(m.x,m.y,()=>{
   // Colorful collectible mine with stacked stones, gold crystals and a team-control ring.
   const mineTeam=m.owner===0?teamPalette(0):m.owner===1?teamPalette(1):null;
@@ -60,8 +63,9 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
   ctx.fillStyle='#bac9b0';ctx.beginPath();ctx.moveTo(m.x-20,m.y-11);ctx.lineTo(m.x-10,m.y-21);ctx.lineTo(m.x+4,m.y-21);ctx.lineTo(m.x-3,m.y-8);ctx.closePath();ctx.fill();
   const crystal=MINE_TYPES[m.resource].crystal;
   for(let i=0;i<5;i++){const cx=m.x-12+i*6,cy=m.y-6+(i%2)*6;ctx.fillStyle='#9a6d22';ctx.beginPath();ctx.moveTo(cx-3,cy+4);ctx.lineTo(cx-2,cy-3);ctx.lineTo(cx,cy-7);ctx.lineTo(cx+3,cy-2);ctx.lineTo(cx+3,cy+4);ctx.closePath();ctx.fill();ctx.fillStyle=crystal;ctx.beginPath();ctx.moveTo(cx-2,cy+3);ctx.lineTo(cx-1,cy-3);ctx.lineTo(cx,cy-6);ctx.lineTo(cx+2,cy-2);ctx.lineTo(cx+2,cy+3);ctx.closePath();ctx.fill();}
-  if(m.rich){ctx.strokeStyle='#ffe16d';ctx.lineWidth=2;ctx.beginPath();ctx.arc(m.x,m.y-1,39,0,Math.PI*2);ctx.stroke();}
-  const labelColor=m.owner===0?'#1764a4':m.owner===1?'#a52d3a':'#42564a';ctx.font='900 11px system-ui';ctx.textAlign='center';const mineLabel=MINE_TYPES[m.resource].label+(m.rich?' GIÀU':'')+' +'+Math.round(m.income*60)+'/PHÚT';ctx.lineWidth=3;ctx.strokeStyle='#f1f8da';ctx.strokeText((m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+mineLabel,m.x,m.y+34);ctx.fillStyle=labelColor;ctx.fillText((m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+mineLabel,m.x,m.y+34);
+  // Label at least 12 px on screen in the owner's light colour (cream when neutral), queued above the scenery; hidden when
+  // zoomed far out, where the flag label already names the region's resource.
+  if(viewScale>=MAP_LABEL_MIN_SCALE){const text=(m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+MINE_TYPES[m.resource].label+' +'+Math.round(m.income*60)+'/PHÚT';queueMapLabel(m.x,m.y,()=>mapText(text,m.x,m.y+34,11,800,m.owner>=0?TEAM_COLORS[m.owner].light:THEME['text-main']));}
   });
  }
  // Show friendly integrated cannon coverage while the unified fortress is selected.
@@ -69,8 +73,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
   if(!base.guns[index].active)continue;const pos=fortressGunPosition(base,index);ctx.save();ctx.beginPath();ctx.arc(pos.x,pos.y,190,0,Math.PI*2);ctx.fillStyle='rgba(76,166,255,0.08)';ctx.fill();ctx.strokeStyle='rgba(106,190,255,0.58)';ctx.lineWidth=2;ctx.setLineDash([9,6]);ctx.stroke();ctx.setLineDash([]);ctx.restore();
  }}
  // Depth-sort decorative scenery and game actors on world Y so units can pass in front of or behind trees.
- const sceneActors=[],enqueue=(y,draw)=>sceneActors.push({y,draw}),leftWorld=camX-260,topWorld=camY-260,rightWorld=camX+VIEW_W/viewScale+260,bottomWorld=camY+VIEW_H/viewScale+260;
- const inView=o=>o.x>=leftWorld&&o.x<=rightWorld&&o.y>=topWorld&&o.y<=bottomWorld;
+ const sceneActors=[],enqueue=(y,draw)=>sceneActors.push({y,draw});
  // Zoomed far out (below DECOR_LAYER_SCALE) scenery comes from one cached layer; closer in, each item is depth-sorted
  // with units so they can walk in front of or behind trees.
  if(viewScale<DECOR_LAYER_SCALE)ctx.drawImage(decorLayerCanvas(),0,0,W,H);
@@ -80,19 +83,21 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
   for(const item of rockDecor)if(inView(item))enqueue(item.y+(item.kind==='stone'?4:18),()=>drawDecor(item));
   for(const item of shoreDecor)if(inView(item))enqueue(item.y,()=>drawDecor(item));
  }
- for(const b of state.bases){if(b.team!==localTeam()&&!currentlyVisible(b.x,b.y))continue;drawMusterYard(b);enqueue(b.y+106,()=>drawBase(b));}
- for(const r of state.regions){if(!r.cp||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(r));}
- for(const b of state.buildings){if(b.team!==localTeam()&&!currentlyVisible(b.x,b.y))continue;enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));}
+ for(const b of state.bases){if(!inView(b)||(b.team!==localTeam()&&!currentlyVisible(b.x,b.y)))continue;drawMusterYard(b);enqueue(b.y+106,()=>drawBase(b));}
+ for(const r of state.regions){if(!r.cp||!inView(r.cp)||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(r));}
+ for(const b of state.buildings){if(!inView(b)||(b.team!==localTeam()&&!currentlyVisible(b.x,b.y)))continue;enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));}
  for(const g of state.guards){if(g.hp<=0||!currentlyVisible(g.x,g.y))continue;enqueue(g.y+9,()=>drawUprightAt(g.x,g.y,()=>{ctx.fillStyle='#24412f45';ctx.beginPath();ctx.ellipse(g.x+2,g.y+8,14,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d4ba9';ctx.beginPath();ctx.arc(g.x,g.y,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#eed8ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#f9ecff';ctx.beginPath();ctx.arc(g.x-3,g.y-2,2.2,0,Math.PI*2);ctx.arc(g.x+3,g.y-2,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#26152f';ctx.fillRect(g.x-11,g.y-16,22,4);ctx.fillStyle='#ef5350';ctx.fillRect(g.x-10,g.y-15,20*Math.max(0,g.hp/g.max),2);}));}
- for(const u of state.units){if(u.team!==localTeam()&&!currentlyVisible(u.x,u.y))continue;enqueue(u.y+unitTargetHeight(u.type)*.48,()=>drawUnit(u));}
+ for(const u of state.units){if(!inView(u)||(u.team!==localTeam()&&!currentlyVisible(u.x,u.y)))continue;enqueue(u.y+unitTargetHeight(u.type)*.48,()=>drawUnit(u));}
  sceneActors.sort((a,b)=>a.y-b.y);for(const actor of sceneActors)actor.draw();
+ // Labels and building health bars queued during the scene, above every sprite.
+ flushMapLabels();
  // Health bars are a separate foreground UI layer so canopies never obscure unit status.
- for(const u of state.units)if(u.hp>0&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitHealthBar(u);
+ for(const u of state.units)if(u.hp>0&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitHealthBar(u);
  // Selection rings remain legible above canopy sprites, while the actor itself still respects Y-depth.
- for(const u of state.units)if((selected===u||u.selected)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
+ for(const u of state.units)if((selected===u||u.selected)&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
  // Projectiles and effects stay on their own foreground layer.
- for(const b of state.bullets){drawUprightAt(b.x,b.y,()=>{ctx.strokeStyle=b.team===0?'#a8e2ff':'#ffadb0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-5,b.y+3);ctx.stroke();});}
- for(const e of state.effects){drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
+ for(const b of state.bullets){if(!inView(b))continue;drawUprightAt(b.x,b.y,()=>{ctx.strokeStyle=b.team===0?'#a8e2ff':'#ffadb0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-5,b.y+3);ctx.stroke();});}
+ for(const e of state.effects){if(!inView(e))continue;drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
  drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');

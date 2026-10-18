@@ -4,8 +4,9 @@ import { ctx, drawUprightAt, zoom } from '../core/view';
 import { TILE_SIZE } from '../config/map';
 import { selectedFlag } from '../core/game';
 import { FLAG_CAPTURE_RADIUS_TILES, FLAG_DECAY_DELAY_SECONDS } from '../config/balance';
-import { FLAG_COLORS, FLAG_LABEL_MIN_PX, FLAG_MIN_SCREEN_ZOOM, FLAG_RING_PX, RESOURCE_ICONS, TERRITORY_COLORS, TERRITORY_GLOW, TERRITORY_GLOW_PX } from '../config/visuals';
+import { FLAG_COLORS, FLAG_LABEL_MIN_PX, FLAG_MIN_SCREEN_ZOOM, FLAG_SHORT_LABEL_ZOOM, FLAG_RING_PX, RESOURCE_ICONS, TERRITORY_COLORS, TERRITORY_GLOW, TERRITORY_GLOW_PX } from '../config/visuals';
 import { regionLabel } from '../map/regions';
+import { TEAM_COLORS, THEME } from '../config/theme';
 import { captureStage } from '../sim/territory';
 
 export function flagScale(){return Math.max(1,FLAG_MIN_SCREEN_ZOOM/zoom);}
@@ -42,13 +43,14 @@ export function drawFlag(r){
   // Two-stage bar for enemy flags: left half = stage 1 (lower), right half = stage 2 (capture), with a divider.
   const stage=captureStage(r),overall=stage===1?r.cap/2:stage===2?.5+r.cap/2:r.cap;
   if(r.cap>0||r.contested){ctx.fillStyle='#111827';ctx.fillRect(-56,26,112,10);ctx.fillStyle=r.contested?'#ff9f43':r.idle>=FLAG_DECAY_DELAY_SECONDS?'#9aa3ad':FLAG_COLORS[r.capTeam]?.main||'#ccc';ctx.fillRect(-55,27,110*overall,8);if(stage){ctx.fillStyle='#fff';ctx.fillRect(-1,24,2,14);}}
-  // Two short lines: owner and region, then the capture status.
-  const owner=r.owner===0?'XANH':r.owner===1?'ĐỎ':'TRUNG LẬP',pct=Math.round(r.cap*100)+'%';
-  const status=r.contested?'TRANH CHẤP':r.cap<=0?'':(stage===1?'GĐ 1/2 · HẠ CỜ '+pct:stage===2?'GĐ 2/2 · CHIẾM '+pct:'ĐANG CHIẾM '+pct)+(r.idle>=FLAG_DECAY_DELAY_SECONDS?' · ĐANG GIẢM':'');
-  // Text keeps at least FLAG_LABEL_MIN_PX on screen.
+  // Two short lines: owner and region, then the capture status; both shortened when zoomed far out (FLAG_SHORT_LABEL_ZOOM).
+  const short=zoom<FLAG_SHORT_LABEL_ZOOM,owner=r.owner===0?'XANH':r.owner===1?'ĐỎ':'TRUNG LẬP',pct=Math.round(r.cap*100)+'%';
+  const status=r.contested?'TRANH CHẤP':r.cap<=0?'':short?pct:(stage===1?'GĐ 1/2 · HẠ CỜ '+pct:stage===2?'GĐ 2/2 · CHIẾM '+pct:'ĐANG CHIẾM '+pct)+(r.idle>=FLAG_DECAY_DELAY_SECONDS?' · ĐANG GIẢM':'');
+  const name=(short?'':'CỜ '+owner+' · ')+regionLabel(r).toUpperCase();
+  // Text keeps at least FLAG_LABEL_MIN_PX on screen; colours from the design tokens.
   const fs=Math.max(13,FLAG_LABEL_MIN_PX/(s*zoom));
-  ctx.font=`900 ${fs}px system-ui`;ctx.textBaseline='alphabetic';ctx.lineWidth=fs*.3;ctx.strokeStyle='#1c2a22';ctx.fillStyle=r.owner===0?'#bfe2ff':r.owner===1?'#ffd0cc':'#fff8e0';
-  for(const [text,ty] of [['CỜ '+owner+' · '+regionLabel(r).toUpperCase(),40+fs*1.1],[status,40+fs*2.3]])if(text){ctx.strokeText(text,0,ty);ctx.fillText(text,0,ty);}
+  ctx.font=`900 ${fs}px ${THEME['font-ui']}`;ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.lineWidth=fs*.3;ctx.strokeStyle=THEME['text-on-map-stroke'];ctx.fillStyle=r.owner>=0?TEAM_COLORS[r.owner].light:THEME['text-main'];
+  for(const [text,ty] of [[name,40+fs*1.1],[status,40+fs*2.3]])if(text){ctx.strokeText(text,0,ty);ctx.fillText(text,0,ty);}
   if(selectedHere){ctx.strokeStyle='#fff4a8';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.beginPath();ctx.ellipse(0,0,66,26,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
   ctx.restore();
  });

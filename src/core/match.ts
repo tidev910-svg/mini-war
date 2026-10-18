@@ -24,6 +24,7 @@ export let last=0;
 export let aiTimer=0,incomeTimer=0;
 export let lastHudSecond=-1,pendingSpawnRetryTimer=0;
 export let snapshotClock=0;
+const HUD_REFRESH_MS=100;let hudRefreshedAt=-Infinity;
 export function fresh(){
  endPlacement();setSuppressNextCanvasClick(false);setSelectedFortress(null);setSelectedBuilding(null);setSelectedFlag(null);
  // Random fortresses anywhere on the map, at least BASE_MIN_SEPARATION of the map width apart, with their regions, mines
@@ -118,7 +119,7 @@ export function update(dt){
   }
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
-  if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY);
+  if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY,u.facing);
   else if(target&&dist(u,target)<=s.range+(target.type?specs[target.type].r:target.w?35:10))u.facing=facingFrom(target.x-u.x,target.y-u.y);
  }
  // bullets track moving target
@@ -173,6 +174,7 @@ export function update(dt){
   const radiusSq=source.r*source.r;for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){const dx=(gx+.5)*cellW-source.x,dy=(gy+.5)*cellH-source.y;if(dx*dx+dy*dy<=radiusSq)state.fogSeen[gy*cols+gx]=1;}
  }
  for(const e of state.effects)e.life-=dt;state.effects=state.effects.filter(e=>e.life>0);
- updateHUD();
+ // The HUD refreshes at most every HUD_REFRESH_MS from the frame loop (actions still call updateHUD() at once).
+ const now=performance.now();if(now-hudRefreshedAt>=HUD_REFRESH_MS){hudRefreshedAt=now;updateHUD();}
 }
 export function loop(ts){if(!last)last=ts;let dt=Math.min((ts-last)/1000,.05);last=ts;update(dt);if(mode==='pvp'&&netRole==='host'&&gameStarted){snapshotClock+=dt;if(snapshotClock>=.18){snapshotClock=0;sendSnapshot();}}draw();requestAnimationFrame(loop);}
