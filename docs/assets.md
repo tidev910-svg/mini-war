@@ -5,6 +5,7 @@
 ## Hai nơi chứa ảnh
 | Thư mục | Chứa gì | Có trong bản build? |
 |---|---|---|
+| `public/assets/audio/` | Âm thanh game tải thật (`.ogg`, Kenney CC0, đã đổi tên theo vai trò: `ui/`, `order/`, `combat/`, `event/`; giấy phép trong `LICENSE.txt`). Bảng tên ↔ file: `SOUNDS` trong `src/config/audio.ts` | Có |
 | `public/assets/units/<quân>/` | Ảnh **game tải thật** (spritesheet đã xử lý). Đường dẫn trong code: `/assets/units/<quân>/...` | Có: Vite copy nguyên `public/` vào `dist/` |
 | `art/units/<quân>/` | Ảnh **nguồn**: tham chiếu, ảnh AI tạo, bản cũ | Không |
 

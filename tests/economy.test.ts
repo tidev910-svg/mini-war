@@ -1,38 +1,44 @@
 // @ts-nocheck
-// Fortress income, mine rates and the training queue (docs/features/economy.md, units.md).
+// Economy & queue V2: fortress income, territory and farm rates, parallel training lanes and buying lanes
+// (docs/features/economy.md, units.md). Numbers are the V2 values; lane prices are provisional (QUEUE_LANE_UPGRADES).
 import { describe, it, expect, beforeAll } from 'vitest';
 import { loadGame, quietMatch } from './helpers/game';
 
 let g;
 beforeAll(async () => { g = await loadGame(); });
 const step = (seconds, dt = 0.05) => { for (let k = 0; k < Math.round(seconds / dt); k++) g.update(dt); };
+const zero = () => ({ food: 0, wood: 0, stone: 0, gold: 0 });
+const neutralAll = state => { for (const r of state.regions) if (r.home == null) r.owner = -1; };
 
-describe('income', () => {
-  it('pays 25 food, 20 wood, 8 stone, 8 gold per minute per fortress with no territory', () => {
-    const state = quietMatch(g);
-    state.resources = [{ food: 0, wood: 0, stone: 0, gold: 0 }, { food: 0, wood: 0, stone: 0, gold: 0 }];
+describe('income (V2)', () => {
+  it('pays 80 food, 50 wood, 15 stone, 20 gold per minute per fortress with no territory', () => {
+    const state = quietMatch(g); neutralAll(state);
+    state.resources = [zero(), zero()];
     step(120);
     for (const res of state.resources) {
-      expect(res.food).toBeCloseTo(50, 1);
-      expect(res.wood).toBeCloseTo(40, 1);
-      expect(res.stone).toBeCloseTo(16, 1);
-      expect(res.gold).toBeCloseTo(16, 1);
+      expect(res.food).toBeCloseTo(160, 1);
+      expect(res.wood).toBeCloseTo(100, 1);
+      expect(res.stone).toBeCloseTo(30, 1);
+      expect(res.gold).toBeCloseTo(40, 1);
     }
-    expect(g.foodPerMinute(0)).toBe(25);
+    expect(g.foodPerMinute(0)).toBe(80);
   });
 
-  it('pays a held mine to its owner only', () => {
-    const state = quietMatch(g);
-    const mine = state.mines.find(m => m.resource === 'stone'), region = state.regions[mine.regionId];
-    region.owner = 0;
-    const before = state.resources.map(r => r.stone);
+  it('a held wood region adds 100 wood/min to its owner only, and moves fully when the flag changes hands', () => {
+    const state = quietMatch(g); neutralAll(state);
+    const region = state.regions[state.mines.find(m => m.resource === 'wood').regionId];
+    region.owner = 0; state.resources = [zero(), zero()];
     step(60);
-    expect(state.resources[0].stone - before[0]).toBeCloseTo(8 + 20, 0);
-    expect(state.resources[1].stone - before[1]).toBeCloseTo(8, 0);
+    expect(state.resources[0].wood).toBeCloseTo(50 + 100, 0);
+    expect(state.resources[1].wood).toBeCloseTo(50, 0);
+    region.owner = 1; state.resources = [zero(), zero()];
+    step(60);
+    expect(state.resources[0].wood).toBeCloseTo(50, 0);
+    expect(state.resources[1].wood).toBeCloseTo(50 + 100, 0);
   });
 
-  it('gives every territory of a type the same fixed rate (no rich mines)', () => {
-    const rates = { food: 25, wood: 30, stone: 20, gold: 20 };
+  it('gives every territory of a type the same rate: 100 food, 100 wood, 40 stone, 70 gold per minute', () => {
+    const rates = { food: 100, wood: 100, stone: 40, gold: 70 };
     for (let k = 0; k < 5; k++) {
       const state = quietMatch(g);
       const flags = state.regions.filter(r => r.cp);
@@ -45,7 +51,7 @@ describe('income', () => {
     }
   });
 
-  it('matches the document example: 2 wood, 1 stone, 1 gold territories give 25 / 80 / 28 / 28 per minute', () => {
+  it('adds up: 2 wood, 1 stone, 1 gold territories give 80 / 250 / 55 / 90 per minute', () => {
     let state, owned = [];
     for (let k = 0; k < 20 && owned.length < 4; k++) {
       state = quietMatch(g);
@@ -53,47 +59,86 @@ describe('income', () => {
       owned = [...pick('wood', 2), ...pick('stone', 1), ...pick('gold', 1)];
     }
     expect(owned).toHaveLength(4);
-    for (const r of state.regions) if (r.home == null) r.owner = -1;
+    neutralAll(state);
     for (const m of owned) state.regions[m.regionId].owner = 0;
-    state.resources[0] = { food: 0, wood: 0, stone: 0, gold: 0 };
+    state.resources[0] = zero();
     step(60);
     const res = state.resources[0];
-    expect(res.food).toBeCloseTo(25, 0); expect(res.wood).toBeCloseTo(80, 0);
-    expect(res.stone).toBeCloseTo(28, 0); expect(res.gold).toBeCloseTo(28, 0);
+    expect(res.food).toBeCloseTo(80, 0); expect(res.wood).toBeCloseTo(250, 0);
+    expect(res.stone).toBeCloseTo(55, 0); expect(res.gold).toBeCloseTo(90, 0);
   });
 
-  it('uses the v1 mine rates', () => {
-    expect(g.MINE_TYPES.food.perSecond * 60).toBeCloseTo(25);
-    expect(g.MINE_TYPES.wood.perSecond * 60).toBeCloseTo(30);
-    expect(g.MINE_TYPES.stone.perSecond * 60).toBeCloseTo(20);
-    expect(g.MINE_TYPES.gold.perSecond * 60).toBeCloseTo(20);
+  it('a working farm adds 60 food/min after its 3-second build', () => {
+    const state = quietMatch(g); neutralAll(state);
+    state.resources[0] = { food: 0, wood: 500, stone: 0, gold: 0 };
+    const b = state.bases[0], spot = g.findBuildSpot(0, 'farm', b.x, b.y, 150, 600);
+    const farm = g.placeBuilding(0, 'farm', spot.x, spot.y);
+    expect(state.resources[0].wood).toBe(400);
+    step(3.05);
+    expect(farm.progress).toBe(1);
+    const inFoodRegion = g.regionAt(farm.x, farm.y)?.resource === 'food' && g.regionAt(farm.x, farm.y)?.owner === 0;
+    expect(g.foodPerMinute(0)).toBeCloseTo(80 + 60 * (inFoodRegion ? 1.25 : 1));
   });
 });
 
-describe('training queue', () => {
-  it('charges when queued and deploys after the training time, one unit at a time', () => {
+describe('training lanes (V2)', () => {
+  it('starts each side with 4 lanes that train in parallel', () => {
     const state = quietMatch(g);
+    expect(g.lanesOf(0)).toBe(4); expect(g.lanesOf(1)).toBe(4);
     state.resources[0] = { food: 2000, wood: 2000, stone: 0, gold: 2000 };
     const count = () => state.units.filter(u => u.team === 0).length;
-    g.buy('infantry', 0);
-    expect(state.resources[0].food).toBe(2000 - 45);
-    expect(state.resources[0].gold).toBe(2000);
+    for (let i = 0; i < 4; i++) g.buy('infantry', 0);
+    expect(state.resources[0].food).toBe(2000 - 4 * 45);
     step(4.9); expect(count()).toBe(0);
-    step(0.1); expect(count()).toBe(1);
-    g.buy('spearman', 0); g.buy('archer', 0);
-    step(6); expect(count()).toBe(2);
-    step(7.9); expect(count()).toBe(2);
-    step(0.1); expect(count()).toBe(3);
+    step(0.15); expect(count()).toBe(4);
   });
 
-  it('holds at most TRAIN_QUEUE_MAX units and counts queued scouts toward the limit of 2', () => {
+  it('a fifth unit waits for a free lane; capacity is lanes + 4 waiting', () => {
     const state = quietMatch(g);
     state.resources[0] = { food: 5000, wood: 5000, stone: 0, gold: 5000 };
-    for (let i = 0; i < 7; i++) g.buy('infantry', 0);
-    expect(g.trainQueueOf(0)).toHaveLength(g.TRAIN_QUEUE_MAX);
+    for (let i = 0; i < 9; i++) g.buy('infantry', 0);
+    expect(g.trainQueueOf(0)).toHaveLength(4 + g.TRAIN_QUEUE_WAITING);
     expect(g.buyProblem('infantry', 0)).toMatch(/đầy/);
+    step(5.05);
+    expect(state.units.filter(u => u.team === 0)).toHaveLength(4);
+    expect(g.trainQueueOf(0)).toHaveLength(4);
     state.trainQueue = [];
     g.buy('scout', 0); g.buy('scout', 0);
     expect(g.buyProblem('scout', 0)).toMatch(/tối đa 2 lính trinh sát/);
+  });
+
+  it('opening lane 5 without enough resources changes nothing', () => {
+    const state = quietMatch(g);
+    state.resources[0] = { food: 0, wood: 199, stone: 100, gold: 0 };
+    expect(g.buyQueueLane(0)).toBe(false);
+    expect(state.resources[0]).toEqual({ food: 0, wood: 199, stone: 100, gold: 0 });
+    expect(g.laneUpgradeOf(0)).toBeNull();
+    expect(g.lanesOf(0)).toBe(4);
+  });
+
+  it('opening lane 5 charges once, takes 15 s, and does not reset units in training', () => {
+    const state = quietMatch(g);
+    state.resources[0] = { food: 1000, wood: 1000, stone: 1000, gold: 1000 };
+    g.buy('cavalry', 0); // 12 s
+    step(2);
+    const before = { ...state.resources[0] };
+    expect(g.buyQueueLane(0)).toBe(true);
+    expect(state.resources[0].wood).toBe(before.wood - 200); expect(state.resources[0].stone).toBe(before.stone - 100);
+    expect(state.resources[0].gold).toBe(before.gold);
+    expect(g.buyQueueLane(0)).toBe(false); // already opening: nothing charged again
+    expect(state.resources[0].wood).toBe(before.wood - 200);
+    const left = g.trainQueueOf(0)[0].left;
+    expect(left).toBeCloseTo(10, 1);
+    step(14.9); expect(g.lanesOf(0)).toBe(4);
+    step(0.15); expect(g.lanesOf(0)).toBe(5); expect(g.laneUpgradeOf(0)).toBeNull();
+    expect(state.units.filter(u => u.team === 0 && u.type === 'cavalry')).toHaveLength(1);
+    expect(g.nextLaneOffer(0)).toMatchObject({ lane: 6, cost: { wood: 350, stone: 150, gold: 50 }, seconds: 20 });
+  });
+
+  it('never blocks training because of the army size', () => {
+    const state = quietMatch(g);
+    state.resources[0] = { food: 5000, wood: 5000, stone: 0, gold: 5000 };
+    for (let i = 0; i < 160; i++) state.units.push({ id: 10000 + i, team: 0, type: 'infantry', hp: 100, max: 100, x: 0, y: 0 });
+    expect(g.buyProblem('infantry', 0)).toBe('');
   });
 });

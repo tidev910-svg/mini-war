@@ -86,6 +86,28 @@ describe('findPath', () => {
   });
 });
 
+describe('map edge', () => {
+  it('never routes through the outer ring of tiles (outside the box units are kept in)', () => {
+    const n = N();
+    for (let i = 0; i < n; i++) for (const t of [i, (n - 1) * n + i, i * n, i * n + n - 1]) expect(g.walkable[t]).toBe(0);
+  });
+  it('a unit sent along the top edge arrives instead of chasing an unreachable waypoint', () => {
+    const state = quietMatch(g);
+    state.fogSeen.fill(1);
+    // Find a stretch of open ground in the second tile row, and send a unit from one end to the other.
+    const n = N(), row = 1; let a = -1, b = -1;
+    for (let x = 2; x < n - 2; x++) { if (g.walkable[row * n + x] && g.walkable[(row + 1) * n + x]) { if (a < 0) a = x; b = x; if (b - a > 12) break; } else a = -1; }
+    expect(b - a).toBeGreaterThan(12);
+    const u = g.spawn(0, 'infantry'); u.x = (a + 0.5) * T(); u.y = g.MOVE_BOUNDS.top;
+    const goal = { x: (b + 0.5) * T(), y: 5 }; // asked for a point beyond the top limit
+    g.applyAction(0, 'move', { ids: [u.id], x: goal.x, y: goal.y });
+    for (let k = 0; k < 20 * 60 && u.order === 'move'; k++) g.update(0.05);
+    expect(u.order).toBe('hold');
+    expect(Math.abs(u.x - goal.x)).toBeLessThan(T() * 2);
+    expect(u.y).toBeGreaterThanOrEqual(g.MOVE_BOUNDS.top);
+  });
+});
+
 describe('units', () => {
   it('walk a move order across the river without ever standing on water or rock', () => {
     const state = quietMatch(g);

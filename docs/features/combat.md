@@ -31,7 +31,7 @@ Di chuyển khi có mục tiêu ngoài tầm: chỉ đuổi nếu `order==='atta
 
 Chết: `hurt()` xoá quân khỏi `state.units` khi HP ≤ 0; pháo đài HP ≤ 0 gọi `finish()`.
 
-**Hiển thị quân chết** (2026-10-18; chỉ để vẽ, không đổi luật): `hurt()` thêm hiệu ứng `{kind: 'fall', type, team, facing, x, y, life, max}` vào `state.effects` khi quân chết (sprite ngã rồi mờ, `UNIT_ANIM.fallSeconds` = 1,4 giây). Xem [rendering.md](rendering.md).
+**Hiển thị & âm thanh** (2026-10-18; không đổi luật): hiệu ứng trúng đòn mang `id` và `src` (loại quân ra đòn, `'gun'`, `'guard'`), đạn mang `id`, để âm thanh phát đúng một lần ([audio.md](audio.md)). Quân chết: `hurt()` thêm hiệu ứng `{kind: 'fall', type, team, facing, x, y, life, max}` vào `state.effects` khi quân chết (sprite ngã rồi mờ, `UNIT_ANIM.fallSeconds` = 1,4 giây). Xem [rendering.md](rendering.md).
 
 ## Code liên quan
 - [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.

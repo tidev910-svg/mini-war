@@ -58,6 +58,7 @@ Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 - [ ] AI không nhắm quân xanh đang trong sương mù của nó.
 
 ## Giới hạn / việc tồn đọng
+- Kinh tế & hàng đợi V2 (2026-10-18): AI dùng cùng 4 hàng đợi song song nhưng vẫn tự giới hạn 2 quân trong hàng đợi và chưa biết mua thêm hàng đợi (không đổi hành vi AI theo yêu cầu V2).
 - AI phát triển chậm (gỗ là nút thắt) và chưa tổ chức tấn công có chủ đích; quân chỉ đánh khi gặp địch hoặc khi đi tới mỏ vùng xanh.
 - AI chỉ nhắm cờ ở chỗ đã khám phá; nếu trinh sát chết sớm, AI mở rộng chậm. Nhóm chiếm cờ và thợ xây là quân chiến đấu bị rút khỏi đội hình. AI không tự xoá tiến độ dở của địch ở cờ mình nếu không có quân đứng đó.
 - `enemyMemory` được ghi nhưng chưa được dùng để ra quyết định tấn công; `aiExploreTarget` chưa dùng.

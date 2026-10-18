@@ -5,6 +5,8 @@ import { $, addLog, ended, localSelectedIds, localTeam, paused, placement, selec
 import { MAX_ZOOM, MIN_ZOOM, VIEW_H, VIEW_W, camX, camY, canvas, centerCameraAt, clampCamera, setCamX, setCamY, setZoom, worldToCanvas, zoom } from '../core/view';
 import { specs } from '../config/balance';
 import { requestAction } from '../core/actions';
+import { setSetting, settings } from '../core/settings';
+import { playSound } from '../audio/sound';
 import { requestBuy } from '../sim/units';
 import { endPlacement } from './input';
 import { closeMenu, closePanels, menuOpen, openPanel, openPanelName, togglePanel } from './panels';
@@ -31,6 +33,7 @@ export const HOTKEYS = [
   ['Space', 'Đưa camera tới quân đang chọn (không chọn gì: tới pháo đài)'],
   ['Mũi tên / + −', 'Cuộn bản đồ (Shift: nhanh gấp đôi) / phóng to, thu nhỏ'],
   ['T', 'Ẩn/hiện ranh giới vùng (khi không dùng làm phím huấn luyện/xây)'],
+  ['M', 'Bật / tắt âm thanh'],
   ['F3 · Pause', 'Tạm dừng / tiếp tục'],
   ['F1', 'Mở hướng dẫn'],
   ['Enter (ở sảnh)', 'Vào trận với AI'],
@@ -103,7 +106,7 @@ document.addEventListener('keydown', e => {
   // Camera keys work anywhere (not only with the canvas focused).
   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-', '_'].includes(key)) {
     e.preventDefault();
-    const step = (e.shiftKey ? 360 : 180) / zoom;
+    const step = (e.shiftKey ? 360 : 180) * settings.scrollSpeed / zoom;
     if (key === '+' || key === '=') setZoom(Math.min(MAX_ZOOM, zoom * 1.15));
     if (key === '-' || key === '_') setZoom(Math.max(MIN_ZOOM, zoom / 1.15));
     if (key === 'ArrowLeft') setCamX(camX - step); if (key === 'ArrowRight') setCamX(camX + step);
@@ -134,7 +137,8 @@ document.addEventListener('keydown', e => {
     case 'h': selectFortress(); break;
     case 'b': togglePanel('build'); break;
     case ',': nextIdle(); break;
-    case 'a': if (ids.length) requestAction('attack', { ids }); break;
+    case 'a': if (ids.length) { playSound('order.attack'); requestAction('attack', { ids }); } break;
+    case 'm': setSetting('muted', !settings.muted); addLog(settings.muted ? 'Đã tắt âm thanh (M để bật lại).' : 'Đã bật âm thanh.'); break;
     case 's': if (ids.length) { requestAction('stop', { ids }); addLog(`${ids.length} quân dừng lại.`); } break;
     case 'Delete': if (ids.length) requestAction('delete', { ids }); break;
     case ' ': e.preventDefault(); { const sel = chosen(); if (sel.length) centerOn(sel); else { const b = state.bases.find(v => v.team === localTeam()); if (b) centerCameraAt(b.x, b.y); } } break;

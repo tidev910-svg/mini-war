@@ -12,7 +12,7 @@ Nông trại là công trình sinh **lúa** — nguồn lúa chính để tuyể
 | Thời gian mở khoá (xây) | 3 giây, tính từ lúc thả nông trại vào chỗ hợp lệ (20 giây → 5 giây → 3 giây, cùng ngày 2026-10-17) | `BUILDING_TYPES.farm.buildTime` |
 | Máu | 180 | `BUILDING_TYPES.farm.hp` |
 | Footprint logic | 62 × 68 (nửa: 31 × 34) | `halfW`, `halfH` |
-| Sản lượng | cấp 1: 20 · cấp 2: 30 · cấp 3: 45 lúa/phút (chỉ khi đã xây xong) | `FARM_LEVELS` |
+| Sản lượng | cấp 1: 20 · cấp 2: 30 · cấp 3: 135 lúa/phút (chỉ khi đã xây xong) | `FARM_LEVELS` |
 | Thưởng vùng lúa | +25% khi nông trại nằm trong vùng lúa do phe mình giữ (cấp 1: 25, cấp 2: 37,5, cấp 3: 56,25); nông trại vẫn xây được ở chỗ khác | `FOOD_REGION_FARM_BONUS`, `farmFoodPerMinute()` |
 | Nâng cấp | cấp 2: 80 gỗ + 40 đá · cấp 3: 120 gỗ + 80 đá · 15 giây mỗi lần | `FARM_LEVELS`, `FARM_UPGRADE_SECONDS` |
 | Nơi đặt | Bất kỳ đâu đã khám phá (`where: 'explored'`), không cần lãnh thổ | — |
@@ -43,7 +43,7 @@ Nút "Nâng cấp nông trại": nếu đang chọn một nông trại của mì
 - [ ] Đặt trên vùng sương mù / nước / đá / sân tập kết / đè quân → bị chặn, có lý do, không trừ gỗ.
 - [ ] Đặt hợp lệ → −100 gỗ; đúng 3 giây sau lúa ròng tăng 20/phút.
 - [ ] Nông trại không đặt được sát cột cờ (< 2,5 ô) — "Quá sát cột cờ."
-- [ ] Nâng cấp 2 lần → 45 lúa/phút; nút nâng cấp báo hết khi đã cấp 3.
+- [ ] Nâng cấp 2 lần → 135 lúa/phút; nút nâng cấp báo hết khi đã cấp 3.
 - [ ] Kéo nông trại sang chỗ hợp lệ / không hợp lệ.
 - [ ] PvP: guest đặt, nâng cấp và kéo nông trại; host thấy đúng.
 

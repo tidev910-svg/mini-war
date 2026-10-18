@@ -4,20 +4,20 @@
 
 ## Mô tả
 Bốn tài nguyên: **lúa, gỗ, đá, vàng**. Ba nguồn thu cộng dồn:
-- **Pháo đài:** luôn sinh 25 lúa, 20 gỗ, 8 đá, 8 vàng mỗi phút từ giây đầu tiên, kể cả khi không có lãnh thổ. Không tăng theo thời gian. Mất hết đất mà còn pháo đài thì vẫn tuyển được lính bộ để phản công.
+- **Pháo đài:** luôn sinh 80 lúa, 50 gỗ, 15 đá, 20 vàng mỗi phút từ giây đầu tiên, kể cả khi không có lãnh thổ (kinh tế V2). Không tăng theo thời gian. Mất hết đất mà còn pháo đài thì vẫn tuyển được quân để phản công.
 - **Nông trại:** sinh lúa.
 - **Mỏ:** mỗi vùng có cờ có một mỏ cùng loại, chỉ sinh cho phe đang giữ vùng (xem [territory.md](territory.md)). Vùng nhà **không có mỏ**: thu nhập pháo đài thay cho mỏ gỗ cũ của vùng nhà, nên không bị cộng trùng.
 
-Nguồn: "Đề xuất cân bằng kinh tế và quân đội" (17/10/2026) và "Cơ chế sinh tài nguyên lãnh thổ" (18/10/2026), bản thử nghiệm v1. Các con số còn phải kiểm chứng bằng playtest.
+Nguồn: **"Yêu cầu sửa đổi V2 — chỉ sửa kinh tế và hàng đợi"** (18/10/2026), thay cho các mức v1 trước đó ("Đề xuất cân bằng kinh tế và quân đội" 17/10, "Cơ chế sinh tài nguyên lãnh thổ" 18/10).
 
-**Công thức thu nhập mỗi phút** (khớp tài liệu 18/10, cộng thêm phần nông trại đã chốt riêng):
+**Công thức thu nhập mỗi phút (V2)**: thu nhập ròng = nhà chính + lãnh thổ đang giữ + công trình − tiêu thụ (lúa nuôi quân chỉ trừ vào lúa).
 ```text
-Lúa  = 25 (nhà chính) + 25 × số vùng lúa đang giữ + Σ nông trại (20/30/45 theo cấp, +25% nếu trong vùng lúa của mình) − lúa nuôi quân
-Gỗ   = 20 (nhà chính) + 30 × số vùng gỗ đang giữ
-Đá   =  8 (nhà chính) + 20 × số vùng đá đang giữ
-Vàng =  8 (nhà chính) + 20 × số vùng vàng đang giữ
+Lúa  = 80 (nhà chính) + 100 × số vùng lúa đang giữ + Σ nông trại (60/90/135 theo cấp, +25% nếu trong vùng lúa của mình) − lúa nuôi quân
+Gỗ   = 50 (nhà chính) + 100 × số vùng gỗ đang giữ
+Đá   = 15 (nhà chính) +  40 × số vùng đá đang giữ
+Vàng = 20 (nhà chính) +  70 × số vùng vàng đang giữ
 ```
-Ví dụ: giữ 2 vùng gỗ, 1 vùng đá, 1 vùng vàng, không nông trại, không quân → 25 lúa, 80 gỗ, 28 đá, 28 vàng mỗi phút.
+Ví dụ: giữ 2 vùng gỗ, 1 vùng đá, 1 vùng vàng, không nông trại, không quân → 80 lúa, 250 gỗ, 55 đá, 90 vàng mỗi phút.
 
 Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **thiếu tiếp tế**. Thiết kế đầy đủ: [resource-system.md](resource-system.md).
 
@@ -25,17 +25,17 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
 | Tài nguyên ban đầu mỗi phe | 150 lúa, 400 gỗ, 50 đá, 50 vàng | `STARTING_RESOURCES` |
-| Thu nhập pháo đài | 25 lúa, 20 gỗ, 8 đá, 8 vàng mỗi phút cho mỗi pháo đài còn đứng | `FORTRESS_INCOME_PER_MINUTE` |
-| Nông trại | +20/30/45 lúa/phút theo cấp, chỉ khi đã xây xong | `FARM_LEVELS`, xem [farms.md](farms.md) |
+| Thu nhập pháo đài | 80 lúa, 50 gỗ, 15 đá, 20 vàng mỗi phút cho mỗi pháo đài còn đứng | `FORTRESS_INCOME_PER_MINUTE` |
+| Nông trại | +60/90/135 lúa/phút theo cấp, chỉ khi đã xây xong (V2: cấp 1 = 60; cấp 2/3 nhân cùng hệ số ×3, chờ xác nhận) | `FARM_LEVELS`, xem [farms.md](farms.md) |
 | Chu kỳ cộng thu nhập | Mỗi 1 giây (`incomeTimer`) | `update()` |
 
 **Loại mỏ** (`MINE_TYPES`):
 | `resource` | Sản lượng | Nhãn trên bản đồ |
 |---|---:|---|
-| `food` | 25 lúa/phút; nông trại của chủ vùng trong vùng lúa +25% | MỎ LÚA +25/PHÚT |
-| `wood` | 30 gỗ/phút | MỎ GỖ +30/PHÚT |
-| `stone` | 20 đá/phút | MỎ ĐÁ +20/PHÚT |
-| `gold` | 20 vàng/phút | MỎ VÀNG +20/PHÚT |
+| `food` | 100 lúa/phút; nông trại của chủ vùng trong vùng lúa +25% | MỎ LÚA +100/PHÚT |
+| `wood` | 100 gỗ/phút | MỎ GỖ +100/PHÚT |
+| `stone` | 40 đá/phút | MỎ ĐÁ +40/PHÚT |
+| `gold` | 70 vàng/phút | MỎ VÀNG +70/PHÚT |
 
 **Mỏ**: mỗi vùng có cờ có **đúng 1 mỏ** (vùng nhà không có), cùng loại tài nguyên với vùng (lúa, gỗ, đá hoặc vàng). **Mọi vùng cùng loại sinh đúng một mức cố định**, ở đâu cũng vậy: mỏ giàu (× 1,5 ở giữa bản đồ) đã bỏ ngày 2026-10-18 theo tài liệu "Cơ chế sinh tài nguyên lãnh thổ". Gần mỗi nhà luôn có đủ 4 loại vùng. Cách sinh vùng và mỏ: [territory.md](territory.md).
 
@@ -78,7 +78,7 @@ Chỉ thoát khi **nông trại đủ nuôi quân** (lúa ròng ≥ 0), không p
 Chỉ host tính thu nhập, lúa duy trì và thiếu tiếp tế; `state.resources` và `state.supply` đi qua snapshot, guest hiển thị phần tử `[1]`. Log cảnh báo thiếu tiếp tế chỉ hiện ở host (guest vẫn thấy trạng thái trên HUD).
 
 ## Kiểm thử thủ công
-- [ ] Đầu trận HUD hiện 150 lúa, 400 gỗ, 50 đá, 50 vàng, `#foodRate` "+25 −0 = +25/phút" (thu nhập gộp − tiêu hao quân = ròng); không làm gì thì mỗi phút được 25 lúa, 20 gỗ, 8 đá, 8 vàng.
+- [ ] Đầu trận HUD hiện 150 lúa, 400 gỗ, 50 đá, 50 vàng, `#foodRate` "+80 −0 = +80/phút" (thu nhập gộp − tiêu hao quân = ròng); không làm gì thì mỗi phút được 80 lúa, 50 gỗ, 15 đá, 20 vàng.
 - Đã chạy thử 2026-10-17: kho về 0, không lãnh thổ, không quân, chạy 120 giây → mỗi phe đúng 50 lúa, 40 gỗ, 16 đá, 16 vàng; vùng nhà 0 mỏ, 20 mỏ ở 20 vùng; mỏ thường lúa 25, gỗ 30, đá 20, vàng 20/phút; chiếm vùng đá → chỉ phe giữ nhận 0,333 đá/giây, đổi chủ thì chuyển hẳn.
 - [ ] Xây 1 nông trại → lúa tăng ~20 mỗi phút.
 - [ ] Đứng 1 quân ở cờ một vùng gỗ trung lập → ~60 giây sau nhãn mỏ đổi "XANH", gỗ tăng thêm ~30/phút.
@@ -88,14 +88,15 @@ Chỉ host tính thu nhập, lúa duy trì và thiếu tiếp tế; `state.resou
 - [ ] Tuyển quân vượt sức nuôi của nông trại → HUD lúa hiện số ròng âm (màu cam); khi kho về 0 → log "Kho lúa đã cạn", HUD đếm ngược 30s; hết giờ → log thiếu tiếp tế, quân chậm rõ rệt.
 - [ ] Xây thêm nông trại cho lúa ròng ≥ 0 → log "hết thiếu tiếp tế", tốc độ trở lại bình thường.
   (Đã chạy thử bằng debugger 2026-10-16: kỵ binh đi 49 đơn vị/giây khi thiếu tiếp tế, 58 khi bình thường.)
-- Đã đối chiếu 2026-10-18 với tài liệu "Cơ chế sinh tài nguyên lãnh thổ" (mục 7, trên 30 bản đồ):
+- Đã kiểm thử V2 2026-10-18 (`tests/economy.test.ts`, `pnpm smoke economy`): 0 vùng → 80/50/15/20 mỗi phút; 1 vùng gỗ → +100 gỗ chỉ cho chủ, đổi chủ thì chuyển hẳn; nông trại xong sau 3 giây thêm +60 lúa; ví dụ 2 gỗ + 1 đá + 1 vàng → 80/250/55/90.
+- (Trước V2) Đã đối chiếu 2026-10-18 với tài liệu "Cơ chế sinh tài nguyên lãnh thổ" (mục 7, trên 30 bản đồ):
   - Luôn 20 vùng có cờ, mỗi vùng 1 loại tài nguyên + 1 cờ + 1 mỏ; nhà nào cũng đi bộ tới được đủ 4 loại.
   - Vùng trung lập không sinh gì; đổi chủ thì thu nhập chuyển hẳn sang chủ mới.
   - Chạy ở 144 FPS hay 20 FPS đều ra đúng mức mỗi phút; 0 vùng vẫn có thu nhập nhà chính, mất nhà chính thì khoản này dừng.
   - Unit test mới: mọi vùng cùng loại có đúng một mức; ví dụ 2 gỗ + 1 đá + 1 vàng → 25/80/28/28.
 
 ## Giới hạn / việc tồn đọng
-- Các mức thu nhập (lãnh thổ 25/30/20/20, nhà chính 25/20/8/8) là đề xuất v1, chưa chốt chính thức; tài liệu 18/10 yêu cầu chơi thử các trận 15–30 phút trước khi chốt.
+- Mức thu nhập V2 (nhà chính 80/50/15/20, lãnh thổ 100/100/40/70, nông trại 60) theo tài liệu V2; nên chơi thử các trận 15–30 phút để kiểm tra nhịp trận.
 - Nông trại lệch với công thức của tài liệu 18/10 ("20 × số nông trại"): còn nâng cấp cấp 2/3 và thưởng +25% trong vùng lúa. Đã quyết định giữ nguyên ngày 2026-10-18.
 - `state.guards` và khối "Neutral monsters guarding the gold mines" trong `update()` là code chết: không nơi nào thêm quái canh mỏ.
 - Không có giới hạn trần tài nguyên.

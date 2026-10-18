@@ -4,8 +4,9 @@ import { MAP_WORLD_H, MAP_WORLD_W, MAX_ZOOM, MIN_ZOOM, VIEW_H, VIEW_W, camX, cam
 import { H, W } from '../config/map';
 import { $, addLog, canAfford, conn, costText, draggingFarm, ended, formatAmount, localSelectedIds, localTeam, missingText, mode, notifyShortfall, netRole, paused, peer, placement, selected, selectedBuilding, selectedFlag, selectedFortress, setDraggingFarm, setPaused, setPlacement, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setSuppressNextCanvasClick, state, suppressNextCanvasClick } from '../core/game';
 import { fresh } from '../core/match';
+import { playSound } from '../audio/sound';
 import { BUILDING_TYPES, FARM_LEVELS, FLAG_CAPTURE_MAX_UNITS, FLAG_DECAY_DELAY_SECONDS, FOOD_REGION_FARM_BONUS, FORTRESS_GUN_COST, specs } from '../config/balance';
-import { requestBuy } from '../sim/units';
+import { requestBuy, requestBuyLane } from '../sim/units';
 import { farmFoodPerMinute } from '../sim/economy';
 import { createRoom, destroyPeer, joinRoom, setNetStatus } from '../net/peer';
 import { roomFromUrl, showFriendPanel, showModeHome, startAIMode } from './modeScreen';
@@ -48,13 +49,14 @@ for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.butto
 $('upgradeOutpost').querySelector('span').textContent=costText(BUILDING_TYPES.outpost.cost)+' · '+BUILDING_TYPES.outpost.buildTime+'s · cạnh cờ đã chiếm, có súng';
 $('turret').querySelector('span').textContent=costText(FORTRESS_GUN_COST)+' · tích hợp pháo thứ hai';
 for(const type of Object.keys(specs))$(type).onclick=()=>requestBuy(type);
+$('buyLane').onclick=()=>requestBuyLane();
 // Building cards close the drawer so the map is free for placement.
 for(const [kind,def] of Object.entries(BUILDING_TYPES))if(def.button)$(def.button).onclick=()=>{closePanels();beginPlacement(kind);};
 $('toggleTerritory').onclick=()=>setShowTerritory(!showTerritory);
 $('upgradeFarm').onclick=()=>requestAction('upgrade',{kind:'farm',id:selectedBuilding?.kind==='farm'&&selectedBuilding.team===localTeam()?selectedBuilding.id:null});
 $('upgradeOutpost').onclick=()=>requestAction('outpost',{regionId:selectedFlag});
 $('turret').onclick=()=>requestAction('turret');
-$('attack').onclick=()=>requestAction('attack',{ids:state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id)});
+$('attack').onclick=()=>{const ids=state.units.filter(u=>u.team===localTeam()&&u.selected).map(u=>u.id);if(ids.length)playSound('order.attack');requestAction('attack',{ids});};
 // Fullscreen on the whole page (not #gameApp) so the lobby, guide and dialogs stay visible in fullscreen too.
 async function toggleFullscreen(){try{if(document.fullscreenElement){await document.exitFullscreen();}else{await document.documentElement.requestFullscreen();}}catch{addLog('Trình duyệt không cho phép bật toàn màn hình.');}}
 $('fullscreen').onclick=toggleFullscreen;

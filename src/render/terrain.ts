@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Trees, rocks, grass and terrain detail (docs/features/rendering.md).
 import { ctx, drawUprightAt, renderView } from '../core/view';
+import { settings } from '../core/settings';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
 import { state } from '../core/game';
@@ -286,6 +287,7 @@ function terrainDetailLayer(){
  return detailLayer;
 }
 export function drawTerrainDetail(viewLeft=0,viewTop=0,viewRight=W,viewBottom=H){
+ if(settings.quality==='low')return; // low quality: no ground speckles
  if(!detailRows)buildTerrainDetail();
  if((renderView.scale||1)<DETAIL_LAYER_SCALE){ctx.drawImage(terrainDetailLayer(),0,0,W,H);return;}
  const pad=12,ty0=Math.max(0,Math.floor((viewTop-pad)/TILE_SIZE)),ty1=Math.min(MAP_TILES-1,Math.floor((viewBottom+pad)/TILE_SIZE));

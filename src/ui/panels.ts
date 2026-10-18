@@ -2,15 +2,35 @@
 // Drawers (train / build), guide and confirm modals, game menu, tooltips, notice banner and unit-card portraits (docs/features/hud-ui.md).
 import { $, canAfford, localTeam, state } from '../core/game';
 import { canvas } from '../core/view';
+import { settings } from '../core/settings';
+import { playSound } from '../audio/sound';
 import { specs } from '../config/balance';
 import { buyProblem } from '../sim/units';
 import { SPEARMAN_ROWS, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryClips, infantrySpriteSheet, scoutClips, scoutSpriteSheet, spearmanSpriteSheet } from '../render/sprites';
 
-const PANELS = { train: 'trainDrawer', build: 'buildDrawer', guide: 'guideModal', confirm: 'confirmModal' };
+const PANELS = { train: 'trainDrawer', build: 'buildDrawer', guide: 'guideModal', confirm: 'confirmModal', settings: 'settingsModal' };
+// Show / hide with the open and close animations of style.css. `hidden` changes at once (so code and tests see the new
+// state immediately); while `.closing` is set the element stays painted and plays its exit animation, then disappears.
+export function showAnimated(el) { el.classList.remove('closing'); el.hidden = false; }
+export function hideAnimated(el) {
+  if (el.hidden) return;
+  el.hidden = true;
+  if (settings.reduceMotion || matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+  el.classList.add('closing');
+  const done = () => el.classList.remove('closing');
+  el.addEventListener('animationend', e => { if (e.target === el) done(); }, { once: true }); setTimeout(done, 400);
+}
 const DOCK = { train: 'openTrain', build: 'openBuild' };
 export let openPanelName = null;
+const MODALS = new Set(['guide', 'confirm', 'settings']);
 export function openPanel(name) {
-  for (const [key, id] of Object.entries(PANELS)) $(id).hidden = key !== name;
+  // Sounds: dialogs open and close like a book, drawers with the interface open/close clicks.
+  const prev = openPanelName;
+  if (name !== prev) {
+    if (prev) playSound(MODALS.has(prev) ? 'ui.dialogClose' : 'ui.close');
+    if (name) playSound(MODALS.has(name) ? 'ui.dialogOpen' : 'ui.open');
+  }
+  for (const [key, id] of Object.entries(PANELS)) key === name ? showAnimated($(id)) : hideAnimated($(id));
   for (const [key, id] of Object.entries(DOCK)) $(id).classList.toggle('active', key === name);
   openPanelName = name;
   if (name) closeMenu();
@@ -57,22 +77,21 @@ export function drawPortraits() {
 }
 for (const sheet of Object.values(SHEETS)) sheet.img.addEventListener('load', drawPortraits);
 
-// Notice banner: shows the newest log line, fades after NOTICE_SECONDS; the scroll button opens the last 12 entries.
+// Notice banner: shows the newest log line, fades after settings.noticeSeconds; the scroll button opens the last 12 entries.
 // A 'danger' line (under attack, losses) gives the banner a red rim while it is the newest.
-const NOTICE_SECONDS = 5;
 let noticeTimer = 0;
 function showNotice() {
   const strip = $('chatStrip'), first = $('feed').firstElementChild;
   strip.classList.remove('idle'); strip.classList.toggle('alert', !!first?.classList.contains('tone-danger'));
-  clearTimeout(noticeTimer); noticeTimer = setTimeout(() => strip.classList.add('idle'), NOTICE_SECONDS * 1000);
+  clearTimeout(noticeTimer); noticeTimer = setTimeout(() => strip.classList.add('idle'), settings.noticeSeconds * 1000);
 }
 new MutationObserver(showNotice).observe($('feed'), { childList: true });
 $('chatToggle').onclick = () => { const strip = $('chatStrip'); strip.classList.toggle('open'); if (!strip.classList.contains('open')) showNotice(); };
 $('feed').onclick = () => $('chatStrip').classList.add('open');
 
 // Game menu (side rail): pause, guide, hide HUD, leave. Closes on outside click, Esc or after picking an item.
-export function closeMenu() { $('gameMenu').hidden = true; $('menuBtn').setAttribute('aria-expanded', 'false'); }
-export function toggleMenu() { const open = $('gameMenu').hidden; $('gameMenu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); if (open) hideTooltip(); }
+export function closeMenu() { if (!$('gameMenu').hidden) playSound('ui.close'); hideAnimated($('gameMenu')); $('menuBtn').setAttribute('aria-expanded', 'false'); }
+export function toggleMenu() { const open = $('gameMenu').hidden; if (open) { showAnimated($('gameMenu')); hideTooltip(); playSound('ui.open'); } else { hideAnimated($('gameMenu')); playSound('ui.close'); } $('menuBtn').setAttribute('aria-expanded', String(open)); }
 export const menuOpen = () => !$('gameMenu').hidden;
 $('menuBtn').onclick = e => { e.stopPropagation(); toggleMenu(); };
 $('gameMenu').addEventListener('click', e => { if (e.target.closest('.menu-item')) closeMenu(); });
@@ -126,3 +145,7 @@ $('guideModal').addEventListener('click', e => { if (e.target === $('guideModal'
 // Touching the battlefield closes an open drawer, like tapping the map in kingdom games.
 canvas.addEventListener('pointerdown', () => { if (openPanelName === 'train' || openPanelName === 'build') closePanels(); });
 // Keys H / B / Esc for the panels are handled in ui/hotkeys.ts.
+
+// Click sound for ordinary buttons; buttons with their own sound (menu, dialogs, drawers, orders, tabs, switches) are left out.
+const CLICKY = '.card-btn, .lane-buy, .lobby-btn, .menu-item, .btn, .segmented button, #toggleTerritory, #fullscreen, #chatToggle';
+document.addEventListener('click', e => { const b = e.target.closest?.(CLICKY); if (b && !b.disabled) playSound('ui.click'); }, true);

@@ -11,6 +11,9 @@ export function setEnded(v){return ended=v;}
 export function setSelected(v){return selected=v;}
 export function setGameTime(v){return gameTime=v;}
 export let nextId=1,logTimer=0,draggingFarm=null;
+// Ids for effects and bullets (display only: the soundscape plays each hit or shot once, also on the PvP guest).
+export let fxSeq=0;
+export function nextFxId(){return fxSeq=fxSeq+1;}
 export function setNextId(v){return nextId=v;}
 export function setDraggingFarm(v){return draggingFarm=v;}
 export let placement=null,suppressNextCanvasClick=false,selectedFortress=null,selectedBuilding=null,selectedFlag=null;

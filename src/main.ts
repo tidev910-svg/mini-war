@@ -33,6 +33,8 @@ import './render/flags';
 import './render/fog';
 import './render/draw';
 import './ui/hotkeys';
+import './ui/settings';
+import './audio/sound';
 
 fresh();
 setGameStarted(false);

@@ -2,6 +2,7 @@
 // Canvas, view size, camera and zoom, world ↔ screen transforms (docs/features/controls.md, rendering.md).
 import { H, TILE_SIZE, W } from '../config/map';
 import { localTeam, state } from './game';
+import { QUALITY_MAX_SCALE, QUALITY_PIXELS, settings } from './settings';
 
 export const canvas=document.getElementById('game');
 export const gameApp=document.getElementById('gameApp');
@@ -12,13 +13,14 @@ export let camX=0,camY=0,zoom=DEFAULT_ZOOM;
 export function setCamX(v){return camX=v;}
 export function setCamY(v){return camY=v;}
 export function setZoom(v){return zoom=v;}
-export const MAX_CANVAS_PIXELS=2100000;
+// Canvas backing-store cap from the quality setting (QUALITY_PIXELS in core/settings.ts).
+export function maxCanvasPixels(){return QUALITY_PIXELS[settings.quality]||QUALITY_PIXELS.medium;}
 export function syncWorldMetrics(){
   const rect=canvas.getBoundingClientRect();
   const cssWidth=Math.max(540,Math.round(rect.width || canvas.clientWidth || canvas.width));
   const cssHeight=Math.max(320,Math.round(rect.height || canvas.clientHeight || canvas.height));
-  // The canvas fills the screen, so cap its backing store at MAX_CANVAS_PIXELS (CSS scales it up) to keep draw() affordable.
-  const dpr=Math.min(window.devicePixelRatio||1,Math.sqrt(MAX_CANVAS_PIXELS/(cssWidth*cssHeight)));
+  // The canvas fills the screen, so cap its backing store at maxCanvasPixels() (CSS scales it up) to keep draw() affordable.
+  const dpr=Math.min(window.devicePixelRatio||1,Math.sqrt(maxCanvasPixels()/(cssWidth*cssHeight)),QUALITY_MAX_SCALE[settings.quality]||4);
   canvas.width=Math.max(540,Math.round(cssWidth*dpr));
   canvas.height=Math.max(320,Math.round(cssHeight*dpr));
   VIEW_W=canvas.width;VIEW_H=canvas.height;

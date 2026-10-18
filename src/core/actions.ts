@@ -2,7 +2,7 @@
 // Player commands: requestAction() routes to the host, applyAction() changes state (docs/architecture.md, multiplayer.md).
 import { H, W } from '../config/map';
 import { addLog, conn, ended, localTeam, mode, netRole, paused, setPaused, state } from './game';
-import { buy, commandAttack, deleteUnits, stopUnits } from '../sim/units';
+import { buy, buyQueueLane, commandAttack, deleteUnits, stopUnits } from '../sim/units';
 import { setNetStatus } from '../net/peer';
 import { updateHUD } from '../ui/hud';
 import { buildTurret, buildingPlacementProblem, placeBuilding, startOutpost, startUpgrade } from '../sim/buildings';
@@ -21,6 +21,7 @@ export function applyAction(team,action,payload={}){
  else if(action==='upgrade')startUpgrade(team,'farm',payload.id==null?null:Number(payload.id));
  else if(action==='outpost')startOutpost(team,payload.regionId==null?null:Number(payload.regionId));
  else if(action==='turret')buildTurret(team);
+ else if(action==='buyLane')buyQueueLane(team); // open the next training lane (economy & queue V2)
  else if(action==='stop')stopUnits(team,payload.ids);
  else if(action==='delete')deleteUnits(team,payload.ids);
  else if(action==='attack')commandAttack(team,payload.ids);

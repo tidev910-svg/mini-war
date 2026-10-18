@@ -33,6 +33,9 @@ if (solo.length) {
       t.ok(await c.page("document.getElementById('guideModal').hidden"), 'sảnh: Esc đóng hướng dẫn');
       await c.page("document.activeElement?.blur();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))");
       t.ok(await c.game(`return gameStarted&&mode==='ai'`) && await c.page("document.getElementById('modeScreen').classList.contains('hidden')"), 'sảnh: Enter vào trận với AI');
+      // Sound files (public/assets/audio) all fetched and decoded.
+      const audio = await c.game(`const files=new Set(Object.values(SOUNDS).flatMap(s=>s.files));return {...audioStatus(),expected:files.size}`);
+      t.ok(audio.loaded === audio.expected && !audio.failed.length, 'tải và giải mã đủ file âm thanh', audio);
       t.ok(!c.errors.length, 'không lỗi JavaScript', c.errors);
       results.push(t.report());
     }
@@ -41,7 +44,7 @@ if (solo.length) {
       const t = checker('ui: HUD kiểu kingdom, bảng huấn luyện/xây dựng, minimap');
       const ids = ['food', 'wood', 'stone', 'gold', 'foodRate', 'territory', 'territoryIncome', 'time', 'phaseHint', 'unitCount', 'unitBreakdown', 'trainQueue', 'feed',
         'scout', 'infantry', 'archer', 'spearman', 'cavalry', 'attack', 'farm', 'upgradeFarm', 'upgradeOutpost', 'buildTower', 'turret', 'pause', 'toggleTerritory',
-        'fullscreen', 'toggleSideHud', 'openTrain', 'openBuild', 'openGuide', 'minimap', 'overlay', 'overlayRestart', 'menuBtn', 'gameMenu', 'leaveMatch', 'confirmModal', 'tooltip'];
+        'fullscreen', 'toggleSideHud', 'openTrain', 'openBuild', 'openGuide', 'minimap', 'overlay', 'overlayRestart', 'menuBtn', 'gameMenu', 'leaveMatch', 'confirmModal', 'tooltip', 'openSettings', 'lobbySettings', 'settingsModal'];
       const missing = await c.page(`${JSON.stringify(ids)}.filter(id=>!document.getElementById(id))`);
       t.ok(!missing.length, 'mọi id mà code dùng đều có', missing);
       await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources[0]={food:500,wood:500,stone:300,gold:300};return 1`);
@@ -96,6 +99,20 @@ if (solo.length) {
       t.ok(!small.length, 'không chữ nào trên HUD nhỏ hơn 12px', small);
       const overlaps = await c.page(`(()=>{const r=['.commander','.resource-bar','.side-rail','.minimap-frame','.chat-strip','.action-dock'].map(s=>[s,document.querySelector(s).getBoundingClientRect()]),out=[];for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++){const a=r[i][1],b=r[j][1];if(a.width&&b.width&&a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom)out.push(r[i][0]+'×'+r[j][0]);}return out})()`);
       t.ok(!overlaps.length, 'các khối HUD không đè lên nhau', overlaps);
+      // Settings: open from the menu, change quality (canvas shrinks) and the territory switch (synced with T), reset.
+      await c.page("localStorage.removeItem('miniwar.settings')");await c.game(`resetSettings();return 1`);
+      await c.page("document.getElementById('menuBtn').click()"); await c.page("document.getElementById('openSettings').click()");
+      t.ok(!(await hidden('settingsModal')) && await hidden('gameMenu'), 'menu → Cài đặt: hộp mở, menu đóng');
+      const px0 = await c.game('return VIEW_W*VIEW_H');
+      await c.page("document.querySelector('[data-key=quality] button').click()");
+      const qs = await c.game('return {px:VIEW_W*VIEW_H,quality:settings.quality}');
+      t.ok(qs.quality === 'low' && qs.px < px0 && await c.page("JSON.parse(localStorage.getItem('miniwar.settings')).quality==='low'"), 'chất lượng Thấp: canvas nhỏ hơn và được lưu', { px0, qs });
+      await c.page("document.querySelectorAll('.settings-tab')[1].click()"); await c.page("document.querySelector('[data-key=territory] .switch').click()");
+      t.ok(!(await c.game('return showTerritory')), 'công tắc Ranh giới vùng tắt lớp lãnh thổ');
+      await c.page("document.getElementById('settingsReset').click()");
+      t.ok(await c.game("return settings.quality==='medium'&&showTerritory===true"), 'Khôi phục mặc định');
+      await c.page("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))");
+      t.ok(await hidden('settingsModal'), 'Esc đóng Cài đặt');
       const perf = await c.game(`const t0=performance.now();for(let i=0;i<30;i++)draw();return {ms:+((performance.now()-t0)/30).toFixed(1),canvas:[VIEW_W,VIEW_H]}`);
       results.push(t.report({ 'draw() mỗi frame (ms)': perf.ms, canvas: perf.canvas }));
     }
@@ -223,32 +240,36 @@ if (solo.length) {
     }
 
     if (want('economy')) {
-      const t = checker('economy: thu nhập pháo đài và mỏ');
+      const t = checker('economy: thu nhập pháo đài và mỏ (V2)');
       const r = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources=[{food:0,wood:0,stone:0,gold:0},{food:0,wood:0,stone:0,gold:0}];
         const rates={};for(const m of state.mines)(rates[m.resource]??=new Set()).add(Math.round(m.income*60));for(const k in rates)rates[k]=[...rates[k]].join('/');
         for(let i=0;i<120*20;i++)update(.05);
         return {res:state.resources.map(x=>Object.fromEntries(Object.entries(x).map(([k,v])=>[k,Math.round(v*100)/100]))),rates,food:foodPerMinute(0)};`);
-      const want0 = { food: 50, wood: 40, stone: 16, gold: 16 };
-      t.ok(r.res.every(x => Object.entries(want0).every(([k, v]) => Math.abs(x[k] - v) < 0.05)), '120 giây không lãnh thổ → 50 lúa / 40 gỗ / 16 đá / 16 vàng mỗi phe', r.res);
-      t.ok(r.rates.food === '25' && r.rates.wood === '30' && r.rates.stone === '20' && r.rates.gold === '20', 'mọi vùng cùng loại sinh đúng 25 lúa / 30 gỗ / 20 đá / 20 vàng mỗi phút (không còn mỏ giàu)', r.rates);
-      t.ok(r.food === 25, 'lúa/phút của pháo đài = 25', r.food);
+      const want0 = { food: 160, wood: 100, stone: 30, gold: 40 };
+      t.ok(r.res.every(x => Object.entries(want0).every(([k, v]) => Math.abs(x[k] - v) < 0.05)), '120 giây không lãnh thổ → 160 lúa / 100 gỗ / 30 đá / 40 vàng mỗi phe (80/50/15/20 mỗi phút)', r.res);
+      t.ok(r.rates.food === '100' && r.rates.wood === '100' && r.rates.stone === '40' && r.rates.gold === '70', 'mọi vùng cùng loại sinh đúng 100 lúa / 100 gỗ / 40 đá / 70 vàng mỗi phút', r.rates);
+      t.ok(r.food === 80, 'lúa/phút của pháo đài = 80', r.food);
       results.push(t.report());
     }
 
     if (want('training')) {
-      const t = checker('training: hàng đợi huấn luyện');
+      const t = checker('training: 4 hàng đợi song song, mua thêm hàng đợi (V2)');
       const r = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources[0]={food:2000,wood:2000,stone:0,gold:2000};
         const n=()=>state.units.filter(u=>u.team===0).length;let tm=0;const step=s=>{for(let k=0;k<Math.round(s/.05);k++){update(.05);tm+=.05;}};
         const r0={...state.resources[0]};buy('infantry',0);const cost={food:r0.food-state.resources[0].food,gold:r0.gold-state.resources[0].gold};
         step(4.9);const at49=n();step(.1);const at50=n();
         buy('spearman',0);buy('archer',0);const times=[];let prev=n();for(let k=0;k<400;k++){update(.05);tm+=.05;if(n()>prev){times.push(Math.round((tm-5)*10)/10);prev=n();}}
-        for(let i=0;i<6;i++)buy('infantry',0);const full=trainQueueOf(0).length,msg=buyProblem('infantry',0);
+        for(let i=0;i<9;i++)buy('infantry',0);const full=trainQueueOf(0).length,msg=buyProblem('infantry',0);
         state.trainQueue=[];state.units=state.units.filter(u=>u.type!=='scout');buy('scout',0);buy('scout',0);const scoutMsg=buyProblem('scout',0);
-        return {cost,at49,at50,times,full,msg,scoutMsg};`);
+        state.trainQueue=[];state.resources[0]={food:0,wood:100,stone:100,gold:0};const poor=buyQueueLane(0),poorRes={...state.resources[0]};
+        state.resources[0]={food:0,wood:500,stone:500,gold:0};const ok=buyQueueLane(0),paid={...state.resources[0]};step(14.9);const lanesBefore=lanesOf(0);step(.2);
+        return {cost,at49,at50,times,full,msg,scoutMsg,poor,poorRes,ok,paid,lanesBefore,lanesAfter:lanesOf(0)};`);
       t.ok(r.cost.food === 45 && r.cost.gold === 0, 'lính giá 45 lúa, không vàng', r.cost);
       t.ok(r.at49 === 0 && r.at50 === 1, 'lính ra quân đúng giây 5', r);
-      t.ok(r.times[0] === 6 && r.times[1] === 14, 'lính giáo + cung thủ ra ở giây 6 và 14', r.times);
-      t.ok(r.full === 5 && /đầy/.test(r.msg), 'hàng đợi tối đa 5', r);
+      t.ok(r.times[0] === 6 && r.times[1] === 8, 'lính giáo + cung thủ luyện song song, ra ở giây 6 và 8', r.times);
+      t.ok(r.full === 8 && /đầy/.test(r.msg), '4 hàng đợi + 4 chỗ chờ = tối đa 8', r);
+      t.ok(!r.poor && r.poorRes.wood === 100 && r.poorRes.stone === 100, 'thiếu tài nguyên: không mở hàng đợi 5, không trừ', r);
+      t.ok(r.ok && Math.round(r.paid.wood) >= 299 && Math.round(r.paid.wood) <= 301 && Math.round(r.paid.stone) === 400 && r.lanesBefore === 4 && r.lanesAfter === 5, 'đủ tài nguyên: trừ 200 gỗ 100 đá một lần, mở hàng đợi 5 sau 15 giây', r);
       t.ok(/tối đa 2 lính trinh sát/.test(r.scoutMsg), 'tối đa 2 trinh sát tính cả hàng đợi', r.scoutMsg);
       results.push(t.report());
     }
@@ -297,6 +318,11 @@ if (want('pvp')) {
       t.ok(q[0] === 'infantry' && /Lính/.test(line[0] || ''), 'khách mua lính → vào hàng đợi của chủ phòng, khách thấy thẻ tiến độ', { q, line });
       const badge = await guest.page("[document.getElementById('sideName').textContent,document.getElementById('crest').classList.contains('red')]");
       t.ok(badge[0] === 'QUÂN ĐỎ' && badge[1], 'khách thấy huy hiệu QUÂN ĐỎ', badge);
+      // Guest buys the next training lane: the host validates, charges red once and starts the upgrade.
+      await host.game(`state.resources[1]={food:500,wood:500,stone:500,gold:500};return 1`); await sleep(400);
+      await guest.page("document.getElementById('buyLane').click()"); await sleep(900);
+      const lane = await host.game(`return {up:laneUpgradeOf(1),res:{...state.resources[1]}}`);
+      t.ok(lane.up && lane.up.lane === 5 && Math.round(lane.res.wood) <= 302 && Math.round(lane.res.stone) <= 401, 'khách mở hàng đợi 5 → chủ phòng trừ tài nguyên phe đỏ một lần', lane);
       const faction = await guest.page("getComputedStyle(document.documentElement).getPropertyValue('--faction-primary').trim()");
       t.ok(faction === '#B03030', 'giao diện khách đổi sang màu phe đỏ (--faction-primary)', faction);
       await guest.shot(OUT, 'pvp-guest');

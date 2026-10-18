@@ -39,6 +39,9 @@ export function buildWalkable() {
     for (const [y, a, b] of chosen) for (let x = a; x <= b; x++) { bridgeTiles[y * N + x] = 1; walkable[y * N + x] = 1; }
     bridges.push({ y0: chosen[0][0], y1: chosen[chosen.length - 1][0], x0: Math.min(...chosen.map(r => r[1])), x1: Math.max(...chosen.map(r => r[2])) });
   }
+  // The outermost ring of tiles lies outside the box units are kept in (MOVE_BOUNDS in sim/movement.ts: 22–45 world units
+  // from the edges), so routes must never use it: a waypoint there could never be reached.
+  for (let i = 0; i < N; i++) walkable[i] = walkable[(N - 1) * N + i] = walkable[i * N] = walkable[i * N + N - 1] = 0;
   built = true;
 }
 const ensure = () => { if (!built) buildWalkable(); };

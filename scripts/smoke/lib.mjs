@@ -14,7 +14,7 @@ export const sleep = ms => new Promise(r => setTimeout(r, ms));
 const MODULES = ['config/map', 'config/balance', 'config/theme', 'config/visuals', 'ui/theme', 'core/game', 'core/view', 'core/match', 'core/actions',
   'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat',
   'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
-  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/paths', 'render/draw', 'ui/panels', 'ui/hotkeys'];
+  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/paths', 'render/draw', 'ui/panels', 'ui/hotkeys', 'ui/settings', 'core/settings', 'config/audio', 'audio/sound'];
 
 // The Chrome profile lives in the OS temp folder: inside the project, Vite's file watcher crashes on Chrome's locked files.
 export async function launch({ port, outDir, size = '1400,1000', url = URL }) {

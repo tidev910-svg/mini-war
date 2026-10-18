@@ -3,7 +3,7 @@
 > Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
 
 ## Mô tả
-Người chơi dùng lúa (và gỗ/vàng tuỳ loại) để mua 5 loại quân tại pháo đài. Quân đã trả tiền vào **hàng đợi huấn luyện**: mỗi phe huấn luyện lần lượt từng quân (4–12 giây), xong thì xuất hiện ở **sân tập kết** cạnh pháo đài. Nếu sân đã kín, quân vào hàng chờ xuất quân và tự ra khi có chỗ.
+Người chơi dùng lúa (và gỗ/vàng tuỳ loại) để mua 5 loại quân tại pháo đài. Quân đã trả tiền vào **hàng đợi huấn luyện**: mỗi phe có **4 hàng đợi chạy song song** từ đầu trận (mỗi hàng luyện một quân, 4–12 giây), mua thêm được từ hàng đợi thứ 5, xong thì xuất hiện ở **sân tập kết** cạnh pháo đài. Nếu sân đã kín, quân vào hàng chờ xuất quân và tự ra khi có chỗ.
 
 Nguồn: "Đề xuất cân bằng kinh tế và quân đội" (17/10/2026), bản thử nghiệm v1 — các con số còn phải kiểm chứng bằng playtest.
 
@@ -27,12 +27,26 @@ Giá đổi ngày 2026-10-17 theo đề xuất v1: lính bỏ 10 vàng (40 → 4
 Quy tắc mua: mọi điều kiện nằm trong `buyProblem(type, team)` (trả về lý do, hoặc chuỗi rỗng nếu mua được). `buy()` gọi hàm này rồi mới trừ tiền. Nút quân gọi `requestBuy(type)`: ở guest PvP, hàm này kiểm tra trước bằng `buyProblem()` trên snapshot, báo lý do ngay trên màn hình guest và không gửi lệnh; host vẫn kiểm tra lại mọi lệnh mua.
 - Không mua khi `ended` hoặc `paused`, hoặc `type` không phải khoá riêng của `specs` (`Object.hasOwn`).
 - Tối đa **2 trinh sát** mỗi phe (tính cả quân đang huấn luyện và trong hàng chờ xuất quân).
-- Hàng đợi huấn luyện tối đa `TRAIN_QUEUE_MAX` = 5 quân mỗi phe (kể cả quân đang luyện) → "Hàng đợi huấn luyện đã đầy (5 quân)."
+- Sức chứa hàng đợi = số hàng đợi (`lanesOf(team)`, ban đầu `TRAIN_LANES_START` = 4) + `TRAIN_QUEUE_WAITING` = 4 chỗ chờ (`queueCapacity()`) → "Hàng đợi huấn luyện đã đầy (… đang luyện + 4 chờ)." **Không giới hạn số quân đang sống.**
 - Không có khoá thời gian đầu trận và không cần công trình nào.
 - Không đủ tài nguyên (`canAfford()`) → log "thiếu …" (`missingText()`), không trừ.
 - Trừ tiền **lúc xếp hàng**, rồi `queueTraining()` thêm `{id, team, type, order, left, total}` vào `state.trainQueue`. Không có nút huỷ, không hoàn tiền.
-- `updateTraining(dt)` (trong `update()`, chỉ host): mỗi phe chỉ phần tử đầu hàng giảm `left`; về 0 thì `spawn()` (giữ `order`, AI dùng `'explore'` cho trinh sát). Nếu sân kín, quân vào `state.pendingSpawns`. Tạm dừng thì hàng đợi cũng dừng.
-- Thời gian chạy thử 2026-10-17: lính ra ở giây 5,0 (giây 4,9 chưa có); xếp lính giáo + cung thủ cùng lúc → ra ở giây 6 và 14 (lần lượt).
+- `updateTraining(dt)` (trong `update()`, chỉ host): mỗi phe, `lanesOf(team)` phần tử đầu hàng cùng giảm `left` (chạy song song); về 0 thì `spawn()` (giữ `order`, AI dùng `'explore'` cho trinh sát). Nếu sân kín, quân vào `state.pendingSpawns`. Tạm dừng thì hàng đợi cũng dừng.
+- Thời gian chạy thử 2026-10-18 (V2): lính ra ở giây 5,0 (giây 4,9 chưa có); xếp 4 lính cùng lúc → cả 4 ra ở giây 5; xếp lính giáo + cung thủ cùng lúc → ra ở giây 6 và 8 (song song).
+
+**Mua thêm hàng đợi** (kinh tế & hàng đợi V2; nút "Mở hàng đợi thứ N" trong bảng Huấn luyện, `requestBuyLane()` → action `'buyLane'` → `buyQueueLane(team)`):
+- `nextLaneOffer(team)` lấy giá và thời gian từ `QUEUE_LANE_UPGRADES` (`config/balance.ts`). Đây là **giá tạm, chưa chốt**; danh sách sửa hoặc kéo dài được, không cố định dừng ở 8:
+
+| Mở hàng đợi | Gỗ | Đá | Vàng | Thời gian |
+|---|---:|---:|---:|---:|
+| Thứ 5 | 200 | 100 | 0 | 15 giây |
+| Thứ 6 | 350 | 150 | 50 | 20 giây |
+| Thứ 7 | 500 | 250 | 100 | 25 giây |
+| Thứ 8 | 750 | 350 | 150 | 30 giây |
+
+- `laneProblem(team)`: không mua khi trận kết thúc/tạm dừng, đang mở một hàng đợi khác ("Đang mở hàng đợi thứ N."), đã hết bảng giá, hoặc thiếu tài nguyên (ô tài nguyên nháy đỏ).
+- Trừ tài nguyên **một lần** khi mua; `state.laneUpgrade[team] = {lane, left, total}`; `updateQueueLanes(dt)` đếm ngược, hết giờ thì `state.queueLanes[team] = lane`. Quân đang luyện không bị huỷ hay reset.
+- Cả hai phe cùng quy tắc. AI giữ hành vi cũ: tự giới hạn 2 quân trong hàng đợi và không mua thêm hàng đợi.
 
 Vị trí xuất quân (`spawn()`):
 - Sân tập kết: `musterYard(base)` — hình chữ nhật 170×144, phía trước pháo đài, quay về phía pháo đài địch theo trục ngang (`baseDir()`).
@@ -47,7 +61,7 @@ Dữ liệu một quân: `{id, team, type, x, y, hp, max, attackTimer, order('ho
 Hướng quay `facing` (8 hướng: `down`, `down-right`, `right`, `up-right`, `up`, `up-left`, `left`, `down-left`; mặc định `down`): tính cuối mỗi lượt quân trong `update()` bằng `facingFrom(dx, dy, prev)`. Hướng là cung 45° gần nhất; khi đã có hướng, phải lệch khỏi cung cũ thêm `FACING_HYSTERESIS` = 10° mới đổi, để quân đi dọc mép hai cung không lật qua lật lại. Hiện chỉ sprite lính giáo có 4 hướng (hướng chéo quy về trái/phải); các sprite khác chỉ có một hướng ([rendering.md](rendering.md)). Quân di chuyển thì quay theo hướng vừa đi; đứng yên thì quay về mục tiêu **nếu mục tiêu trong tầm đánh**, còn không thì giữ hướng cũ. Mọi loại quân đều có `facing`, nhưng hiện chỉ lính giáo có sprite 4 hướng; các quân khác luôn vẽ hướng xuống.
 
 ## Code liên quan
-- [src/config/balance.ts](../../src/config/balance.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/map/bases.ts](../../src/map/bases.ts), [src/core/game.ts](../../src/core/game.ts): `specs`, `TRAIN_QUEUE_MAX`, `trainQueueOf()`, `buyProblem()`, `buy()`, `requestBuy()`, `queueTraining()`, `updateTraining()`, `updateTrainQueueHUD()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
+- [src/config/balance.ts](../../src/config/balance.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/map/bases.ts](../../src/map/bases.ts), [src/core/game.ts](../../src/core/game.ts): `specs`, `TRAIN_LANES_START`, `TRAIN_QUEUE_WAITING`, `QUEUE_LANE_UPGRADES`, `trainQueueOf()`, `lanesOf()`, `queueCapacity()`, `nextLaneOffer()`, `laneProblem()`, `buyQueueLane()`, `updateQueueLanes()`, `requestBuyLane()`, `buyProblem()`, `buy()`, `requestBuy()`, `queueTraining()`, `updateTraining()`, `updateTrainQueueHUD()`, `spawn()`, `processPendingSpawns()`, `musterYard()`, `normalizeUnitType()`, `unitVisionRadius()`.
 - Hình ảnh: `*SpriteSheet` và `*Clips` (hàng 0–1 xanh idle/walk, hàng 2–3 đỏ), `drawUnit()`, `unitTargetHeight()`, `unitHitRadius()`.
 - Nút: `#scout`, `#infantry`, `#archer`, `#spearman`, `#cavalry` trong [index.html](../../index.html) → `requestAction('buy',{unit})`.
 

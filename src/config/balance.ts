@@ -10,8 +10,18 @@ export const specs={
 };
 // Scout sight in world units (~7 tiles; raised from 145 on 2026-10-18). Used for the player's fog and the AI's own map.
 export const SCOUT_VISION=260;
-// train = seconds in the fortress training queue (one unit at a time per side, paid when queued, TRAIN_QUEUE_MAX waiting).
-export const TRAIN_QUEUE_MAX=5;
+// train = seconds in a fortress training lane (paid when queued). Economy & queue V2 (2026-10-18):
+// each side starts with TRAIN_LANES_START lanes that train in parallel (one unit each); up to TRAIN_QUEUE_WAITING more
+// paid units wait behind them. Lanes from the 5th on are bought: QUEUE_LANE_UPGRADES[i] opens lane TRAIN_LANES_START+1+i
+// (cost paid once when ordered, lane added when the time runs out). PROVISIONAL prices from the V2 proposal, not final;
+// the list can be extended — there is no permanent cap at 8. No cap on living units.
+export const TRAIN_LANES_START=4,TRAIN_QUEUE_WAITING=4;
+export const QUEUE_LANE_UPGRADES=[
+ {cost:{wood:200,stone:100},seconds:15},
+ {cost:{wood:350,stone:150,gold:50},seconds:20},
+ {cost:{wood:500,stone:250,gold:100},seconds:25},
+ {cost:{wood:750,stone:350,gold:150},seconds:30},
+];
 // upkeep = food per minute per living unit. Running out of food starts a grace period, then slows the army.
 export const SUPPLY_GRACE_SECONDS=30,SUPPLY_SPEED_FACTOR=.85,SUPPLY_ATTACK_SPEED_FACTOR=.9;
 // Four-resource economy (docs/features/resource-system.md). Income rates are per second.
@@ -25,7 +35,9 @@ export const BUILDING_TYPES={
  outpost:{name:'Tiền đồn',cost:{wood:200,stone:100},buildTime:40,hp:1500,halfW:26,halfH:24,visionTiles:14,where:'flag',gun:{range:160,damage:10,cooldown:1.2}},
  tower:{name:'Tháp phòng thủ',button:'buildTower',cost:{wood:100,stone:200,gold:50},buildTime:25,hp:520,halfW:22,halfH:24,vision:200,where:'territory',gun:{range:190,damage:17,cooldown:1}}
 };
-export const FARM_LEVELS=[null,{food:20},{food:30,cost:{wood:80,stone:40}},{food:45,cost:{wood:120,stone:80}}],FARM_UPGRADE_SECONDS=15;
+// Economy V2: a working farm makes 60 lúa/phút. Upgrade outputs were scaled by the same ×3 (was 20/30/45) so levels 2 and 3
+// still add food; upgrade prices and times unchanged. (Level 2/3 outputs not specified by the V2 document — to confirm.)
+export const FARM_LEVELS=[null,{food:60},{food:90,cost:{wood:80,stone:40}},{food:135,cost:{wood:120,stone:80}}],FARM_UPGRADE_SECONDS=15;
 // Outposts only build while a friendly unit stands within BUILDER_RADIUS_TILES.
 export const BUILDER_RADIUS_TILES=4;
 // Every neutral region has a flag near its centre (never this close to a fortress). Units within FLAG_CAPTURE_RADIUS_TILES capture it:
@@ -37,8 +49,9 @@ export const FLAG_DECAY_DELAY_SECONDS=5,FLAG_DECAY_SECONDS=60;
 // AI capture squads: units per flag (doubled for enemy or contested flags), flags at once grows every interval up to the max.
 export const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTERVAL=120;
 export const FORTRESS_GUN_COST={stone:100};
-// Food regions: the mine gives 25 lúa/phút and farms standing in a food region their owner holds produce FOOD_REGION_FARM_BONUS more.
+// Food regions: the mine gives 100 lúa/phút (V2) and farms standing in a food region their owner holds produce FOOD_REGION_FARM_BONUS more.
 export const FOOD_REGION_FARM_BONUS=.25;
 // Every standing fortress pays this much per minute from the first second, with or without territory (no growth over time).
-export const FORTRESS_INCOME_PER_MINUTE={food:25,wood:20,stone:8,gold:8};
-export const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:25/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:30/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:20/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:20/60,crystal:'#ffca5e'}};
+// Economy V2 (2026-10-18): 80 lúa, 50 gỗ, 15 đá, 20 vàng.
+export const FORTRESS_INCOME_PER_MINUTE={food:80,wood:50,stone:15,gold:20};
+export const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:100/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:100/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:40/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:70/60,crystal:'#ffca5e'}};

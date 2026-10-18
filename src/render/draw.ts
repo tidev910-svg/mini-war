@@ -1,6 +1,8 @@
 // @ts-nocheck
 // Frame composition: draw() calls every layer in order (docs/features/rendering.md).
 import { TEAM_COLORS, THEME } from '../config/theme';
+import { settings } from '../core/settings';
+import { updateSoundscape } from '../audio/sound';
 import { VIEW_H, VIEW_W, camX, camY, ctx, drawUprightAt, renderView, setRenderView, viewOffsets, zoom } from '../core/view';
 import { H, W } from '../config/map';
 import { terrainCanvas, terrainPadding, terrainSmoothCanvas } from '../map/terrain';
@@ -65,7 +67,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
   for(let i=0;i<5;i++){const cx=m.x-12+i*6,cy=m.y-6+(i%2)*6;ctx.fillStyle='#9a6d22';ctx.beginPath();ctx.moveTo(cx-3,cy+4);ctx.lineTo(cx-2,cy-3);ctx.lineTo(cx,cy-7);ctx.lineTo(cx+3,cy-2);ctx.lineTo(cx+3,cy+4);ctx.closePath();ctx.fill();ctx.fillStyle=crystal;ctx.beginPath();ctx.moveTo(cx-2,cy+3);ctx.lineTo(cx-1,cy-3);ctx.lineTo(cx,cy-6);ctx.lineTo(cx+2,cy-2);ctx.lineTo(cx+2,cy+3);ctx.closePath();ctx.fill();}
   // Label at least 12 px on screen in the owner's light colour (cream when neutral), queued above the scenery; hidden when
   // zoomed far out, where the flag label already names the region's resource.
-  if(viewScale>=MAP_LABEL_MIN_SCALE){const text=(m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+MINE_TYPES[m.resource].label+' +'+Math.round(m.income*60)+'/PHÚT';queueMapLabel(m.x,m.y,()=>mapText(text,m.x,m.y+34,11,800,m.owner>=0?TEAM_COLORS[m.owner].light:THEME['text-main']));}
+  if(settings.mapLabels&&viewScale>=MAP_LABEL_MIN_SCALE){const text=(m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+MINE_TYPES[m.resource].label+' +'+Math.round(m.income*60)+'/PHÚT';queueMapLabel(m.x,m.y,()=>mapText(text,m.x,m.y+34,11,800,m.owner>=0?TEAM_COLORS[m.owner].light:THEME['text-main']));}
   });
  }
  // Show friendly integrated cannon coverage while the unified fortress is selected.
@@ -94,7 +96,9 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Labels and building health bars queued during the scene, above every sprite.
  flushMapLabels();
  // Health bars are a separate foreground UI layer so canopies never obscure unit status.
- for(const u of state.units)if(u.hp>0&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitHealthBar(u);
+ // Which bars show follows the hpBars setting: always, only for hurt units, or only for selected ones.
+ const barShown=u=>settings.hpBars==='always'||(settings.hpBars==='damaged'?u.hp<u.max:(selected===u||u.selected));
+ for(const u of state.units)if(u.hp>0&&inView(u)&&barShown(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitHealthBar(u);
  // Selection rings remain legible above canopy sprites, while the actor itself still respects Y-depth.
  for(const u of state.units)if((selected===u||u.selected)&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
  // Projectiles and effects stay on their own foreground layer.
@@ -104,7 +108,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');
  // Route lines of the selected units go above the fog so a march into unexplored ground stays visible.
- drawUnitPaths();
+ if(settings.unitPaths)drawUnitPaths();
  // Keep placement feedback readable even when the cursor crosses unexplored fog.
  if(placement)drawBuilding({kind:placement.kind,x:placement.x,y:placement.y,team:localTeam(),previewValid:placement.valid},true);
  // Hide enemy forces and enemy structures when their location is not currently visible.
@@ -114,4 +118,5 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  if(dragSelect){const x=Math.min(dragSelect.x,dragSelect.cx),y=Math.min(dragSelect.y,dragSelect.cy),w=Math.abs(dragSelect.cx-dragSelect.x),h=Math.abs(dragSelect.cy-dragSelect.y);ctx.fillStyle='#69b9ff22';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#8bd0ff';ctx.setLineDash([6,4]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);}
  if(placement){const valid=placement.valid,color=valid?'#47b96c':'#d84c58',name=BUILDING_TYPES[placement.kind].name.toUpperCase(),text=valid?name+' · VỊ TRÍ HỢP LỆ':name+' · '+(placement.problem||'VỊ TRÍ BỊ CHẶN');ctx.save();ctx.font='700 13px system-ui';const w=Math.min(VIEW_W-32,Math.max(280,ctx.measureText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy').width+28)),x=(VIEW_W-w)/2,y=Math.round(VIEW_H*.14);ctx.fillStyle='#101b25eF';ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x,y,w,30,8);ctx.fill();ctx.stroke();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy',VIEW_W/2,y+15,w-18);ctx.restore();}
  drawMinimap();
+ updateSoundscape();
 }

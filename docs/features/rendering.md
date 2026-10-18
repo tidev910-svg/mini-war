@@ -29,7 +29,7 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions`, `goldR
 
 Cầu gỗ `drawBridges()` vẽ ngay trước lớp lãnh thổ; đường đi của quân đang chọn `drawUnitPaths()` vẽ ngay trước danh sách `sceneActors` ([pathfinding.md](pathfinding.md)).
 
-Canvas `#game` phủ toàn màn hình; `syncWorldMetrics()` giới hạn độ phân giải nền ở `MAX_CANVAS_PIXELS` = 2,1 triệu điểm ảnh (CSS phóng lên).
+Canvas `#game` phủ toàn màn hình; `syncWorldMetrics()` giới hạn độ phân giải nền ở `maxCanvasPixels()` theo cài đặt chất lượng (1 / 2,1 / 3,6 triệu điểm ảnh; mức Thấp còn tối đa 0,75 điểm ảnh canvas cho mỗi điểm ảnh CSS), CSS phóng lên. Thanh máu quân, nhãn mỏ/công trình, đường đi và đốm mặt đất cũng theo cài đặt ([settings.md](settings.md)).
 
 **Sprite** (`public/assets/units/<quân>/`, đường dẫn `/assets/units/<quân>/...`; quy ước thư mục và tên: [assets.md](../assets.md)):
 | Đối tượng | File | Ghi chú |

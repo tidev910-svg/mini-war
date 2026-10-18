@@ -43,9 +43,19 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
-- [ ] Tìm đường: hiếm khi nhóm quân trong `pnpm smoke path` không tới đích trên một bản đồ ngẫu nhiên. → [pathfinding.md](features/pathfinding.md)
+- [ ] Âm thanh: thêm nhạc nền / tiếng môi trường; nghe duyệt lại các tiếng sự kiện (thua trận đang là saxophone). → [audio.md](features/audio.md)
+
+- [ ] Kinh tế V2: chốt giá/thời gian mở hàng đợi (đang là giá tạm) và sản lượng nông trại cấp 2/3 (đang 90/135). → [units.md](features/units.md), [economy.md](features/economy.md)
 
 ## Đã xong gần đây
+**2026-10-18 (sửa lỗi kẹt mép bản đồ):** đường đi không còn dùng vòng ô ngoài cùng, điểm đường đi kẹp vào `MOVE_BOUNDS`; `pnpm smoke path` hết lỗi ngẫu nhiên; thêm unit test.
+
+**2026-10-18 (kinh tế & hàng đợi V2):** nhà chính 80/50/15/20, lãnh thổ 100/100/40/70, nông trại 60 lúa/phút; 4 hàng đợi huấn luyện song song + 4 chỗ chờ, mua thêm từ hàng đợi thứ 5 (giá tạm trong `QUEUE_LANE_UPGRADES`), không giới hạn quân số.
+
+**2026-10-18 (âm thanh):** 45 hiệu ứng CC0 của Kenney cho giao diện, mệnh lệnh, trận đánh (định vị theo camera, chỉ chỗ nhìn thấy) và sự kiện; tab Âm thanh (âm lượng tổng / trận đánh / giao diện, tắt tiếng), phím M; máy khách PvP nghe theo snapshot.
+
+**2026-10-18 (cài đặt + hiệu ứng mở menu):** hộp Cài đặt 3 tab (chất lượng hình, giảm chuyển động, thanh máu, nhãn, đường đi, ranh giới, cỡ giao diện, tốc độ cuộn, thời gian thông báo), tự lưu `localStorage`; menu ☰ bung kiểu dải cờ, hộp thoại mở kiểu cuộn giấy da với vệt sáng đồng, bảng có hiệu ứng đóng, sảnh xuất hiện lần lượt.
+
 **2026-10-18 (quay về ảnh vẽ tay):** bỏ quân vẽ bằng code (`render/unitArt.ts`), dùng lại spritesheet; lính giáo vẫn 4 hướng (hướng chéo → trái/phải); quân chết vẫn có sprite ngã rồi mờ.
 
 **2026-10-18 (8 hướng + đánh nhau):** quân dựng bằng con rối 3-D chiếu theo góc quay: 8 hướng (5 góc dựng + 3 lật), đi 6 khung, tấn công 4 khung (lấy đà / ra đòn / theo đà / thu về) riêng cho kiếm, dao, giáo, cung, thương; trúng đòn chớp đỏ; chết thì ngã rồi mờ; hướng 8 cung có độ trễ.

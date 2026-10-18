@@ -46,11 +46,14 @@
 | F3 hoặc Pause | Tạm dừng / tiếp tục (trước 2026-10-18 là Space) |
 | F1 | Mở/đóng hướng dẫn |
 | Enter (ở sảnh) | Vào trận với AI. Esc ở sảnh đóng hộp hướng dẫn |
+| M | Bật / tắt âm thanh ([audio.md](audio.md)) |
 | Esc | Theo thứ tự: đóng menu ☰ → huỷ đặt công trình → đóng bảng đang mở (kể cả hộp xác nhận rời trận) → bỏ chọn tất cả. Khi hộp xác nhận đang mở, các phím khác bị bỏ qua |
 
 Nhóm quân là dữ liệu cục bộ của trình duyệt (danh sách id, tự bỏ quân đã chết). Thẻ quân và thẻ công trình có nhãn phím nhỏ ở góc (`.hotkey`).
 
 **Đội hình** (action `move`): quân được xếp lưới vuông `ceil(√n)` cột, khoảng cách 34, tâm lưới là điểm nhấp và được đẩy vào trong nếu sát mép. Ô rơi vào nước/đá dời tới ô đi được gần nhất; mỗi quân đi theo đường vòng qua vật cản (`assignGroupMove()`, [pathfinding.md](pathfinding.md)). Điểm nhấp có vòng sáng nhấp nháy (`showMoveMarker()`); quân mình đang chọn và đang đi hiện đường nét đứt có mũi tên tới đích (một đường cho mỗi nhóm). Toạ độ kẹp trong `[25, W−25] × [45, H−30]`. Khi đang khoá xuất quân, quân có ô đích ngoài vùng căn cứ bị chuyển `hold`.
+
+Bước cuộn của phím mũi tên nhân với cài đặt **Tốc độ cuộn bản đồ** (`settings.scrollSpeed` = 0,6 / 1 / 1,6; [settings.md](settings.md)).
 
 **Camera**: `zoom` trong `[MIN_ZOOM, MAX_ZOOM]`; mặc định `DEFAULT_ZOOM` = khung nhìn rộng 64 ô, tối đa zoom vào 32 ô. Đầu trận camera đặt pháo đài của mình vào giữa phần màn hình không bị HUD che (`centerCameraOnHome()`, `hudInsets()`; guest PvP là pháo đài đỏ).
 

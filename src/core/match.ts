@@ -2,10 +2,10 @@
 // Match lifecycle: fresh() map and state, the simulation step update(), finish() and the frame loop (docs/features/match-flow.md).
 import { DEFAULT_ZOOM, camX, camY, centerCameraOnHome, setCamX, setCamY, setZoom, zoom } from './view';
 import { BASE_MIN_SEPARATION, H, MAP_FAIRNESS_TOLERANCE, MAP_GENERATION_TRIES, MAP_TILES, TILE_SIZE, W } from '../config/map';
-import { $, addLog, dist, ended, gameStarted, gameTime, localTeam, mode, netRole, nextId, paused, selected, selectedBuilding, selectedFlag, selectedFortress, setEnded, setGameTime, setNextId, setPaused, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setState, setSuppressNextCanvasClick, state, suppressNextCanvasClick, teamResources } from './game';
+import { $, addLog, dist, ended, nextFxId, gameStarted, gameTime, localTeam, mode, netRole, nextId, paused, selected, selectedBuilding, selectedFlag, selectedFortress, setEnded, setGameTime, setNextId, setPaused, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setState, setSuppressNextCanvasClick, state, suppressNextCanvasClick, teamResources } from './game';
 import { endPlacement } from '../ui/input';
-import { FLAG_CAPTURE_RADIUS_TILES, FORTRESS_INCOME_PER_MINUTE, SCOUT_VISION, STARTING_RESOURCES, specs } from '../config/balance';
-import { facingFrom, processPendingSpawns, unitVisionRadius, updateTraining } from '../sim/units';
+import { FLAG_CAPTURE_RADIUS_TILES, FORTRESS_INCOME_PER_MINUTE, SCOUT_VISION, STARTING_RESOURCES, TRAIN_LANES_START, specs } from '../config/balance';
+import { facingFrom, processPendingSpawns, unitVisionRadius, updateQueueLanes, updateTraining } from '../sim/units';
 import { farmFoodPerMinute, supplyFactor, updateSupply } from '../sim/economy';
 import { sendSnapshot } from '../net/snapshot';
 import { aiCanSee, revealHomeTerritory, teamCanSee } from '../sim/fog';
@@ -17,7 +17,7 @@ import { hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
 import { buildWorldDecor } from '../render/terrain';
 import { draw } from '../render/draw';
-import { clearPath, steerTo } from '../sim/movement';
+import { clampToBounds, clearPath, steerTo } from '../sim/movement';
 import { nearestWalkable, reachableFrom, tileOf } from '../map/paths';
 
 export let last=0;
@@ -49,7 +49,7 @@ export function fresh(){
  }
  const {regions,mines,blueBase,redBase}=best;
  buildRegionMap(regions);
- setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[]});
+ setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null]});
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
  centerCameraOnHome();
@@ -61,7 +61,7 @@ export function finish(win){if(ended)return;setEnded(true);$('resultTitle').text
 export function update(dt){
  if(!gameStarted|| (mode==='pvp'&&netRole==='guest') || paused||ended)return;const before=gameTime;setGameTime(gameTime+(dt));incomeTimer+=dt;aiTimer+=dt;
  const shownSecond=Math.floor(gameTime);if(shownSecond!==lastHudSecond){lastHudSecond=shownSecond;updateMatchClockHUD();updateTrainQueueHUD(localTeam());}
- updateTraining(dt);
+ updateTraining(dt);updateQueueLanes(dt);
  pendingSpawnRetryTimer+=dt;if(pendingSpawnRetryTimer>=.35){pendingSpawnRetryTimer=0;processPendingSpawns();}
  // Income once a second: fortress base income, farms, and the mines of held regions.
  while(incomeTimer>=1){incomeTimer-=1;
@@ -104,18 +104,18 @@ export function update(dt){
    const range=s.range+(tr?tr.r:target.w?35:10);
    if(d<=range){
     if(u.attackTimer<=0){u.attackTimer=cooldown;
-      if(u.type==='archer'){state.bullets.push({x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
+      if(u.type==='archer'){state.bullets.push({id:nextFxId(),x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
       else hurt(target,s.damage,u.team,u.type);
     }
    }else if((u.order==='attack'||(mode==='ai'&&u.team===1))){
     steerTo(u,target.x,target.y,speed,dt);
-    u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
+    clampToBounds(u);
    }
   }
   // Player units with a move order follow their path to the clicked point (formation slot).
   if((mode==='pvp'||u.team===0)&&u.order==='move'&&u.dest){
    if(steerTo(u,u.dest.x,u.dest.y,speed,dt)){u.order='hold';u.dest=null;clearPath(u);}
-   u.x=Math.max(22,Math.min(W-22,u.x));u.y=Math.max(45,Math.min(H-30,u.y));
+   clampToBounds(u);
   }
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
@@ -133,7 +133,7 @@ export function update(dt){
  for(const base of state.bases)for(let index=0;index<(base.guns||[]).length;index++){
   const gun=base.guns[index];if(!gun.active)continue;gun.cool-=dt;const source=fortressGunPosition(base,index);let target=null,bd=190;
   for(const u of state.units){if(u.team===base.team)continue;if((mode==='pvp'&&!teamCanSee(base.team,u.x,u.y))||(mode==='ai'&&base.team===1&&!aiCanSee(u.x,u.y)))continue;const d=Math.hypot(source.x-u.x,source.y-u.y);if(d<bd){bd=d;target=u;}}
-  if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({x:source.x,y:source.y-8,target,damage:17,team:base.team,speed:320,life:1.2});}
+  if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({id:nextFxId(),x:source.x,y:source.y-8,target,damage:17,team:base.team,speed:320,life:1.2});}
  }
  // Neutral monsters guarding the gold mines attack nearby player units.
  for(const g of state.guards){
@@ -142,7 +142,7 @@ export function update(dt){
   if(target){
    const d=Math.hypot(target.x-g.x,target.y-g.y);
    if(d>g.range){g.x+=(target.x-g.x)/d*g.speed*dt;g.y+=(target.y-g.y)/d*g.speed*dt;}
-   else if(g.timer<=0){target.hp-=g.damage;g.timer=g.cooldown;state.effects.push({x:target.x,y:target.y,life:.18,max:.18,color:'#ff9f43'});}
+   else if(g.timer<=0){target.hp-=g.damage;g.timer=g.cooldown;state.effects.push({id:nextFxId(),src:'guard',x:target.x,y:target.y,life:.18,max:.18,color:'#ff9f43'});}
   }else{
    const d=Math.hypot(g.homeX-g.x,g.homeY-g.y);
    if(d>3){g.x+=(g.homeX-g.x)/d*g.speed*dt;g.y+=(g.homeY-g.y)/d*g.speed*dt;}

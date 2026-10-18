@@ -2,7 +2,7 @@
 // Unit movement along paths (docs/features/pathfinding.md). Every walk — move orders, chasing a target, AI errands —
 // goes through steerTo(). Routes are planned on what the unit's side has explored: unexplored ground counts as open, so a
 // unit heads straight into the fog and only re-routes once its own vision reveals water or rock across the way.
-import { TILE_SIZE } from '../config/map';
+import { H, TILE_SIZE, W } from '../config/map';
 import { state } from '../core/game';
 import { findPath, groupPaths, isWalkableAt, lineWalkable, nearestWalkable, pathStillOpen, planGrid } from '../map/paths';
 
@@ -10,6 +10,11 @@ import { findPath, groupPaths, isWalkableAt, lineWalkable, nearestWalkable, path
 // Every PATH_CHECK_SECONDS the remaining route is re-checked against newly explored tiles.
 export const PATH_GOAL_TOLERANCE = TILE_SIZE * 1.5, PATH_REPATH_SECONDS = 1, PATH_CHECK_SECONDS = 0.4;
 
+// Units are kept inside this box (update() clamps them after moving). Path waypoints are clamped to the same box in
+// steerTo(), otherwise a route touching the map edge (a waypoint at y < MOVE_BOUNDS.top) is never reached: the unit
+// steps towards it, is clamped back, and stays "moving" forever.
+export const MOVE_BOUNDS = { left: 22, top: 45, right: W - 22, bottom: H - 30 };
+export function clampToBounds(u) { u.x = Math.max(MOVE_BOUNDS.left, Math.min(MOVE_BOUNDS.right, u.x)); u.y = Math.max(MOVE_BOUNDS.top, Math.min(MOVE_BOUNDS.bottom, u.y)); }
 // What `team` knows of the map: its explored tiles (team 0 = state.fogSeen, team 1 = state.enemyFogSeen).
 export function knownMap(team) { return team === 0 ? state.fogSeen : state.enemyFogSeen; }
 
@@ -31,7 +36,8 @@ export function steerTo(u, gx, gy, speed, dt) {
   }
   let budget = speed * dt;
   while (budget > 0 && u.path.length) {
-    const p = u.path[0], d = Math.hypot(p.x - u.x, p.y - u.y), step = Math.min(d, budget);
+    const w = u.path[0], p = { x: Math.max(MOVE_BOUNDS.left, Math.min(MOVE_BOUNDS.right, w.x)), y: Math.max(MOVE_BOUNDS.top, Math.min(MOVE_BOUNDS.bottom, w.y)) };
+    const d = Math.hypot(p.x - u.x, p.y - u.y), step = Math.min(d, budget);
     const nx = d > 1e-9 ? u.x + (p.x - u.x) / d * step : p.x, ny = d > 1e-9 ? u.y + (p.y - u.y) / d * step : p.y;
     // Never step onto water or rock, even where the plan assumed unexplored ground was open: stop and re-plan next frame.
     if (!isWalkableAt(nx, ny) && isWalkableAt(u.x, u.y)) { u.path = null; u.pathCheck = 0; return false; }

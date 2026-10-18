@@ -23,17 +23,19 @@ PeerJS **không** nằm trong `package.json`; nó được tải từ CDN lúc c
 | Thư mục | File | Nội dung | Tài liệu |
 |---|---|---|---|
 | — | `main.ts` | Điểm vào: import mọi module, rồi `fresh()` và chạy `loop()` | [match-flow.md](features/match-flow.md) |
-| `config/` | `map.ts`, `balance.ts`, `theme.ts`, `visuals.ts` | **Chỉ hằng số**: kích thước bản đồ & sinh vùng; bảng cân bằng (`specs`, `BUILDING_TYPES`, `MINE_TYPES`, thu nhập, chiếm cờ, AI); design tokens của giao diện (`THEME`, `TEAM_COLORS`, `MAP_UI`, nơi duy nhất chứa màu/cỡ chữ/khoảng cách); màu/kích thước viền, cờ, sương mù (lấy màu phe và sương mù từ `theme.ts`) | [economy.md](features/economy.md), [units.md](features/units.md), [territory.md](features/territory.md) |
+| `config/` | `map.ts`, `balance.ts`, `theme.ts`, `visuals.ts`, `audio.ts` | **Chỉ hằng số**: kích thước bản đồ & sinh vùng; bảng cân bằng (`specs`, `BUILDING_TYPES`, `MINE_TYPES`, thu nhập, chiếm cờ, AI); design tokens của giao diện (`THEME`, `TEAM_COLORS`, `MAP_UI`, nơi duy nhất chứa màu/cỡ chữ/khoảng cách); màu/kích thước viền, cờ, sương mù (lấy màu phe và sương mù từ `theme.ts`) | [economy.md](features/economy.md), [units.md](features/units.md), [territory.md](features/territory.md) |
 | `core/` | `game.ts` | Trạng thái dùng chung: `state`, `mode`, `netRole`, `paused`, `ended`, lựa chọn, `nextId`; tiện ích `localTeam()`, `canAfford()`, `spend()`, `addLog()`, `$()` | — |
 | | `view.ts` | Canvas, khung nhìn, camera/zoom, đổi toạ độ | [controls.md](features/controls.md) |
 | | `match.ts` | `fresh()`, `update(dt)`, `finish()`, `loop()`; bộ đếm `aiTimer`, `incomeTimer`… | [match-flow.md](features/match-flow.md) |
 | | `actions.ts` | `requestAction()` / `applyAction()` | [multiplayer.md](features/multiplayer.md) |
+| | `settings.ts` | Tuỳ chọn của người chơi (`settings`, `setSetting()`, `onSettingChange()`), lưu trong `localStorage`, không gửi qua mạng | [settings.md](features/settings.md) |
 | `map/` | `terrain.ts`, `regions.ts`, `bases.ts`, `paths.ts` | Địa hình, `walkDistances()`; bản đồ vùng và `generateRegions()`; hình học pháo đài (`baseDir()`, `musterYard()`); ô đi được, cầu, A* (`findPath()`, `groupPaths()`) | [territory.md](features/territory.md), [fortress.md](features/fortress.md) |
 | `sim/` | `economy.ts`, `units.ts`, `movement.ts`, `fog.ts`, `buildings.ts`, `territory.ts`, `combat.ts` | Luật mô phỏng: lúa & tiếp tế; mua quân, hàng đợi huấn luyện, xuất quân; đi theo đường (`steerTo()`); sương mù & tầm nhìn; công trình; chiếm cờ; chọn mục tiêu & sát thương | file tính năng cùng tên |
 | `ai/` | `enemy.ts` | `runEnemyAI()` | [ai-opponent.md](features/ai-opponent.md) |
 | `net/` | `peer.ts`, `snapshot.ts` | Phòng PeerJS; gửi/nhận snapshot | [multiplayer.md](features/multiplayer.md) |
+| `audio/` | `sound.ts` | Phát âm thanh (Web Audio: bus `ui` / `sfx` / `event`, định vị theo camera), `updateSoundscape()` biến thay đổi trạng thái trận thành tiếng | [audio.md](features/audio.md) |
 | `render/` | `draw.ts`, `sprites.ts`, `terrain.ts`, `units.ts`, `buildings.ts`, `flags.ts`, `territory.ts`, `fog.ts`, `minimap.ts`, `paths.ts` | Vẽ: `draw()` gọi các lớp theo thứ tự (gồm cầu, đường đi của quân đang chọn), cuối cùng là minimap | [rendering.md](features/rendering.md), [minimap.md](features/minimap.md) |
-| `ui/` | `theme.ts`, `hud.ts`, `panels.ts`, `hotkeys.ts`, `input.ts`, `modeScreen.ts` | Ghi token lên `:root` thành biến CSS, `setFactionTheme()`; HUD nổi trên bản đồ; bảng Huấn luyện/Xây dựng, hướng dẫn, xác nhận rời trận, menu, tooltip, thông báo, chân dung quân; phím tắt kiểu Đế Chế (`hotkeys.ts`); chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
+| `ui/` | `theme.ts`, `hud.ts`, `panels.ts`, `hotkeys.ts`, `input.ts`, `modeScreen.ts`, `settings.ts` | Ghi token lên `:root` thành biến CSS, `setFactionTheme()`; hộp Cài đặt (`SETTINGS_SCHEMA`); mở/đóng có hiệu ứng (`showAnimated()` / `hideAnimated()`); HUD nổi trên bản đồ; bảng Huấn luyện/Xây dựng, hướng dẫn, xác nhận rời trận, menu, tooltip, thông báo, chân dung quân; phím tắt kiểu Đế Chế (`hotkeys.ts`); chuột/phím/nút; màn hình chọn chế độ | [hud-ui.md](features/hud-ui.md), [controls.md](features/controls.md) |
 
 Quy ước giữa các module (chi tiết ở [conventions.md](conventions.md)):
 - **Biến dùng chung**: mỗi biến `let` có một module sở hữu. Module khác đọc trực tiếp (ES module luôn thấy giá trị mới nhất), nhưng muốn gán thì gọi setter của module sở hữu, vd. `setPaused(true)`, `setState(packet.state)`, `setZoom(z)`, `setNextId(nextId+1)`.
@@ -62,7 +64,7 @@ Nút / chuột / phím ─► requestAction(action, payload)
    ├─ guest PvP: conn.send({type:'action',...}) ─► host: applyAction(1, ...)
    └─ còn lại:   applyAction(localTeam(), ...)
 ```
-Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm', id}`, `outpost {regionId}`, `moveFarm {id, x, y}`, `turret`, `attack {ids}`, `stop {ids}`, `delete {ids}`, `move {ids, x, y}`, `pause {paused}`. Ngoại lệ: kéo nông trại ở host/AI và chọn quân/công trình sửa trực tiếp ở phía client (xem [controls.md](features/controls.md)).
+Action hợp lệ: `buy {unit}`, `build {kind, x, y}`, `upgrade {kind: 'farm', id}`, `outpost {regionId}`, `moveFarm {id, x, y}`, `turret`, `buyLane` (mở thêm hàng đợi huấn luyện), `attack {ids}`, `stop {ids}`, `delete {ids}`, `move {ids, x, y}`, `pause {paused}`. Ngoại lệ: kéo nông trại ở host/AI và chọn quân/công trình sửa trực tiếp ở phía client (xem [controls.md](features/controls.md)).
 
 ## Camera & toạ độ
 - `worldToScreenPlane()` / `screenPlaneToWorld()` hiện là hàm đồng nhất (góc nhìn từ trên xuống, chưa phải isometric thật); giữ lại làm điểm mở rộng.

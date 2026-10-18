@@ -4,11 +4,13 @@ import { ctx, zoom } from '../core/view';
 import { localTeam, state } from '../core/game';
 import { TILE_SIZE } from '../config/map';
 import { bridges } from '../map/paths';
+import { playSound } from '../audio/sound';
 
 // Pulse shown at the clicked point for MOVE_MARKER_SECONDS after a move order (set by ui/input.ts via showMoveMarker()).
 export const MOVE_MARKER_SECONDS = 1.2;
 let moveMarker = null;
-export function showMoveMarker(x, y) { moveMarker = { x, y, at: performance.now() }; }
+// Called for the local player's move orders only, so it also gives the order its sound.
+export function showMoveMarker(x, y) { moveMarker = { x, y, at: performance.now() }; playSound('order.move'); }
 
 // Dashed route for the local side's selected, moving units, with chevrons pointing the way and a small flag at the end.
 // One line per move order (u.moveGroup): the unit with the longest way left draws it. Widths are in screen pixels.
