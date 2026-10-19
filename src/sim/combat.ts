@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Target selection and damage (docs/features/combat.md).
 import { dist, mode, nextFxId, selected, setSelected, state } from '../core/game';
+import { COUNTER_MULTIPLIERS, STRUCTURE_DAMAGE_MULTIPLIERS } from '../config/balance';
 import { UNIT_ANIM } from '../config/visuals';
 import { finish } from '../core/match';
 import { aiCanSee, teamCanSee } from './fog';
@@ -21,10 +22,15 @@ export function nearestEnemy(u){
  return best;
 }
 export function unitTargetValid(t,u){return t&&t.hp>0&&((t.team!==undefined&&t.team!==u.team)||t.team===undefined);}
+export function damageMultiplier(attackerType,target){
+ if(!attackerType||!target)return 1;
+ const structure=!!target.kind||state.bases.includes(target);
+ if(structure)return STRUCTURE_DAMAGE_MULTIPLIERS[attackerType]??1;
+ return COUNTER_MULTIPLIERS[attackerType]?.[target.type]??1;
+}
 export function hurt(target,damage,team,attackerType=null){
- let finalDamage=damage;
- if(attackerType==='spearman'&&target?.type==='cavalry')finalDamage*=1.35;
- else if(attackerType==='cavalry'&&target?.type==='spearman')finalDamage*=0.9;
+ // Combat V3.1: base damage × counter multiplier (unit targets) or × structure multiplier (buildings and fortresses).
+ const finalDamage=damage*damageMultiplier(attackerType,target);
  target.hp-=finalDamage;state.effects.push({id:nextFxId(),src:attackerType||'gun',x:target.x,y:target.y,life:.18,max:.18,color:team===0?'#73c8ff':'#ff747a'});
  // Display only: a dying unit leaves a falling body (travels in the snapshot to the guest).
  if(target.hp<=0){

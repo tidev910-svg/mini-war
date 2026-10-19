@@ -200,7 +200,7 @@ export function endPointer(e){
 }
 canvas.addEventListener('pointerup',endPointer);
 canvas.addEventListener('pointercancel',endPointer);
-// Keyboard shortcuts (Esc, T, F3, A, S, camera keys…) are all handled in ui/hotkeys.ts.
+// Keyboard shortcuts (Esc, T, F10, 1–5, F1–F9, A, S, camera keys…) are all handled in ui/hotkeys.ts.
 
 // Minimap: press or drag to centre the camera there (local view only, nothing to send to the host).
 let minimapDrag=null;

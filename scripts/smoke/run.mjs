@@ -118,27 +118,41 @@ if (solo.length) {
     }
 
     if (want('hotkeys')) {
-      const t = checker('hotkeys: phím tắt kiểu Đế Chế');
+      const t = checker('hotkeys: phím tắt kiểu Đế Chế + Unit Control V1.0');
       const key = (k, o = {}) => c.page(`document.dispatchEvent(new KeyboardEvent('keydown',${JSON.stringify({ key: k, code: o.code || '', ctrlKey: !!o.ctrl, shiftKey: !!o.shift, bubbles: true })}))`);
       await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];state.resources[0]={food:2000,wood:2000,stone:500,gold:2000};
-        for(let i=0;i<6;i++)spawn(0,i<3?'infantry':'archer');for(const u of state.units)u.selected=false;localSelectedIds.clear();return 1`);
+        for(let i=0;i<6;i++)spawn(0,i<3?'infantry':'archer');for(const t of ['cavalry','cavalry','spearman'])spawn(0,t);for(const u of state.units)u.selected=false;localSelectedIds.clear();return 1`);
       const sel = () => c.game(`return state.units.filter(u=>u.selected).map(u=>u.type)`);
       await key('a', { ctrl: true });
-      t.ok((await sel()).length === 6, 'Ctrl+A chọn tất cả quân');
+      t.ok((await sel()).length === 9, 'Ctrl+A chọn tất cả quân');
+      // Unit Control V1.0: keys 1–5 filter the selection by type; units dropped keep their orders.
+      await c.game(`const b=state.bases[0];for(const u of state.units)if(u.type==='infantry'){u.order='move';u.dest={x:b.x,y:b.y+400};}updateSelectionBar();return 1`);
+      t.ok(await c.page("!document.getElementById('unitBar').hidden&&document.querySelectorAll('#unitBar .unit-chip').length===4"), 'thanh quân hiện 4 loại trong nhóm');
+      await key('5', { code: 'Digit5' });
+      let s5 = await sel();
+      t.ok(s5.length === 2 && s5.every(x => x === 'cavalry'), 'phím 5: chỉ giữ kỵ binh', s5);
+      t.ok(await c.game(`return state.units.filter(u=>u.type==='infantry').every(u=>u.order==='move'&&!u.selected)`), 'lính bị bỏ chọn vẫn giữ lệnh đi');
+      await key('1', { code: 'Digit1' });
+      t.ok((await sel()).join() === s5.join() && /không có trinh sát/.test(await c.page("document.getElementById('feed').firstElementChild.textContent")), 'phím 1 khi nhóm không có trinh sát: giữ nguyên, có thông báo');
+      await c.page("document.querySelector('#unitBar .unit-chip[data-type=archer]').dispatchEvent(new MouseEvent('click',{bubbles:true,shiftKey:true}))");
+      const sh = (await sel()).sort().join();
+      t.ok(sh === 'archer,archer,archer,cavalry,cavalry', 'Shift + bấm biểu tượng cung thủ: thêm cung thủ từ nhóm đã khoanh', sh);
+      await c.page("document.querySelector('#unitBar .unit-chip[data-type=spearman]').click()");
+      t.ok((await sel()).join() === 'spearman', 'bấm biểu tượng lính giáo: chỉ chọn lính giáo trong nhóm đã khoanh');
       await c.game(`for(const u of state.units)u.selected=u.type==='archer';localSelectedIds.clear();for(const u of state.units)if(u.selected)localSelectedIds.add(u.id);return 1`);
       await key('2', { code: 'Digit2', ctrl: true });
       await key('Escape');
       t.ok((await sel()).length === 0, 'Esc bỏ chọn');
-      await key('2', { code: 'Digit2' });
+      await key('F2');
       const g2 = await sel();
-      t.ok(g2.length === 3 && g2.every(x => x === 'archer'), 'Ctrl+2 gán nhóm, 2 chọn lại nhóm', g2);
+      t.ok(g2.length === 3 && g2.every(x => x === 'archer'), 'Ctrl+2 lưu nhóm, F2 gọi lại nhóm', g2);
       // Both taps inside one evaluation: separate CDP round trips can exceed the 400 ms double-tap window on a busy machine.
-      await c.game(`const tap=()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'2',code:'Digit2',bubbles:true}));tap();setCamX(0);setCamY(0);tap();return 1`);
+      await c.game(`const tap=()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'F2',bubbles:true}));tap();setCamX(0);setCamY(0);tap();return 1`);
       // Expected camera = centred on the group, clamped to the map (a group near the edge cannot be centred).
       const cam = await c.game(`const a=state.units.filter(u=>u.selected),cx=a.reduce((s,u)=>s+u.x,0)/a.length,cy=a.reduce((s,u)=>s+u.y,0)/a.length;
         const ex=Math.max(0,Math.min(Math.max(0,MAP_WORLD_W-VIEW_W/zoom),cx-VIEW_W/zoom/2)),ey=Math.max(0,Math.min(Math.max(0,MAP_WORLD_H-VIEW_H/zoom),cy-VIEW_H/zoom/2));
         return Math.abs(camX-ex)<2&&Math.abs(camY-ey)<2&&(ex>0||ey>0)`);
-      t.ok(cam, 'bấm số hai lần liền: camera tới nhóm');
+      t.ok(cam, 'bấm F2 hai lần liền: camera tới nhóm');
       await key('s');
       t.ok(await c.game(`return state.units.filter(u=>u.selected).every(u=>u.order==='hold'&&!u.path)`), 'S: nhóm dừng lại');
       await key('h');
@@ -158,10 +172,10 @@ if (solo.length) {
       t.ok(idle, 'dấu phẩy: chọn một quân đang rảnh');
       const before = await c.game(`return state.units.length`); await key('Delete');
       t.ok(await c.game(`return state.units.length`) === before - 1, 'Delete: loại bỏ quân đang chọn');
-      const p0 = await c.game(`return paused`); await key('F3');
-      t.ok(await c.game(`return paused`) !== p0, 'F3: tạm dừng'); await key('F3');
-      await key('F1');
-      t.ok(!(await c.page("document.getElementById('guideModal').hidden")) && (await c.page("document.querySelectorAll('#hotkeyTable tr').length")) > 10, 'F1: mở hướng dẫn có bảng phím tắt');
+      const p0 = await c.game(`return paused`); await key('F10');
+      t.ok(await c.game(`return paused`) !== p0, 'F10: tạm dừng'); await key('F10');
+      await key('?');
+      t.ok(!(await c.page("document.getElementById('guideModal').hidden")) && (await c.page("document.querySelectorAll('#hotkeyTable tr').length")) > 10, '?: mở hướng dẫn có bảng phím tắt');
       await key('Escape');
       results.push(t.report());
     }

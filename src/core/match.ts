@@ -4,7 +4,7 @@ import { DEFAULT_ZOOM, camX, camY, centerCameraOnHome, setCamX, setCamY, setZoom
 import { BASE_MIN_SEPARATION, H, MAP_FAIRNESS_TOLERANCE, MAP_GENERATION_TRIES, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { $, addLog, dist, ended, nextFxId, gameStarted, gameTime, localTeam, mode, netRole, nextId, paused, selected, selectedBuilding, selectedFlag, selectedFortress, setEnded, setGameTime, setNextId, setPaused, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setState, setSuppressNextCanvasClick, state, suppressNextCanvasClick, teamResources } from './game';
 import { endPlacement } from '../ui/input';
-import { FLAG_CAPTURE_RADIUS_TILES, FORTRESS_INCOME_PER_MINUTE, SCOUT_VISION, STARTING_RESOURCES, TRAIN_LANES_START, specs } from '../config/balance';
+import { FLAG_CAPTURE_RADIUS_TILES, FORTRESS_INCOME_PER_MINUTE, SCOUT_VISION, STARTING_RESOURCES, TRAIN_LANES_START, FORTRESS_GUN_DAMAGE, specs } from '../config/balance';
 import { facingFrom, processPendingSpawns, unitVisionRadius, updateQueueLanes, updateTraining } from '../sim/units';
 import { farmFoodPerMinute, supplyFactor, updateSupply } from '../sim/economy';
 import { sendSnapshot } from '../net/snapshot';
@@ -133,7 +133,7 @@ export function update(dt){
  for(const base of state.bases)for(let index=0;index<(base.guns||[]).length;index++){
   const gun=base.guns[index];if(!gun.active)continue;gun.cool-=dt;const source=fortressGunPosition(base,index);let target=null,bd=190;
   for(const u of state.units){if(u.team===base.team)continue;if((mode==='pvp'&&!teamCanSee(base.team,u.x,u.y))||(mode==='ai'&&base.team===1&&!aiCanSee(u.x,u.y)))continue;const d=Math.hypot(source.x-u.x,source.y-u.y);if(d<bd){bd=d;target=u;}}
-  if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({id:nextFxId(),x:source.x,y:source.y-8,target,damage:17,team:base.team,speed:320,life:1.2});}
+  if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({id:nextFxId(),x:source.x,y:source.y-8,target,damage:FORTRESS_GUN_DAMAGE[index]??FORTRESS_GUN_DAMAGE[0],team:base.team,speed:320,life:1.2});}
  }
  // Neutral monsters guarding the gold mines attack nearby player units.
  for(const g of state.guards){

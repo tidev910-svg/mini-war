@@ -10,6 +10,7 @@ import { activeFortressGuns } from '../map/bases';
 import { buildingDef, buildingDone, upgradeCost, upgradeTarget } from '../sim/buildings';
 import { refreshTooltip, updateUnitCards } from './panels';
 import { setFactionTheme } from './theme';
+import { updateSelectionBar } from './selection';
 import { setSetting, settings } from '../core/settings';
 import { playSound } from '../audio/sound';
 
@@ -25,8 +26,8 @@ function setButton(el, iconName, label, key = '') {
 export let showTerritory=settings.territory;
 // Also remembered as the 'territory' setting (core/settings.ts), so T and the settings panel stay in step.
 export function setShowTerritory(on){showTerritory=on;setSetting('territory',on);const el=$('toggleTerritory');if(el){el.dataset.tip=(on?'Ranh giới vùng: đang hiện':'Ranh giới vùng: đang ẩn')+' · T';el.classList.toggle('placing',!on);}}
-// Pause item in the menu (F3 clicks it even while the menu is closed).
-export function setPauseButton(){setButton($('pause'),paused?'play':'pause',paused?'Tiếp tục':'Tạm dừng','F3');}
+// Pause item in the menu (F10 / Pause click it even while the menu is closed).
+export function setPauseButton(){setButton($('pause'),paused?'play':'pause',paused?'Tiếp tục':'Tạm dừng','F10');}
 export function updateMatchClockHUD(){const sec=Math.floor(gameTime);$('time').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');setText($('phaseHint'),gameTime<300?'Giai đoạn phát triển kinh tế':gameTime<600?'Giai đoạn mở rộng':'Giai đoạn giao tranh');}
 
 // Army row: one icon + count per unit type, plus units waiting in the muster yard.
@@ -79,6 +80,7 @@ export function updateHUD(){
  $('pause').disabled=ended;
  setPauseButton();
  watchHomeUnderAttack(home);
+ updateSelectionBar();
  refreshTooltip();
 }
 

@@ -123,8 +123,8 @@
       <button class="rail-btn" id="toggleTerritory" type="button" data-tip="Ẩn/hiện ranh giới vùng · T" data-tip-side="left"><svg class="ico"><use href="#i-map"/></svg></button>
       <button class="rail-btn" id="fullscreen" type="button" data-tip="Toàn màn hình" data-tip-side="left"><svg class="ico"><use href="#i-expand"/></svg></button>
       <div class="game-menu" id="gameMenu" role="menu" hidden>
-        <button class="menu-item" id="pause" type="button" role="menuitem" style="--i:0"><svg class="ico"><use href="#i-pause"/></svg><span>Tạm dừng</span><kbd>F3</kbd></button>
-        <button class="menu-item" id="openGuide" type="button" role="menuitem" style="--i:1"><svg class="ico"><use href="#i-help"/></svg><span>Hướng dẫn</span><kbd>F1</kbd></button>
+        <button class="menu-item" id="pause" type="button" role="menuitem" style="--i:0"><svg class="ico"><use href="#i-pause"/></svg><span>Tạm dừng</span><kbd>F10</kbd></button>
+        <button class="menu-item" id="openGuide" type="button" role="menuitem" style="--i:1"><svg class="ico"><use href="#i-help"/></svg><span>Hướng dẫn</span><kbd>?</kbd></button>
         <button class="menu-item" id="openSettings" type="button" role="menuitem" style="--i:2"><svg class="ico"><use href="#i-gear"/></svg><span>Cài đặt</span></button>
         <button class="menu-item" id="toggleSideHud" type="button" role="menuitem" aria-label="Ẩn giao diện" style="--i:3"><svg class="ico"><use href="#i-eye-off"/></svg><span>Ẩn giao diện</span></button>
         <button class="menu-item danger" id="leaveMatch" type="button" role="menuitem" style="--i:4"><svg class="ico"><use href="#i-exit"/></svg><span>Rời trận</span></button>
@@ -155,6 +155,9 @@
       <span class="dock-slot" data-tip="Xây dựng và nâng cấp · B"><button class="dock-btn" id="openBuild" type="button" aria-label="Xây dựng"><svg class="shield-bg"><use href="#shield"/></svg><svg class="ico"><use href="#i-build"/></svg><span class="ribbon">Xây dựng</span><kbd class="hotkey">B</kbd></button></span>
       <span class="dock-slot" data-tip="Nhóm quân đang chọn tấn công · A"><button class="dock-btn warn" id="attack" type="button" aria-label="Tấn công"><svg class="shield-bg"><use href="#shield"/></svg><svg class="ico"><use href="#i-attack"/></svg><span class="ribbon">Tấn công</span><kbd class="hotkey">A</kbd></button></span>
     </nav>
+
+    <!-- Selection bar (Unit Control V1.0): unit types in the current selection; built by ui/selection.ts -->
+    <nav class="unit-bar" id="unitBar" aria-label="Quân đang chọn" hidden></nav>
 
     <!-- Drawers -->
     <section class="drawer controls" id="trainDrawer" aria-label="Huấn luyện quân" hidden>

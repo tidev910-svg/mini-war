@@ -1,6 +1,6 @@
 # Điều khiển, chọn quân & camera
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
 
 ## Mô tả
 Điều khiển bằng chuột (có hỗ trợ cảm ứng để kéo bản đồ) và phím. Người chơi chọn một hoặc nhiều quân, ra lệnh di chuyển theo đội hình hoặc tấn công; kéo/zoom bản đồ.
@@ -27,9 +27,10 @@
 **Phím tắt kiểu Đế Chế (Age of Empires II)** — mọi phím xử lý trong `src/ui/hotkeys.ts`, bảng `HOTKEYS` (cũng hiện trong hộp thoại hướng dẫn, `#hotkeyTable`). Không cần focus canvas; bỏ qua khi đang gõ trong ô nhập hoặc khi màn chọn chế độ đang mở.
 | Phím | Kết quả |
 |---|---|
-| Ctrl + 1…9 | Gán nhóm quân đang chọn vào số đó (Ctrl + số khi không chọn gì: xoá nhóm) |
-| 1…9 | Chọn nhóm; bấm cùng số hai lần trong `GROUP_DOUBLE_TAP_MS` = 400 ms: camera tới giữa nhóm |
-| Shift + 1…9 | Thêm nhóm vào lựa chọn hiện tại |
+| 1 2 3 4 5 (hàng số hoặc bàn phím số) | **Lọc theo loại** trong nhóm đang chọn: 1 trinh sát, 2 lính, 3 lính giáo, 4 cung thủ, 5 kỵ binh (`SELECT_KEYS`, `filterSelectionByType()`). Không tìm quân ngoài nhóm; nhóm không có loại đó thì giữ nguyên và báo "Nhóm đang chọn không có …" |
+| Ctrl + 1…9 | Lưu nhóm quân đang chọn vào số đó (Ctrl + số khi không chọn gì: xoá nhóm) |
+| F1…F9 | Gọi nhóm đã lưu; bấm cùng phím hai lần trong `GROUP_DOUBLE_TAP_MS` = 400 ms: camera tới giữa nhóm. Chặn hành vi mặc định của trình duyệt (F1 trợ giúp, F3 tìm, F5 tải lại…) |
+| Shift + F1…F9 | Thêm nhóm vào lựa chọn hiện tại |
 | H | Chọn pháo đài, đưa camera về, mở bảng Huấn luyện |
 | Q W E R T | Khi pháo đài đang chọn hoặc bảng Huấn luyện mở: trinh sát, lính, cung thủ, lính giáo, kỵ binh (`TRAIN_KEYS`, qua `requestBuy()`) |
 | B | Mở/đóng bảng Xây dựng |
@@ -43,8 +44,8 @@
 | Space | Camera tới giữa nhóm đang chọn; không chọn gì thì tới pháo đài |
 | Mũi tên / `+` `=` / `-` `_` | Kéo camera 180/zoom (Shift: 360/zoom) / phóng to ×1,15 / thu nhỏ ÷1,15 |
 | T | Ẩn/hiện ranh giới vùng (khi T không đang là phím huấn luyện/xây) |
-| F3 hoặc Pause | Tạm dừng / tiếp tục (trước 2026-10-18 là Space) |
-| F1 | Mở/đóng hướng dẫn |
+| F10 hoặc Pause | Tạm dừng / tiếp tục (trước 2026-10-19 là F3, trước 2026-10-18 là Space) |
+| ? | Mở/đóng hướng dẫn (trước 2026-10-19 là F1) |
 | Enter (ở sảnh) | Vào trận với AI. Esc ở sảnh đóng hộp hướng dẫn |
 | M | Bật / tắt âm thanh ([audio.md](audio.md)) |
 | Esc | Theo thứ tự: đóng menu ☰ → huỷ đặt công trình → đóng bảng đang mở (kể cả hộp xác nhận rời trận) → bỏ chọn tất cả. Khi hộp xác nhận đang mở, các phím khác bị bỏ qua |
@@ -57,7 +58,17 @@ Bước cuộn của phím mũi tên nhân với cài đặt **Tốc độ cuộ
 
 **Camera**: `zoom` trong `[MIN_ZOOM, MAX_ZOOM]`; mặc định `DEFAULT_ZOOM` = khung nhìn rộng 64 ô, tối đa zoom vào 32 ô. Đầu trận camera đặt pháo đài của mình vào giữa phần màn hình không bị HUD che (`centerCameraOnHome()`, `hudInsets()`; guest PvP là pháo đài đỏ).
 
+**Unit Control V1.0** (19/10/2026; chỉ đổi cách chọn quân và phím tắt):
+- **Ba cách chọn theo loại:**
+  - Phím 1–5 lọc nhóm đang chọn.
+  - Nhấp đúp vào quân: chọn mọi quân cùng loại của mình đang trên màn hình.
+  - **Thanh quân** (`#unitBar`, giữa phía dưới, trên dải thông báo; `updateSelectionBar()`): mỗi loại có trong nhóm một ô gồm biểu tượng, số đang chọn (`n/tổng` khi chỉ chọn một phần) và phím 1–5. Bấm ô: chỉ chọn loại đó; Shift + bấm: thêm hoặc bỏ loại đó (`selectTypeFromPool()`).
+- **Nhóm gốc:** thanh nhớ lựa chọn "thật" gần nhất (khoanh, nhấp, nhấp đúp, Ctrl+A, gọi nhóm). Lọc chỉ thu hẹp lựa chọn trong nhóm gốc nên Shift + bấm thêm lại được loại đã lọc bỏ. Mọi thay đổi lựa chọn khác tạo nhóm gốc mới.
+- Lựa chọn chỉ nằm trên máy này, không gửi action: quân bị bỏ chọn **giữ nguyên lệnh**. Lệnh mới (nhấp phải, A, S…) chỉ áp cho quân đang chọn.
+- Đang gõ trong ô nhập liệu thì phím không có tác dụng (`typing()`).
+
 ## Code liên quan
+- [src/ui/selection.ts](../../src/ui/selection.ts): `SELECT_KEYS`, `selectUnits()`, `selectedOwnUnits()`, `filterSelectionByType()`, `selectTypeFromPool()`, `updateSelectionBar()` (gọi từ `updateHUD()` và sau mỗi lần lọc / gọi nhóm). [src/ui/hotkeys.ts](../../src/ui/hotkeys.ts): `saveGroup()`, `recallGroup()`.
 - [src/ui/input.ts](../../src/ui/input.ts): các `addEventListener` ở cấp module (`wheel`, hai `pointerdown`, hai `pointermove`, `stopPan()`, `endPointer()`, `click`, hai `keydown`; minimap: `centerCameraOnMinimap()`).
 - [src/ui/hotkeys.ts](../../src/ui/hotkeys.ts): `HOTKEYS`, `TRAIN_KEYS`, `BUILD_KEYS`, `selectUnits()`, nhóm quân, nhấp đúp chọn cùng loại, một trình xử lý `keydown` cho mọi phím.
 - [src/ui/panels.ts](../../src/ui/panels.ts): đóng bảng khi bấm xuống canvas.
@@ -79,7 +90,7 @@ Bước cuộn của phím mũi tên nhân với cài đặt **Tốc độ cuộ
 - [ ] Kéo khung chọn 5 quân → log "5 lính được chọn"; nhấp phải → quân dàn đội hình, không chồng lên nhau.
 - [ ] Shift + nhấp thêm/bỏ quân.
 - [ ] Zoom bằng con lăn giữ đúng điểm dưới con trỏ; kéo camera bằng chuột phải.
-- [ ] Ctrl+1 gán nhóm, Esc bỏ chọn, 1 chọn lại, bấm 1 hai lần camera tới nhóm; H rồi Q/T huấn luyện; B rồi F đặt nông trại; S dừng; Delete loại bỏ; dấu phẩy chọn quân rảnh; F3 tạm dừng; F1 hướng dẫn.
+- [ ] Khoanh nhiều loại quân, bấm 5 chỉ còn kỵ binh (quân bị bỏ chọn giữ lệnh), bấm 1 khi không có trinh sát thì giữ nguyên và có thông báo; thanh quân: bấm biểu tượng chỉ chọn loại đó, Shift + bấm thêm/bỏ. Ctrl+1 lưu nhóm, Esc bỏ chọn, F1 gọi lại, bấm F1 hai lần camera tới nhóm; F5 không tải lại trang; H rồi Q/T huấn luyện; B rồi F đặt nông trại; S dừng; Delete loại bỏ; dấu phẩy chọn quân rảnh; F3 tạm dừng; F1 hướng dẫn.
 - Đã chạy thử 2026-10-18: `pnpm smoke hotkeys` đạt toàn bộ các phím trên.
 
 ## Giới hạn / việc tồn đọng

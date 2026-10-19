@@ -12,13 +12,13 @@ Bảng `specs` (đơn vị: HP, sát thương/đòn, tầm & tốc độ theo đ
 
 | Khoá | Tên | HP | ST | Tầm | Tốc độ | Cooldown | Giá (`cost`) | Huấn luyện (`train`, giây) | Nuôi (`upkeep`, lúa/phút) | Bán kính `r` | Tầm nhìn |
 |---|---|---:|---:|---:|---:|---:|---|---:|---:|---:|---:|
-| `scout` | Trinh sát | 60 | 5 | 18 | 72 | 1.1 | 25 lúa | 4 | 0,3 | 8 | 260 |
-| `infantry` | Lính | 100 | 13 | 22 | 45 | 0.8 | 40 lúa | 5 | 0,8 | 10 | 105 |
-| `archer` | Cung thủ | 65 | 10 | 125 | 34 | 1.05 | 55 lúa, 25 gỗ, 10 vàng | 8 | 1,2 | 9 | 130 |
-| `spearman` | Lính giáo | 145 | 18 | 26 | 38 | 0.82 | 45 lúa, 15 gỗ | 6 | 0,8 | 11 | 150 |
+| `scout` | Trinh sát | 60 | 7 | 18 | 72 | 1.1 | 25 lúa | 4 | 0,3 | 8 | 260 |
+| `infantry` | Lính | 100 | 14 | 22 | 45 | 0.8 | 40 lúa | 5 | 0,8 | 10 | 105 |
+| `archer` | Cung thủ | 65 | 16 | 125 | 34 | 1.05 | 55 lúa, 25 gỗ, 10 vàng | 8 | 1,2 | 9 | 130 |
+| `spearman` | Lính giáo | 145 | 12 | 26 | 38 | 0.82 | 45 lúa, 15 gỗ | 6 | 0,8 | 11 | 150 |
 | `cavalry` | Lính kỵ binh | 210 | 24 | 27 | 58 | 0.9 | 80 lúa, 35 vàng | 12 | 2,5 | 13 | 105 |
 
-Giá và lúa nuôi đổi ngày 2026-10-19 theo cân bằng V3.1 (trinh sát 30 → 25 lúa, nuôi 0,5 → 0,3; lính 45 → 40 lúa, nuôi 1 → 0,8; lính giáo nuôi 1 → 0,8; cung thủ nuôi 1,5 → 1,2; kỵ binh 40 → 35 vàng, nuôi 3 → 2,5). Trước đó, ngày 2026-10-17 theo đề xuất v1: lính bỏ 10 vàng (40 → 45 lúa) để luôn tuyển được quân cơ bản khi thiếu vàng; lính giáo 20 → 15 gỗ; cung thủ 30 → 25 gỗ; kỵ binh 50 → 40 vàng. Chỉ số chiến đấu giữ nguyên.
+Sát thương (cột ST) đổi ngày 2026-10-19 theo Combat V3.1, hệ số khắc chế xem [combat.md](combat.md). Giá và lúa nuôi đổi ngày 2026-10-19 theo cân bằng V3.1 (trinh sát 30 → 25 lúa, nuôi 0,5 → 0,3; lính 45 → 40 lúa, nuôi 1 → 0,8; lính giáo nuôi 1 → 0,8; cung thủ nuôi 1,5 → 1,2; kỵ binh 40 → 35 vàng, nuôi 3 → 2,5). Trước đó, ngày 2026-10-17 theo đề xuất v1: lính bỏ 10 vàng (40 → 45 lúa) để luôn tuyển được quân cơ bản khi thiếu vàng; lính giáo 20 → 15 gỗ; cung thủ 30 → 25 gỗ; kỵ binh 50 → 40 vàng. Chỉ số chiến đấu giữ nguyên.
 
 `cost` là object `{food, wood, stone, gold}`; nhãn giá trên nút được sinh từ `specs` bằng `costText()` nên luôn khớp. Nút mua là các thẻ trong bảng Huấn luyện (nút 🛡 hoặc phím H, xem [hud-ui.md](hud-ui.md)); quân đang luyện và đang chờ hiện ở bảng Hàng đợi bên trái. Nhãn thẻ có thêm thời gian huấn luyện và "nuôi X lúa/phút". Hết lúa nuôi quân thì quân bị chậm, xem "Lúa duy trì & thiếu tiếp tế" trong [economy.md](economy.md). **Mọi loại quân tuyển tại pháo đài** qua hàng đợi huấn luyện rồi xuất hiện ở sân tập kết (không còn nhà lính, không khoá thời gian đầu trận). Ba nhà lính đã bỏ ngày 2026-10-17; cùng ngày người dùng chốt cho lính bộ, cung thủ, kỵ binh tuyển thẳng tại nhà chính như trinh sát và lính giáo.
 

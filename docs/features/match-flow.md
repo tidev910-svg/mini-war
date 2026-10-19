@@ -47,7 +47,7 @@ Tạm dừng: nút `#pause` hoặc phím Space. Ở guest PvP gửi action `paus
 - [ ] Giây 0: tuyển lính giáo và ra lệnh đi xa → lính đi ngay. HUD ghi "Giai đoạn phát triển kinh tế", không còn đếm ngược mở khoá.
 - Đã chạy thử 2026-10-17: lính giáo tuyển ở giây 0 nhận lệnh `move` và rời pháo đài; 40 trận mới đều có pháo đài và sân tập kết trên đất, xuất quân được.
 - [ ] Phá pháo đài đỏ → overlay thắng; "Chơi lại" tạo trận mới với vị trí căn cứ khác.
-- [ ] F3 (hoặc Pause) tạm dừng/tiếp tục; khi tạm dừng các nút mua bị vô hiệu.
+- [ ] F10 (hoặc Pause) tạm dừng/tiếp tục; khi tạm dừng các nút mua bị vô hiệu.
 - [ ] PvP: guest bấm tạm dừng → cả hai bên dừng.
 
 ## Giới hạn / việc tồn đọng

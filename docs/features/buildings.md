@@ -17,8 +17,8 @@ Cột cờ (có sẵn, không phải công trình) và vùng lãnh thổ: xem [t
 | `kind` | Tên | Giá | Thời gian xây | Máu | Nửa kích thước (`halfW×halfH`) | Tầm nhìn | Được đặt ở (`where`) | Tác dụng |
 |---|---|---|---:|---:|---|---:|---|---|
 | `farm` | Nông trại | 120 gỗ | 3s | 180 | 31×34 | 90 | `explored` | +35/50/70 lúa/phút theo cấp (V3.1) |
-| `outpost` | Tiền đồn | 150 gỗ, 80 đá | 35s, **cần quân đứng cạnh** | 1.500 | 26×24 | 14 ô (`visionTiles`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 10, 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
-| `tower` | Tháp phòng thủ | 120 gỗ, 120 đá, 30 vàng | 30s | 520 | 22×24 | 200 | `territory` | Súng: tầm 190, ST 17, 1 phát/giây |
+| `outpost` | Tiền đồn | 150 gỗ, 80 đá | 35s, **cần quân đứng cạnh** | 1.500 | 26×24 | 14 ô (`visionTiles`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 12 (V3.1), 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
+| `tower` | Tháp phòng thủ | 120 gỗ, 120 đá, 30 vàng | 30s | 520 | 22×24 | 200 | `territory` | Súng: tầm 190, ST 30 (V3.1), 1 phát/giây |
 
 **Nâng cấp**
 | Nâng cấp | Giá | Thời gian | Kết quả |

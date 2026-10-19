@@ -430,3 +430,20 @@ button{font:inherit;color:inherit}
 .lane-buy:disabled{cursor:default;opacity:.85}
 .lane-buy.opening{border-style:dashed}
 @media (max-width:560px){.lane-bar{flex-direction:column;align-items:stretch}.lane-buy{align-items:flex-start;text-align:left}}
+
+/* Selection bar (Unit Control V1.0): bottom centre above the notice banner; one chip per unit type in the selection pool.
+   Lit chips are selected; "n/total" when only part of that type is selected. */
+.unit-bar{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);display:flex;align-items:center;gap:var(--sp-1);padding:var(--sp-1) var(--sp-2);
+  background:var(--ui-bg-panel-glass);border:var(--border-3) solid var(--gold-muted);border-radius:var(--radius-sm);box-shadow:0 6px 18px var(--ui-shadow);animation:rise .16s ease-out}
+.unit-chip{position:relative;display:flex;align-items:center;gap:4px;padding:5px 10px 5px 8px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text-sub);
+  background:var(--ui-bg-deep);border:var(--border-3) solid var(--gold-muted);font:700 var(--fs-md) var(--font-ui);font-variant-numeric:tabular-nums;transition:filter .12s,transform .1s}
+.unit-chip .ico{width:18px;height:18px}
+.unit-chip small{font-size:var(--fs-xs);font-weight:600;color:var(--text-sub)}
+.unit-chip kbd{position:absolute;top:-7px;left:-5px;min-width:16px;padding:0 4px;border-radius:4px;font:800 var(--fs-xs)/1.3 var(--font-ui);color:var(--gold-ink);background:var(--gold-muted)}
+.unit-chip.on{color:var(--text-main);background:var(--faction-dark);border-color:var(--gold)}
+.unit-chip.on kbd{background:var(--gold)}
+.unit-chip:hover{filter:brightness(1.2)}
+.unit-chip:active{transform:scale(.96)}
+.unit-total{padding:0 var(--sp-1) 0 var(--sp-2);font-size:var(--fs-sm);color:var(--text-sub);white-space:nowrap}
+@media (max-width:1100px){.unit-bar{bottom:176px}}
+@media (max-width:560px){.unit-bar{bottom:150px;max-width:calc(100% - 16px);flex-wrap:wrap;justify-content:center}}

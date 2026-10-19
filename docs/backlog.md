@@ -1,12 +1,12 @@
 # Việc tồn đọng (backlog)
 
-> Cập nhật lần cuối: 2026-10-17 · Tổng hợp từ mục "Giới hạn / việc tồn đọng" của các file trong `features/`.
+> Cập nhật lần cuối: 2026-10-19 · Tổng hợp từ mục "Giới hạn / việc tồn đọng" của các file trong `features/`.
 
 Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưởng. Khi làm xong một mục: xoá dòng ở đây **và** dòng tương ứng trong file tính năng (quy tắc 5 trong `CLAUDE.md`). Chi tiết kỹ thuật nằm trong file tính năng được dẫn.
 
 ## Đề xuất làm tiếp
 1. **AI tổ chức tấn công** — AI chỉ đánh khi gặp địch; `enemyMemory` đã ghi nhưng chưa dùng. → [ai-opponent.md](features/ai-opponent.md)
-2. **Playtest bản cân bằng v1** (17/10: thu nhập pháo đài 25/20/8/8, mỏ lúa 25, mỏ vàng 20, giá quân mới, hàng đợi huấn luyện) — chơi 5–10 trận ở nhiều vị trí nhà, đo số quân phút 5/10/15, thời điểm chiếm cờ đầu tiên, thời gian phản công sau khi mất đất; chốt thời lượng trận mong muốn (15/20/30 phút). Chưa có nút huỷ quân trong hàng đợi. → [economy.md](features/economy.md), [resource-system.md](features/resource-system.md)
+2. **Chơi thử cân bằng V3.1 + Combat V3.1** — 10–20 trận giữa người chơi cùng trình độ, mục tiêu trận 15–20 phút; ghi thời lượng, số quân, tài nguyên dư, tỉ lệ thắng từng chiến thuật; chốt giá/thời gian mở hàng đợi (đang là giá tạm). → [economy.md](features/economy.md), [combat.md](features/combat.md), [units.md](features/units.md)
 
 ## Lối chơi
 - [ ] Quân không va chạm nhau; đường đi không né công trình. → [pathfinding.md](features/pathfinding.md)
@@ -30,8 +30,9 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 ## Giao diện & đồ hoạ
 - [ ] 14 nút, màn hình thấp vẫn có thể phải cuộn; công trình và nhãn nhỏ ở zoom mặc định. → [hud-ui.md](features/hud-ui.md), [buildings.md](features/buildings.md)
 - [ ] Chỉ lính giáo có sprite 4 hướng; công trình (trừ nông trại) chưa có sprite. → [units.md](features/units.md), [buildings.md](features/buildings.md)
+- [ ] Âm thanh: thêm nhạc nền / tiếng môi trường; nghe duyệt lại các tiếng sự kiện (thua trận đang là saxophone). → [audio.md](features/audio.md)
 - [ ] Văn bản hướng dẫn (`#guideModal` trong `index.html`) viết cứng. → [hud-ui.md](features/hud-ui.md)
-- [ ] Chưa có bảng thông tin cho quân/công trình/cờ đang chọn; minimap chưa có ping, chưa hiện mỏ. → [hud-ui.md](features/hud-ui.md), [minimap.md](features/minimap.md)
+- [ ] Chưa có bảng thông tin cho quân/công trình/cờ đang chọn; minimap chưa có ping. → [hud-ui.md](features/hud-ui.md), [minimap.md](features/minimap.md)
 - [ ] Vùng nhấp chọn pháo đài không khớp kích thước logic; sương mù căn cứ xanh không cộng tầm nhìn pháo. → [fortress.md](features/fortress.md)
 - [ ] Ở host/AI, nhóm chọn bằng khung phải dùng chuột phải để di chuyển. → [controls.md](features/controls.md)
 
@@ -43,11 +44,11 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
-- [ ] Âm thanh: thêm nhạc nền / tiếng môi trường; nghe duyệt lại các tiếng sự kiện (thua trận đang là saxophone). → [audio.md](features/audio.md)
-
-- [ ] Chơi thử cân bằng V3.1 (10–20 trận, mục tiêu 15–20 phút); chốt giá/thời gian mở hàng đợi (đang là giá tạm). → [units.md](features/units.md), [economy.md](features/economy.md)
-
 ## Đã xong gần đây
+**2026-10-19 (Unit Control V1.0):** phím 1–5 lọc loại lính trong nhóm đang chọn; thanh quân (bấm: chỉ loại đó, Shift + bấm: thêm/bỏ); nhóm quân lưu Ctrl + 1–9, gọi F1–F9 (Shift: thêm); tạm dừng chuyển sang F10, hướng dẫn sang phím ?.
+
+**2026-10-19 (Combat V3.1, chỉ sát thương):** ST quân 7/14/12/16/24; súng pháo đài 18, pháo thứ hai 45, tháp 30, tiền đồn 12; khắc chế giáo→kỵ ×2,2, kỵ→cung ×1,5, cung→giáo ×1,3, lính→giáo ×1,2; hệ số đánh công trình 0,5/1,1/1,0/0,6/0,8 (không nhân chồng).
+
 **2026-10-19 (cân bằng V3.1, bản thử nghiệm):** khởi đầu 200/250/75/75; nhà chính 40/30/10/10; lãnh thổ 45/45/35/35; nông trại 35/50/70 (120 gỗ, nâng cấp 100+40 / 160+80); quân rẻ hơn và nuôi ít lúa hơn; tháp 120/120/30 xây 30 giây; tiền đồn 150/80 xây 35 giây; pháo thứ hai 150 đá.
 
 **2026-10-18 (sửa lỗi kẹt mép bản đồ):** đường đi không còn dùng vòng ô ngoài cùng, điểm đường đi kẹp vào `MOVE_BOUNDS`; `pnpm smoke path` hết lỗi ngẫu nhiên; thêm unit test.
