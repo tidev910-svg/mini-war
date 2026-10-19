@@ -58,6 +58,8 @@ Bảng màu **"sắt & máu"** (đổi ngày 2026-10-18, thay cho tông xanh nav
 
 **Bảng thông tin** (`#selInfo`, góc phải dưới, trên 3 nút khiên): máu, sát thương, khắc chế, lệnh, tiến độ xây/nâng cấp/chiếm cờ của thứ đang chọn — xem [selection-info.md](selection-info.md).
 
+**Đội hình**: nút "Đội hình" cuối thanh quân (khi có quân chiến đấu được chọn; viền sáng nếu có quân trong đội hình) mở `#formationMenu` phía trên thanh quân — xem [formations.md](formations.md).
+
 **Thanh quân** (`#unitBar`, giữa phía dưới, trên dải thông báo): chỉ hiện khi đang chọn quân; mỗi loại trong nhóm một ô (biểu tượng, số lượng, phím 1–5), ô đang chọn viền `--gold` nền `--faction-dark`. Xem [controls.md](controls.md) (Unit Control V1.0).
 
 **Tooltip** (`src/ui/panels.ts`): một khung `#tooltip` dùng chung cho mọi phần tử có `data-tip`. Khung hiện dưới phần tử, hoặc bên trái nếu có `data-tip-side="left"`, và tự lật để không tràn màn hình. `refreshTooltip()` (gọi từ `updateHUD()`) cập nhật số liệu khi đang rê chuột. Thiết bị cảm ứng không hiện tooltip.

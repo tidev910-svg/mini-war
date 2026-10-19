@@ -2,6 +2,7 @@
 // Keyboard shortcuts in the style of Age of Empires II (docs/features/controls.md): type filter 1–5 and control groups
 // (Unit Control V1.0), select fortress, idle unit, stop, delete, contextual train/build keys, camera keys. Every key
 // handler of the game lives here.
+import { formationMenuOpen, toggleFormationMenu } from './formation';
 import { $, addLog, ended, localTeam, paused, placement, selectedFortress, setSelectedFortress, state } from '../core/game';
 import { MAX_ZOOM, MIN_ZOOM, VIEW_H, VIEW_W, camX, camY, canvas, centerCameraAt, clampCamera, setCamX, setCamY, setZoom, worldToCanvas, zoom } from '../core/view';
 import { specs } from '../config/balance';
@@ -34,6 +35,7 @@ export const HOTKEYS = [
   ['Nhấp đúp vào quân', 'Chọn mọi quân cùng loại đang trên màn hình'],
   ['A', 'Nhóm đang chọn tấn công'],
   ['S', 'Nhóm đang chọn dừng lại'],
+  ['G', 'Mở bảng Đội hình cho quân đang chọn (trinh sát không tham gia)'],
   ['Delete', 'Loại bỏ quân đang chọn (không hoàn tiền)'],
   ['Space', 'Đưa camera tới quân đang chọn (không chọn gì: tới pháo đài)'],
   ['Mũi tên / + −', 'Cuộn bản đồ (Shift: nhanh gấp đôi) / phóng to, thu nhỏ'],
@@ -42,7 +44,7 @@ export const HOTKEYS = [
   ['F10 · Pause', 'Tạm dừng / tiếp tục'],
   ['?', 'Mở hướng dẫn'],
   ['Enter (ở sảnh)', 'Vào trận với AI'],
-  ['Esc', 'Đóng menu → huỷ đặt công trình → đóng bảng → bỏ chọn'],
+  ['Esc', 'Đóng bảng Đội hình / menu → huỷ đặt công trình → đóng bảng → bỏ chọn'],
 ];
 
 // The guide's shortcut table is built from HOTKEYS so it never drifts from the handlers.
@@ -119,7 +121,8 @@ document.addEventListener('keydown', e => {
   const fGroup = /^F([1-9])$/.exec(key)?.[1];
   if (fGroup) { e.preventDefault(); if (!e.ctrlKey && !e.metaKey && !e.altKey) recallGroup(e, Number(fGroup)); return; }
   if (key === 'Escape') {
-    if (menuOpen()) closeMenu();
+    if (formationMenuOpen()) toggleFormationMenu(false);
+    else if (menuOpen()) closeMenu();
     else if (placement) { endPlacement(); addLog('Đã hủy đặt công trình.'); }
     else if (openPanelName) closePanels();
     else { selectUnits([]); }
@@ -146,5 +149,6 @@ document.addEventListener('keydown', e => {
     case 'Delete': if (ids.length) requestAction('delete', { ids }); break;
     case ' ': e.preventDefault(); { const sel = chosen(); if (sel.length) centerOn(sel); else { const b = state.bases.find(v => v.team === localTeam()); if (b) centerCameraAt(b.x, b.y); } } break;
     case 't': setShowTerritory(!showTerritory); break;
+    case 'g': toggleFormationMenu(); break;
   }
 });

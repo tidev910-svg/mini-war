@@ -29,6 +29,7 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 | Chọn chế độ & chơi P2P | [features/multiplayer.md](features/multiplayer.md) | `createRoom()`, `joinRoom()`, snapshot | Cần kiểm thử |
 | Bản đồ, địa hình, đồ hoạ | [features/rendering.md](features/rendering.md) | `buildTerrain()`, `draw()`, spritesheet | Đang có |
 | HUD & giao diện | [features/hud-ui.md](features/hud-ui.md) | `config/theme.ts`, `updateHUD()`, `openPanel()`, `index.html` | Đang có |
+| Đội hình quân đội | [features/formations.md](features/formations.md) | `createFormation()`, `updateFormations()`, `formationTarget()`, `state.formations` | Đang có |
 | Bảng thông tin đang chọn | [features/selection-info.md](features/selection-info.md) | `updateSelectionInfo()`, `#selInfo` | Đang có |
 | Thống kê cuối trận | [features/match-stats.md](features/match-stats.md) | `state.stats`, `sampleStats()`, `showMatchStats()` | Đang có |
 | Âm thanh | [features/audio.md](features/audio.md) | `config/audio.ts`, `playSound()`, `updateSoundscape()` | Đang có |

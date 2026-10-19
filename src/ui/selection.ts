@@ -64,7 +64,9 @@ export function updateSelectionBar() {
   const html = TYPE_ORDER.filter(t => all.some(u => u.type === t)).map(t => {
     const n = sel.filter(u => u.type === t).length, total = all.filter(u => u.type === t).length;
     return `<button type="button" class="unit-chip${n ? ' on' : ''}" data-type="${t}" data-tip="${specs[t].name}: bấm để chỉ chọn loại này · Shift + bấm: thêm/bỏ · phím ${keyOf[t]}"><kbd>${keyOf[t]}</kbd><svg class="ico"><use href="#i-${ICONS[t]}"/></svg><b>${n}</b>${n !== total ? `<small>/${total}</small>` : ''}</button>`;
-  }).join('') + `<span class="unit-total">${sel.length} quân</span>`;
+  }).join('') + `<span class="unit-total">${sel.length} quân</span>`
+    // Formations (ui/formation.ts) take fighters only; the button shows when at least one is selected.
+    + (sel.some(u => u.type !== 'scout') ? `<button type="button" class="formation-btn${sel.some(u => u.formation != null) ? ' on' : ''}" data-tip="Xếp đội hình cho quân đang chọn (trinh sát không tham gia) · G"><svg class="ico"><use href="#i-units"/></svg>Đội hình<kbd>G</kbd></button>` : '');
   if (html !== barHtml) { barHtml = html; bar.innerHTML = html; }
   bar.hidden = false;
 }

@@ -15,6 +15,8 @@ export const DEFAULT_SETTINGS = {
   masterVolume: .8,       // 0..1 — all sound (audio/sound.ts)
   sfxVolume: .8,          // 0..1 — battle: hits, shots, falls, building
   uiVolume: .7,           // 0..1 — interface, orders and event jingles
+  musicVolume: .5,        // 0..1 — background music made in code (audio/music.ts)
+  ambienceVolume: .5,     // 0..1 — wind and birds in a match
   muted: false,           // all sound off (also the M key)
   aiDifficulty: 'normal', // 'easy' | 'normal' | 'hard' — pace of the AI opponent (AI_DIFFICULTY in config/balance.ts)
 };

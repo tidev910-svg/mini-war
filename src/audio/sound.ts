@@ -2,12 +2,16 @@
 // Sound playback and the battlefield soundscape (docs/features/audio.md).
 // playSound(name, {x, y}) plays an entry of SOUNDS (config/audio.ts) through a Web Audio graph:
 //   source → gain → stereo pan → bus ('ui' | 'sfx' | 'event') → master → speakers
+// Two more buses carry the music and ambience made live in code ('music', 'ambience'; audio/music.ts). Sounds named
+// 'synth:<recipe>' are rendered at load by audio/synth.ts instead of being fetched.
 // The AudioContext and the sound files are set up when the page loads (browsers keep it suspended); the first pointer or
 // key press resumes it, since audio may only start after a user gesture.
 // updateSoundscape() runs once per frame (from draw()) and turns changes in the match state into sounds — new hits,
 // shots and falls, captures and losses, finished buildings, new units, spending, selection, start and end. Because it
 // reads the state rather than hooking the simulation, the PvP guest hears the same battle from its snapshots.
-import { AUDIO_EDGE_GAIN, AUDIO_MAX_VOICES, AUDIO_PAN, AUDIO_VIEW_MARGIN, COINS_MIN_SPEND, SOUNDS } from '../config/audio';
+import { AUDIO_EDGE_GAIN, AUDIO_MAX_VOICES, AUDIO_PAN, AUDIO_VIEW_MARGIN, COINS_MIN_SPEND, MUSIC_HEAT, SOUNDS } from '../config/audio';
+import { renderSynth } from './synth';
+import { addBattleHeat, updateMusic } from './music';
 import { DEFAULT_ZOOM, VIEW_H, VIEW_W, camX, camY, zoom } from '../core/view';
 import { ended, gameStarted, gameTime, localSelectedIds, localTeam, state } from '../core/game';
 import { onSettingChange, settings } from '../core/settings';
@@ -23,16 +27,19 @@ function applyVolumes() {
   if (!ac) return;
   master.gain.value = settings.muted ? 0 : settings.masterVolume;
   buses.ui.gain.value = settings.uiVolume; buses.event.gain.value = settings.uiVolume; buses.sfx.gain.value = settings.sfxVolume;
+  buses.music.gain.value = settings.musicVolume; buses.ambience.gain.value = settings.ambienceVolume;
 }
 function ensureAudio() {
   if (ac) return ac;
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
   ac = new AC(); master = ac.createGain(); master.connect(ac.destination);
-  for (const b of ['ui', 'sfx', 'event']) { buses[b] = ac.createGain(); buses[b].connect(master); }
+  for (const b of ['ui', 'sfx', 'event', 'music', 'ambience']) { buses[b] = ac.createGain(); buses[b].connect(master); }
   applyVolumes();
   const files = new Set(Object.values(SOUNDS).flatMap(s => s.files));
-  for (const f of files) fetch(import.meta.env.BASE_URL + 'assets/audio/' + f).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-    .then(data => ac.decodeAudioData(data)).then(buf => { buffers.set(f, buf); flushPending(); }).catch(() => failed.add(f));
+  const loaded = f => buf => { buffers.set(f, buf); flushPending(); };
+  for (const f of files) if (f.startsWith('synth:')) renderSynth(f.slice(6), ac.sampleRate).then(loaded(f)).catch(() => failed.add(f));
+  else fetch(import.meta.env.BASE_URL + 'assets/audio/' + f).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then(data => ac.decodeAudioData(data)).then(loaded(f)).catch(() => failed.add(f));
   return ac;
 }
 ensureAudio();
@@ -43,7 +50,9 @@ function flushPending() {
   const now = performance.now();
   for (let i = pending.length - 1; i >= 0; i--) { const p = pending[i]; if (now - p.at > PENDING_SECONDS * 1000) pending.splice(i, 1); else if (playSound(p.name, null, false)) pending.splice(i, 1); }
 }
-onSettingChange(key => { if (['muted', 'masterVolume', 'uiVolume', 'sfxVolume'].includes(key)) applyVolumes(); });
+onSettingChange(key => { if (['muted', 'masterVolume', 'uiVolume', 'sfxVolume', 'musicVolume', 'ambienceVolume'].includes(key)) applyVolumes(); });
+// The live graph for audio/music.ts, or null before / without Web Audio.
+export function audioGraph() { return ac ? { ac, buses } : null; }
 
 // Gain and pan for a world point: silent outside the view (+margin), quieter towards the edges and when zoomed far out.
 function positional(x, y) {
@@ -81,6 +90,7 @@ let seenFx = new Set(), seenShots = new Set(), owners = [], buildings = new Map(
 const total = r => r ? r.food + r.wood + r.stone + r.gold : 0;
 function reset() { primed = false; seenFx = new Set(); seenShots = new Set(); owners = []; buildings = new Map(); ownUnits = new Set(); selectedCount = 0; }
 export function updateSoundscape() {
+  updateMusic(audioGraph());
   if (!state) return;
   const team = localTeam(), seen = (x, y) => teamCanSee(team, x, y);
   if (gameStarted && !wasStarted) { reset(); playSound('event.start'); }
@@ -94,12 +104,12 @@ export function updateSoundscape() {
   for (const e of state.effects) {
     if (e.id == null) continue; fx.add(e.id);
     if (!primed || seenFx.has(e.id) || !seen(e.x, e.y)) continue;
-    playSound(e.kind === 'fall' ? 'combat.fall' : e.src === 'archer' || e.src === 'gun' ? 'combat.arrowHit' : 'combat.clash', e);
+    if (playSound(e.kind === 'fall' ? 'combat.fall' : e.src === 'archer' || e.src === 'gun' ? 'combat.arrowHit' : 'combat.clash', e)) addBattleHeat(e.kind === 'fall' ? MUSIC_HEAT.fall : MUSIC_HEAT.clash);
   }
   for (const b of state.bullets) {
     if (b.id == null) continue; shots.add(b.id);
     if (!primed || seenShots.has(b.id) || !seen(b.x, b.y)) continue;
-    playSound(b.attackerType === 'archer' ? 'combat.bow' : 'combat.cannon', b);
+    if (playSound(b.attackerType === 'archer' ? 'combat.bow' : 'combat.cannon', b) && b.attackerType !== 'archer') addBattleHeat(MUSIC_HEAT.cannon);
   }
   seenFx = fx; seenShots = shots;
   // Flags: captured by the local side, or lost by it.

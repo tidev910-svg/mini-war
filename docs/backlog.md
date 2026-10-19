@@ -28,7 +28,7 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 ## Giao diện & đồ hoạ
 - [ ] 14 nút, màn hình thấp vẫn có thể phải cuộn; công trình và nhãn nhỏ ở zoom mặc định. → [hud-ui.md](features/hud-ui.md), [buildings.md](features/buildings.md)
 - [ ] Chỉ lính giáo có sprite 4 hướng; công trình (trừ nông trại) chưa có sprite. → [units.md](features/units.md), [buildings.md](features/buildings.md)
-- [ ] Âm thanh: thêm nhạc nền / tiếng môi trường; nghe duyệt lại các tiếng sự kiện (thua trận đang là saxophone). → [audio.md](features/audio.md)
+- [ ] Âm thanh: nghe duyệt nhạc nền và các tiếng tự tạo, chỉnh nếu cần. → [audio.md](features/audio.md)
 - [ ] Văn bản hướng dẫn (`#guideModal` trong `index.html`) viết cứng. → [hud-ui.md](features/hud-ui.md)
 - [ ] Minimap chưa có ping. → [minimap.md](features/minimap.md)
 - [ ] Vùng nhấp chọn pháo đài không khớp kích thước logic; sương mù căn cứ xanh không cộng tầm nhìn pháo. → [fortress.md](features/fortress.md)
@@ -43,6 +43,10 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-19 (âm thanh tự tạo):** nhạc nền tạo bằng code (nền trầm + đàn gảy trên Rê thứ, trống trận dồn theo độ căng giao tranh), tiếng gió và chim trong trận, 8 tiếng sự kiện làm lại bằng trống / tù và / chuông (thua trận hết saxophone); thêm âm lượng Nhạc nền, Tiếng môi trường trong Cài đặt.
+
+**2026-10-19 (đội hình V3.1):** nút Đội hình / phím G: Phòng thủ, Mũi nhọn, Bao vây hai cánh; Giữ đội hình (đi theo quân chậm nhất, xoay theo hướng đi, qua cầu thành hàng dọc rồi dàn lại) hoặc Di chuyển tự do; rời chỗ để đánh rồi tự tập hợp; ra lệnh riêng thì tách khỏi đội hình; trinh sát không tham gia.
+
 **2026-10-19 (quân không đi xuyên nhau, công trình chặn đường):** quân chồng nhau tự tách nhẹ; nông trại, tháp, tiền đồn, pháo đài chặn ô nên đường đi vòng qua; quân cận chiến đánh công trình từ sát mép, cung thủ giữ tầm cũ.
 
 **2026-10-19 (bảng thông tin đang chọn):** góc phải dưới hiện máu, sát thương, khắc chế, lệnh của quân / nhóm quân; pháo, thu nhập của pháo đài; tiến độ xây, nâng cấp, súng của công trình; tiến độ chiếm, quân trong vòng, sản lượng của cờ.

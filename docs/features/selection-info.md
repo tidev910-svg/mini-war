@@ -13,7 +13,9 @@ Bảng nhỏ ở góc phải dưới (trên 3 nút khiên) cho biết thứ đan
 | Công trình | Máu; tiến độ xây (tiền đồn: có/không có quân đứng gần để xây); tiến độ nâng cấp; nông trại: cấp và lúa/phút (thưởng vùng lúa); tháp/tiền đồn: súng |
 | Cờ | Loại vùng, phe giữ; tiến độ hạ cờ (1/2) / chiếm cờ (2/2) và phe đang chiếm; tranh chấp hoặc tiền đồn giữ cờ; tài nguyên mỗi phút cho phe giữ; số quân mình (và quân địch **đang nhìn thấy**) trong vòng cờ, thời gian ước tính mỗi giai đoạn; có tiền đồn không |
 
-Lệnh hiển thị: Đứng giữ vị trí (`hold`), Đang di chuyển (`move`), Tấn công (`attack`), Đi tự do (`explore`), Đang chiếm cờ (`captureTarget`), Đang xây tiền đồn (`buildTarget`).
+Dòng **Đội hình** (khi có): loại đội hình · cách di chuyển · đang hành quân / hàng dọc qua lối hẹp ([formations.md](formations.md)).
+
+Lệnh hiển thị: Theo đội hình (`formation`), Đứng giữ vị trí (`hold`), Đang di chuyển (`move`), Tấn công (`attack`), Đi tự do (`explore`), Đang chiếm cờ (`captureTarget`), Đang xây tiền đồn (`buildTarget`).
 
 ## Luật & thông số
 Không áp dụng: chỉ đọc số từ `specs`, `COUNTER_MULTIPLIERS`, `STRUCTURE_DAMAGE_MULTIPLIERS`, `BUILDING_TYPES`, `FARM_LEVELS`, `FORTRESS_GUN_DAMAGE`, `FORTRESS_INCOME_PER_MINUTE`, mỏ của vùng (`state.mines[].income`).

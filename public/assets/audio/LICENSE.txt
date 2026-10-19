@@ -2,3 +2,7 @@ Sound effects in this folder come from Kenney (www.kenney.nl) asset packs:
 RPG Audio, Interface Sounds, Impact Sounds and Music Jingles, by Kenney Vleugels.
 License: Creative Commons Zero (CC0) — http://creativecommons.org/publicdomain/zero/1.0/
 Files were renamed for the game; the audio itself is unchanged. See src/config/audio.ts for the mapping.
+
+Since 2026-10-19 the event sounds (match start, alarm, flag captured/lost, building finished, unit trained, victory,
+defeat), the background music and the ambience are no longer files: they are synthesized in code by the game
+(src/audio/synth.ts, src/audio/music.ts) and belong to the project.

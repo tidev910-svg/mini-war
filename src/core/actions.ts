@@ -7,6 +7,7 @@ import { setNetStatus } from '../net/peer';
 import { updateHUD } from '../ui/hud';
 import { buildTurret, buildingPlacementProblem, placeBuilding, startOutpost, startUpgrade } from '../sim/buildings';
 import { assignGroupMove } from '../sim/movement';
+import { attackFormations, cancelFormations, createFormation, detachUnits, orderFormationMove, setFormationMode, stopFormations } from '../sim/formation';
 
 export function requestAction(action,payload={}){
  if(mode==='pvp'&&netRole==='guest'){
@@ -22,9 +23,13 @@ export function applyAction(team,action,payload={}){
  else if(action==='outpost')startOutpost(team,payload.regionId==null?null:Number(payload.regionId));
  else if(action==='turret')buildTurret(team);
  else if(action==='buyLane')buyQueueLane(team); // open the next training lane (economy & queue V2)
- else if(action==='stop')stopUnits(team,payload.ids);
- else if(action==='delete')deleteUnits(team,payload.ids);
- else if(action==='attack')commandAttack(team,payload.ids);
+ // Stop / attack on a whole formation act on the formation; units picked out of one leave it (sim/formation.ts).
+ else if(action==='stop'){if(ended||paused)return;const done=stopFormations(team,payload.ids);stopUnits(team,(payload.ids||[]).filter(id=>!done.has(id)));}
+ else if(action==='delete'){detachUnits(team,payload.ids);deleteUnits(team,payload.ids);}
+ else if(action==='attack'){if(ended||paused)return;const done=attackFormations(team,payload.ids);const rest=(payload.ids||[]).filter(id=>!done.has(id));if(rest.length)commandAttack(team,rest);}
+ else if(action==='formation'){if(!ended&&!paused)createFormation(team,payload.ids,String(payload.kind));}
+ else if(action==='formationMode'){if(!ended&&!paused)setFormationMode(team,payload.ids,String(payload.mode));}
+ else if(action==='formationCancel'){if(!ended&&!paused)cancelFormations(team,payload.ids);}
  else if(action==='move'){
   if(ended||paused)return;
   const ids=new Set(payload.ids||[]);
@@ -32,7 +37,9 @@ export function applyAction(team,action,payload={}){
   const y=Math.max(45,Math.min(H-30,Number(payload.y)||0));
   // Give every selected unit a unique formation slot around the clicked destination,
   // instead of sending the whole group to exactly the same point.
-  const chosen=state.units.filter(u=>u.team===team&&ids.has(u.id));
+  // Whole formations march as formations; the rest (scouts, loose units, units picked out of a formation) move as before.
+  const inFormation=orderFormationMove(team,[...ids],x,y);
+  const chosen=state.units.filter(u=>u.team===team&&ids.has(u.id)&&!inFormation.has(u.id));
   if(chosen.length){
   const spacing=34;
    const cols=Math.ceil(Math.sqrt(chosen.length));

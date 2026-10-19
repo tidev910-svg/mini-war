@@ -21,6 +21,7 @@ import { aiLevel, aiUnitGoal, newAIPlan } from '../ai/attack';
 import { buildWorldDecor } from '../render/terrain';
 import { draw } from '../render/draw';
 import { clampToBounds, clearPath, separateUnits, steerTo, syncStructureObstacles } from '../sim/movement';
+import { formationMayChase, formationOf, formationTarget, updateFormations } from '../sim/formation';
 import { nearestWalkable, reachableFrom, setStructureObstacles, tileOf } from '../map/paths';
 
 export let last=0;
@@ -53,7 +54,7 @@ export function fresh(){
  }
  const {regions,mines,blueBase,redBase}=best;
  buildRegionMap(regions);
- setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan()});
+ setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[]});
  syncStructureObstacles();
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
@@ -77,12 +78,13 @@ export function update(dt){
   updateSupply(0);updateSupply(1);
  }
  if(mode==='ai'&&aiTimer>=aiLevel().tick){aiTimer=0;runEnemyAI();}
- updateBuildings(dt);syncStructureObstacles();
+ updateBuildings(dt);syncStructureObstacles();updateFormations(dt);
  // unit movement and combat
  for(const u of [...state.units]){
   if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
   const speed=s.speed*supplyFactor(u.team,'speed'),cooldown=s.cooldown/supplyFactor(u.team,'attack');
   let target=nearestEnemy(u);if(!unitTargetValid(target,u))target=null;
+  const fm=u.formation!=null?formationOf(u):null;let engaged=false;
   if(mode==='ai'&&u.team===1&&!target){
    // Assigned builders stay at their flag until it no longer needs them.
    const job=u.buildTarget?state.buildings.find(b=>b.id===u.buildTarget&&needsBuilder(b)):null;
@@ -109,21 +111,25 @@ export function update(dt){
   }
   if(target){
    const d=dist(u,target),range=attackRange(u,target);
-   if(d<=range){
+   if(d<=range){engaged=true;
     if(u.attackTimer<=0){u.attackTimer=cooldown;
       if(u.type==='archer'){state.bullets.push({id:nextFxId(),x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
       else hurt(target,s.damage,u.team,u.type);
     }
-   }else if((u.order==='attack'||(mode==='ai'&&u.team===1))){
+   }else if((u.order==='attack'||(mode==='ai'&&u.team===1)||(fm&&u.order==='formation'&&formationMayChase(fm,u,target)))){
+    engaged=true;
     steerTo(u,target.x,target.y,speed,dt);
     clampToBounds(u);
    }
   }
   // Player units with a move order follow their path to the clicked point (formation slot).
   if((mode==='pvp'||u.team===0)&&u.order==='move'&&u.dest){
-   if(steerTo(u,u.dest.x,u.dest.y,speed,dt)){u.order='hold';u.dest=null;clearPath(u);}
+   if(steerTo(u,u.dest.x,u.dest.y,speed,dt)){u.order=fm?'formation':'hold';u.dest=null;clearPath(u);}
    clampToBounds(u);
   }
+  // Formation members walk to their slot (or column place) when not fighting (sim/formation.ts). A slot that slid less
+  // than PATH_GOAL_TOLERANCE does not re-plan by itself, so an emptied path away from the slot is dropped.
+  else if(fm&&u.order==='formation'&&!engaged){const p=formationTarget(fm,u);if(Math.hypot(p.x-u.x,p.y-u.y)>4){if(steerTo(u,p.x,p.y,speed,dt)&&Math.hypot(p.x-u.x,p.y-u.y)>8)clearPath(u);clampToBounds(u);}else if(u.path)clearPath(u);}
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
   if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY,u.facing);

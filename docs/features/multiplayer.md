@@ -23,6 +23,7 @@ Không có tài khoản/đăng nhập; ai có mã phòng đều vào được.
 ```
 Guest                                   Host
  requestAction(a,p) ──{type:'action'}──► applyAction(1,a,p) → sendSnapshot()
+   (gồm cả formation / formationMode / formationCancel — formations.md)
  applySnapshot()   ◄──{type:'snapshot'}── mỗi 0.18s: serializeSnapshot()
  (không chạy update)                     update(dt) chạy mô phỏng đầy đủ
 ```

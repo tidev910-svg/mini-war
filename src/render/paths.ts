@@ -5,6 +5,7 @@ import { localTeam, state } from '../core/game';
 import { TILE_SIZE } from '../config/map';
 import { bridges } from '../map/paths';
 import { playSound } from '../audio/sound';
+import { formationTarget } from '../sim/formation';
 
 // Pulse shown at the clicked point for MOVE_MARKER_SECONDS after a move order (set by ui/input.ts via showMoveMarker()).
 export const MOVE_MARKER_SECONDS = 1.2;
@@ -18,13 +19,20 @@ export function drawUnitPaths() {
   const team = localTeam(), px = 1 / zoom, leaders = new Map();
   const left = u => { let d = 0, p = u; for (const q of u.path) { d += Math.hypot(q.x - p.x, q.y - p.y); p = q; } return d; };
   for (const u of state.units) {
-    if (u.team !== team || !u.selected || u.hp <= 0 || !u.path?.length || (u.order !== 'move' && !u.moving)) continue;
+    if (u.team !== team || !u.selected || u.hp <= 0 || !u.path?.length || (u.order !== 'move' && !u.moving) || u.order === 'formation') continue;
     const key = u.order === 'move' && u.moveGroup != null ? 'g' + u.moveGroup : 'u' + u.id, cur = leaders.get(key), l = left(u);
     if (!cur || l > cur.l) leaders.set(key, { u, l });
   }
+  const routes = [...leaders.values()].map(({ u }) => [{ x: u.x, y: u.y }, ...u.path]);
+  // Formations (sim/formation.ts) with a selected member: one route from the anchor while marching, a faint ring per slot.
+  const shown = (state.formations || []).filter(f => f.team === team && f.ids.some(id => state.units.find(v => v.id === id)?.selected));
   ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  for (const { u } of leaders.values()) {
-    const pts = [{ x: u.x, y: u.y }, ...u.path];
+  for (const f of shown) {
+    if (f.moving && f.path.length) routes.push([{ x: f.x, y: f.y }, ...f.path]);
+    ctx.strokeStyle = 'rgba(255,231,168,.35)'; ctx.lineWidth = 1.5 * px;
+    for (const id of f.ids) { const u = state.units.find(v => v.id === id); if (!u) continue; const p = formationTarget(f, u); ctx.beginPath(); ctx.ellipse(p.x, p.y, 7 * px, 4 * px, 0, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  for (const pts of routes) {
     ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (const p of pts.slice(1)) ctx.lineTo(p.x, p.y);
     ctx.setLineDash([]); ctx.strokeStyle = 'rgba(10,20,30,.55)'; ctx.lineWidth = 5 * px; ctx.stroke();
     ctx.setLineDash([9 * px, 7 * px]); ctx.lineDashOffset = -performance.now() / 40 * px; ctx.strokeStyle = '#ffe7a8'; ctx.lineWidth = 2.5 * px; ctx.stroke();

@@ -38,8 +38,9 @@
 | , (dấu phẩy) | Chọn lần lượt quân đang rảnh (không lệnh đi/tấn công, đứng yên) và đưa camera tới |
 | Ctrl + A | Chọn tất cả quân của mình |
 | Nhấp đúp vào quân | Chọn mọi quân cùng loại đang trên màn hình |
-| A | Nhóm đang chọn tấn công (action `attack`) |
-| S | Nhóm đang chọn dừng lại (action `stop`: lệnh `hold`, xoá đích và đường đi) |
+| A | Nhóm đang chọn tấn công (action `attack`; cả đội hình được chọn: giữ đội hình, đuổi mọi địch đang thấy rồi tập hợp lại) |
+| S | Nhóm đang chọn dừng lại (action `stop`: lệnh `hold`, xoá đích và đường đi; cả đội hình được chọn: đội hình đứng lại; chỉ một phần: phần đó tách khỏi đội hình) |
+| G | Mở/đóng bảng Đội hình cho quân đang chọn (`toggleFormationMenu()`, [formations.md](formations.md)); Esc đóng bảng |
 | Delete | Loại bỏ quân đang chọn, không hoàn tiền (action `delete`) |
 | Space | Camera tới giữa nhóm đang chọn; không chọn gì thì tới pháo đài |
 | Mũi tên / `+` `=` / `-` `_` | Kéo camera 180/zoom (Shift: 360/zoom) / phóng to ×1,15 / thu nhỏ ÷1,15 |

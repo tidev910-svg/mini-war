@@ -348,6 +348,11 @@ if (want('pvp')) {
       await sleep(1200);
       const gp = await guest.game(`return state.units.filter(u=>u.team===1).map(u=>({order:u.order,path:u.path?.length||0}))`);
       t.ok(gp.length && gp.every(u => u.order === 'move' && u.path > 0), 'khách ra lệnh đi → nhận đường đi trong snapshot', gp);
+      // Guest formation (formations.md): the host arranges the guest's fighters; the guest sees it in the snapshot.
+      await guest.game(`const ids=state.units.filter(u=>u.team===1).map(u=>u.id);requestAction('formation',{ids,kind:'defense'});return ids.length`);
+      await sleep(900);
+      const gf = await guest.game(`const f=(state.formations||[]).find(f=>f.team===1);return f?{kind:f.kind,n:f.ids.length,fighters:state.units.filter(u=>u.team===1&&u.type!=='scout').length}:null`);
+      t.ok(gf && gf.kind === 'defense' && gf.n === gf.fighters, 'khách xếp đội hình → chủ phòng xếp, khách thấy qua snapshot', gf);
       // Guest captures a flag: its whole region becomes visible to the guest only.
       const target = await host.game(`const b=state.bases[1],r=state.regions.filter(r=>r.cp).sort((a,c)=>Math.hypot(a.cp.x-b.x,a.cp.y-b.y)-Math.hypot(c.cp.x-b.x,c.cp.y-b.y))[0];
         r.owner=1;r.cap=0;return r.id`);

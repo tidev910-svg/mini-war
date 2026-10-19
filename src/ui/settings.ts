@@ -25,6 +25,8 @@ export const SETTINGS_SCHEMA = [
     { key: 'masterVolume', label: 'Âm lượng tổng', hint: 'Áp dụng cho mọi âm thanh.', range: true, preview: 'ui.confirm' },
     { key: 'sfxVolume', label: 'Trận đánh', hint: 'Kiếm chạm, tên bay, pháo, quân ngã, xây dựng — chỉ nghe trong khung nhìn.', range: true, preview: 'combat.clash' },
     { key: 'uiVolume', label: 'Giao diện & sự kiện', hint: 'Bấm nút, ra lệnh, chiếm cờ, cảnh báo, thắng thua.', range: true, preview: 'event.built' },
+    { key: 'musicVolume', label: 'Nhạc nền', hint: 'Trống trận và đàn, dồn dập hơn khi đang giao tranh trong tầm nhìn.', range: true },
+    { key: 'ambienceVolume', label: 'Tiếng môi trường', hint: 'Gió và chim trong trận; nhỏ dần khi thu nhỏ bản đồ.', range: true },
   ] },
   { id: 'controls', title: 'Điều khiển', rows: [
     { key: 'aiDifficulty', label: 'Độ khó AI', hint: 'Chơi với AI: tốc độ ra quân, thời điểm và quy mô các đợt tấn công. Đổi giữa trận có hiệu lực ngay.', options: [['easy', 'Dễ'], ['normal', 'Thường'], ['hard', 'Khó']] },

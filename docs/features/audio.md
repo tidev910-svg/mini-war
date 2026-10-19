@@ -1,13 +1,16 @@
 # Âm thanh
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
 
 ## Mô tả
-Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh và các sự kiện lớn.
-- **Nguồn:** file `.ogg` lấy từ các bộ CC0 của Kenney: RPG Audio, Interface Sounds, Impact Sounds, Music Jingles. Không cần ghi nguồn; vẫn có ghi trong `public/assets/audio/LICENSE.txt`.
+Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh và các sự kiện lớn, cùng nhạc nền và tiếng môi trường.
+- **Nguồn:**
+  - Giao diện, mệnh lệnh, trận đánh: file `.ogg` từ các bộ CC0 của Kenney (RPG Audio, Interface Sounds, Impact Sounds). Không cần ghi nguồn; vẫn ghi trong `public/assets/audio/LICENSE.txt`.
+  - **Sự kiện, nhạc nền, tiếng môi trường: tạo bằng code** (Web Audio), không có file, thuộc dự án: trống trận, tù và, chuông, đàn gảy, gió, chim.
 - **Tiếng trận đánh có định vị:** chỉ nghe khi trận đánh nằm trong khung camera và phe mình đang nhìn thấy chỗ đó; nhỏ dần về mép màn hình và khi thu nhỏ bản đồ; lệch trái/phải theo vị trí trên màn hình.
 - **Tuỳ chỉnh:** tab **Âm thanh** trong Cài đặt có âm lượng tổng, trận đánh, giao diện & sự kiện, và nút tắt tiếng. Phím **M** bật/tắt tiếng.
-- Chưa có nhạc nền và tiếng môi trường.
+- **Nhạc nền** (sảnh và trong trận): nền trầm theo vòng hợp âm Rê thứ – Si giáng – Đô – La thứ, đàn gảy ngẫu hứng trên Rê thứ. Trong trận có trống trận dồn dần theo **độ căng**: mỗi tiếng giao tranh người chơi nghe thấy làm tăng độ căng, độ căng nguội dần. Hết trận nhạc tắt dần để nghe nhạc thắng/thua.
+- **Tiếng môi trường** (chỉ trong trận): gió thổi lúc mạnh lúc nhẹ; chim hót khi yên bình (độ căng < 0,4); nhỏ dần khi thu nhỏ bản đồ và khi giao tranh căng.
 
 ## Luật & thông số
 | Tình huống | Tên trong `SOUNDS` | File (trong `public/assets/audio/`) | Nguồn Kenney |
@@ -27,17 +30,22 @@ Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh v�
 | Quân ngã | `combat.fall` | `combat/fall-1..3` | Impact `impactSoft_heavy_000..002` |
 | Đặt công trình | `build.place` | `combat/build-place.ogg` | Impact `impactPlank_medium_000` |
 | Tiêu tài nguyên (kho giảm ≥ `COINS_MIN_SPEND` = 15 trong một frame) | `economy.coins` | `combat/coins-1..2` | RPG `handleCoins`, `handleCoins2` |
-| Vào trận | `event.start` | `event/start.ogg` | Jingles `jingles_HIT15` |
-| Pháo đài bị tấn công | `event.alarm` | `event/alarm.ogg` | Jingles `jingles_HIT11` |
-| Mất vùng / chiếm vùng | `event.lost`, `event.capture` | `event/lost.ogg`, `event/capture.ogg` | Jingles `jingles_HIT03`, `jingles_PIZZI01` |
-| Công trình xây xong; quân huấn luyện xong | `event.built`, `event.trained` | `event/built.ogg`, `event/trained.ogg` | Jingles `jingles_PIZZI00`, Interface `confirmation_002` |
-| Thắng / thua | `event.victory`, `event.defeat` | `event/victory.ogg`, `event/defeat.ogg` | Jingles `jingles_PIZZI07`, `jingles_SAX07` |
+| Vào trận | `event.start` | `synth:start` — 3 trống trận rồi tù và gọi Rê → La | Tự tạo |
+| Pháo đài bị tấn công | `event.alarm` | `synth:alarm` — hai hồi tù và trầm (La2) trên hồi trống | Tự tạo |
+| Mất vùng / chiếm vùng | `event.lost`, `event.capture` | `synth:lost` — kèn đi xuống La → Fa + trống; `synth:capture` — kèn lệnh đi lên Rê – Fa# – La | Tự tạo |
+| Công trình xây xong; quân huấn luyện xong | `event.built`, `event.trained` | `synth:built` — hai nhát búa + chuông nhỏ; `synth:trained` — gõ trống + kèn ngắn | Tự tạo |
+| Thắng / thua | `event.victory`, `event.defeat` | `synth:victory` — hồi trống, kèn lệnh ba tiếng, hợp âm Rê trưởng, chũm chọe, chuông; `synth:defeat` — ba hồi chuông trầm trên nền kèn u buồn (thay đoạn saxophone cũ) | Tự tạo |
 
 Tổng cộng 45 file, khoảng 610 KB.
 
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
-| Âm lượng mặc định: tổng / trận đánh / giao diện & sự kiện | 80% / 80% / 70% | `DEFAULT_SETTINGS` (`masterVolume`, `sfxVolume`, `uiVolume`) |
+| Âm lượng mặc định: tổng / trận đánh / giao diện & sự kiện / nhạc nền / môi trường | 80% / 80% / 70% / 50% / 50% | `DEFAULT_SETTINGS` (`masterVolume`, `sfxVolume`, `uiVolume`, `musicVolume`, `ambienceVolume`) |
+| Nhịp nhạc | 92 BPM, bước nốt móc đơn, xếp lịch trước 0,3 giây | `MUSIC_BPM`, `MUSIC_LOOKAHEAD` |
+| Vòng hợp âm | Dm – B♭ – C – Am, mỗi hợp âm 2 ô nhịp | `CHORDS` (`audio/music.ts`) |
+| Độ căng trận đánh | Mỗi tiếng nghe thấy cộng: đòn trúng 0,035, quân ngã 0,07, đạn pháo 0,03, pháo đài bị tấn công 0,4 (tối đa 1); nguội theo e^(−t/9 s); nhạc bám theo bản làm mượt (≈ 2,5 giây) | `MUSIC_HEAT`, `MUSIC_HEAT_SECONDS`, `addBattleHeat()` |
+| Trống theo độ căng | > 0,12: phách 1 · > 0,35: thêm phách 4, 5, 7 · > 0,65: móc đơn liên tục + tiếng lắc · > 0,75: kèn nhấn mỗi 2 ô nhịp | `playStep()` |
+| Môi trường | Chim mỗi 3–10 giây khi độ căng < 0,4; âm lượng × max(0,35, zoom / mặc định) × (1 − 0,5 × độ căng) | `updateMusic()` |
 | Số tiếng tối đa cùng lúc | 18 (bỏ tiếng định vị cũ nhất trước) | `AUDIO_MAX_VOICES` |
 | Giới hạn cho từng tiếng | `maxVoices` (số bản cùng lúc), `minGap` (giây giữa hai lần), `pitch` (lệch tốc độ phát ngẫu nhiên) | `SOUNDS` |
 | Vùng nghe tiếng trận đánh | Khung camera + 25% mỗi phía; mép nhỏ còn 35%; lệch trái/phải tối đa 0,7 | `AUDIO_VIEW_MARGIN`, `AUDIO_EDGE_GAIN`, `AUDIO_PAN` |
@@ -45,10 +53,14 @@ Tổng cộng 45 file, khoảng 610 KB.
 | Tiếng sự kiện yêu cầu trước khi sẵn sàng | Chờ tối đa 2 giây rồi phát | `PENDING_SECONDS` |
 
 ## Code liên quan
-- [src/config/audio.ts](../../src/config/audio.ts): `SOUNDS`, `AUDIO_*`, `COINS_MIN_SPEND`. Đổi tiếng thì chép file mới vào `public/assets/audio/` và sửa bảng này.
+- [src/config/audio.ts](../../src/config/audio.ts): `SOUNDS`, `AUDIO_*`, `COINS_MIN_SPEND`, `MUSIC_BPM`, `MUSIC_LOOKAHEAD`, `MUSIC_HEAT_SECONDS`, `MUSIC_HEAT`. Đổi tiếng file thì chép file mới vào `public/assets/audio/` và sửa bảng này; tiếng tự tạo ghi `synth('<công thức>')`.
+- [src/audio/instruments.ts](../../src/audio/instruments.ts): nhạc cụ tổng hợp dùng chung `drum()`, `horn()`, `bell()`, `pluck()`, `knock()`, `cymbal()`, `makeReverb()`, `noise()`, `midi()`.
+- [src/audio/synth.ts](../../src/audio/synth.ts): `SYNTH_RECIPES` (start, alarm, lost, capture, built, trained, victory, defeat), `renderSynth(name)` dựng một công thức thành AudioBuffer bằng `OfflineAudioContext` lúc tải trang.
+- [src/audio/music.ts](../../src/audio/music.ts): `updateMusic(graph)` (gọi đầu `updateSoundscape()` mỗi frame), `addBattleHeat(v)`, `musicStatus()`; bên trong `setup()`, `playStep()`, `bird()`.
 - [src/audio/sound.ts](../../src/audio/sound.ts):
-  - `playSound(name, pos?)`: chuỗi Web Audio source → gain → stereo pan → bus (`ui`, `sfx`, `event`) → master.
-  - `ensureAudio()`: tạo AudioContext và tải/giải mã mọi file khi mở trang. Lần bấm chuột/phím đầu tiên bật context.
+  - `playSound(name, pos?)`: chuỗi Web Audio source → gain → stereo pan → bus (`ui`, `sfx`, `event`) → master. Thêm bus `music`, `ambience` cho `audio/music.ts`; `audioGraph()` trả `{ac, buses}`.
+  - `ensureAudio()`: tạo AudioContext, tải/giải mã mọi file và dựng mọi tiếng `synth:` khi mở trang. Lần bấm chuột/phím đầu tiên bật context.
+  - Tiếng giao tranh phát được thì cộng độ căng nhạc (`addBattleHeat()`); `ui/hud.ts` cộng thêm khi pháo đài bị tấn công.
   - `updateSoundscape()`: gọi cuối mỗi `draw()`, so trạng thái trận giữa các frame:
     - hiệu ứng trúng đòn/ngã và đạn mới (theo `id`), chỉ chỗ phe mình nhìn thấy;
     - cờ đổi chủ; công trình của mình mới đặt hoặc vừa xây xong; quân mới; số quân chọn tăng; kho giảm đột ngột;
@@ -56,7 +68,7 @@ Tổng cộng 45 file, khoảng 610 KB.
   - `soundStats`, `audioStatus()` dùng cho kiểm thử.
 - Gọi trực tiếp: `openPanel()`, `toggleMenu()`, `closeMenu()`, tiếng bấm chung (`ui/panels.ts`); thiếu tài nguyên và pháo đài bị tấn công (`ui/hud.ts`); nút và phím tấn công (`ui/input.ts`, `ui/hotkeys.ts`); lệnh đi (`showMoveMarker()` trong `render/paths.ts`); tab và công tắc Cài đặt (`ui/settings.ts`).
 - Trường chỉ để hiển thị: `id` (`nextFxId()` trong `core/game.ts`) trên `state.effects` và `state.bullets`; `src` (loại quân ra đòn, `'gun'` cho súng, `'guard'`) trên hiệu ứng trúng đòn.
-- Cài đặt: `muted`, `masterVolume`, `sfxVolume`, `uiVolume` ([settings.md](settings.md)); thanh trượt `.volume` trong [src/style.css](../../src/style.css).
+- Cài đặt: `muted`, `masterVolume`, `sfxVolume`, `uiVolume`, `musicVolume`, `ambienceVolume` ([settings.md](settings.md)); thanh trượt `.volume` trong [src/style.css](../../src/style.css).
 
 ## Tương tác
 - [settings.md](settings.md): tab Âm thanh, phím M.
@@ -71,7 +83,10 @@ Không gửi âm thanh qua mạng. `updateSoundscape()` chỉ đọc `state`, n�
 - [ ] Vào trận có tiếng trống; mở menu, hộp thoại, đổi tab có tiếng.
 - [ ] Giao tranh trong khung nhìn nghe tiếng kiếm, cung, ngã; cuộn camera đi chỗ khác thì im.
 - [ ] Mua quân nghe tiếng đồng xu; thiếu tiền nghe tiếng lỗi; quân ra sân có tiếng xác nhận.
-- [ ] Chiếm cờ, mất cờ, pháo đài bị tấn công, thắng/thua có đoạn nhạc ngắn.
+- [ ] Chiếm cờ, mất cờ, pháo đài bị tấn công, thắng/thua có tiếng trống / tù và / chuông tự tạo.
+- [ ] Sảnh có nhạc nhẹ; vào trận có gió, chim; giao tranh trong khung nhìn thì trống dồn lên, hết đánh thì lắng lại; hết trận nhạc tắt dần.
+- [ ] Thanh trượt Nhạc nền / Tiếng môi trường có tác dụng ngay; M tắt cả nhạc.
+- Đã chạy thử 2026-10-19 (Chrome headless): 45 tiếng sẵn sàng (37 file + 8 tự tạo); 8 công thức đỉnh 0,10–0,88 (không méo), đuôi tắt hẳn; thu 40 giây nhạc trong trận: yên bình ≈ −32 dB RMS, giao tranh ≈ −27 dB, rồi lắng xuống; không lỗi JavaScript.
 - [ ] Phím M tắt/bật; thanh trượt âm lượng có tác dụng ngay, thả tay nghe thử.
 - [ ] PvP: máy khách nghe trận đánh của mình.
 - Đã chạy thử 2026-10-18 (Chrome headless, có bấm chuột thật):
@@ -81,6 +96,7 @@ Không gửi âm thanh qua mạng. `updateSoundscape()` chỉ đọc `state`, n�
   - `pnpm smoke` nhóm `boot` kiểm tra tải đủ file âm thanh.
 
 ## Giới hạn / việc tồn đọng
-- Chưa có nhạc nền và tiếng môi trường (gió, chim); các bộ Kenney đã dùng không có nhạc trung cổ dài.
-- Các file được chọn theo tên và độ dài, chưa được nghe duyệt kỹ (nhất là `event.defeat` là đoạn saxophone); đổi bằng cách sửa `SOUNDS`.
+- Tiếng tự tạo và nhạc chưa được người nghe duyệt kỹ; chỉnh bằng tham số trong `SYNTH_RECIPES` / `audio/music.ts`.
+- Nhạc là đàn gảy ngẫu hứng trên một vòng hợp âm, không có đoạn nhạc soạn sẵn; nghe lâu có thể đơn điệu.
+- Tiếng file Kenney (giao diện, trận đánh) chọn theo tên và độ dài, chưa nghe duyệt kỹ.
 - Chưa có tiếng riêng cho từng loại quân (kỵ binh, giáo đều dùng tiếng kim loại).

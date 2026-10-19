@@ -160,6 +160,13 @@
     <!-- Selection bar (Unit Control V1.0): unit types in the current selection; built by ui/selection.ts -->
     <nav class="unit-bar" id="unitBar" aria-label="Quân đang chọn" hidden></nav>
     <!-- Selection info (ui/info.ts): health, damage, counters, order, build/upgrade/capture progress of what is selected -->
+    <!-- Formation menu (ui/formation.ts): opened from the selection bar's "Đội hình" button or G -->
+    <section class="formation-menu" id="formationMenu" aria-label="Đội hình" hidden>
+      <header><h3>Đội hình</h3><small id="formationCount"></small><button class="drawer-close" type="button" data-close aria-label="Đóng" data-tip="Đóng · Esc"><svg class="ico"><use href="#i-close"/></svg></button></header>
+      <div class="formation-kinds" id="formationKinds"></div>
+      <div class="formation-modes" id="formationModes" role="radiogroup" aria-label="Cách di chuyển"></div>
+      <button class="btn formation-cancel" id="formationCancel" type="button">Hủy đội hình</button>
+    </section>
     <aside class="sel-info" id="selInfo" aria-label="Thông tin đang chọn" hidden></aside>
 
     <!-- Drawers -->

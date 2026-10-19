@@ -10,8 +10,10 @@ import { teamCanSee } from '../sim/fog';
 import { regionLabel } from '../map/regions';
 import { TILE_SIZE } from '../config/map';
 import { selectedOwnUnits } from './selection';
+import { formationOf } from '../sim/formation';
+import { FORMATION_KINDS, FORMATION_MODES } from '../config/formation';
 
-const ORDER_NAMES = { hold: 'Đứng giữ vị trí', move: 'Đang di chuyển', attack: 'Tấn công', explore: 'Đi tự do' };
+const ORDER_NAMES = { hold: 'Đứng giữ vị trí', move: 'Đang di chuyển', attack: 'Tấn công', explore: 'Đi tự do', formation: 'Theo đội hình' };
 const num = n => formatAmount(n);
 const mult = m => '×' + String(Math.round(m * 100) / 100).replace('.', ',');
 const pct = p => `${Math.round(Math.max(0, Math.min(1, p)) * 100)}%`;
@@ -32,6 +34,13 @@ function orderOf(u) {
   return ORDER_NAMES[u.order] || ORDER_NAMES.hold;
 }
 
+// Formation of the selection (sim/formation.ts): kind · mode, or how many of the units are in one.
+function formationRow(units) {
+  const inF = units.filter(u => u.formation != null); if (!inF.length) return '';
+  const f = formationOf(inF[0]);
+  if (!f || inF.length < units.filter(u => u.type !== 'scout').length || inF.some(u => u.formation !== f.id)) return row('Đội hình', `${inF.length} quân đang trong đội hình`);
+  return row('Đội hình', `${FORMATION_KINDS[f.kind].name} · ${FORMATION_MODES[f.mode]}${f.column ? ' · hàng dọc qua lối hẹp' : f.moving ? ' · đang hành quân' : ''}`);
+}
 function unitsHtml(units) {
   const team = units[0].team, starving = supplyFactor(team, 'attack') < 1;
   if (units.length === 1) {
@@ -39,7 +48,7 @@ function unitsHtml(units) {
     return `<header><b>${s.name}</b><small>${sideName(u.team)}</small></header>${bar(u.hp, u.max)}
       <dl>${row('Sát thương', `${num(s.damage)} mỗi ${String(s.cooldown).replace('.', ',')} giây${starving ? ' <em>(thiếu lúa: chậm hơn)</em>' : ''}`)}
       ${row('Tầm đánh', num(s.range))}${row('Tốc độ', num(s.speed))}${row('Lúa nuôi', `${String(s.upkeep).replace('.', ',')}/phút`)}
-      ${counterLines(u.type).map(([k, v]) => row(k, v)).join('')}${row('Lệnh', orderOf(u))}</dl>`;
+      ${counterLines(u.type).map(([k, v]) => row(k, v)).join('')}${row('Lệnh', orderOf(u))}${formationRow(units)}</dl>`;
   }
   const hp = units.reduce((t, u) => t + Math.max(0, u.hp), 0), max = units.reduce((t, u) => t + u.max, 0);
   const dps = units.reduce((t, u) => t + specs[u.type].damage / specs[u.type].cooldown, 0) * (starving ? supplyFactor(team, 'attack') : 1);
@@ -48,7 +57,7 @@ function unitsHtml(units) {
   const orders = Object.entries(units.reduce((o, u) => (o[orderOf(u)] = (o[orderOf(u)] || 0) + 1, o), {})).map(([k, n]) => `${k} ${n}`).join(' · ');
   return `<header><b>${units.length} quân</b><small>${types.map(t => specs[t].name).join(', ')}</small></header>${bar(hp, max)}
     <dl>${row('Sát thương/giây', `≈ ${num(dps)}`)}${row('Lúa nuôi', `${num(upkeep)}/phút`)}
-    ${types.length === 1 ? counterLines(types[0]).map(([k, v]) => row(k, v)).join('') : ''}${row('Lệnh', orders)}</dl>`;
+    ${types.length === 1 ? counterLines(types[0]).map(([k, v]) => row(k, v)).join('') : ''}${row('Lệnh', orders)}${formationRow(units)}</dl>`;
 }
 
 function buildingHtml(b) {

@@ -1,5 +1,7 @@
 // @ts-nocheck
 // HUD over the battlefield: player panel, resource banners, queue panel, side rail and menu (docs/features/hud-ui.md).
+import { addBattleHeat } from '../audio/music';
+import { MUSIC_HEAT } from '../config/audio';
 import { gameApp, syncWorldMetrics, toggleSideHud } from '../core/view';
 import { $, addLog, canAfford, costText, ended, formatAmount, gameTime, localTeam, paused, selectedBuilding, state, teamResources } from '../core/game';
 import { BUILDING_TYPES, FARM_LEVELS, FORTRESS_INCOME_PER_MINUTE, RESOURCE_NAMES, TRAIN_QUEUE_WAITING, specs } from '../config/balance';
@@ -12,6 +14,7 @@ import { refreshTooltip, updateUnitCards } from './panels';
 import { setFactionTheme } from './theme';
 import { updateSelectionBar } from './selection';
 import { updateSelectionInfo } from './info';
+import { updateFormationMenu } from './formation';
 import { setSetting, settings } from '../core/settings';
 import { playSound } from '../audio/sound';
 
@@ -81,7 +84,7 @@ export function updateHUD(){
  $('pause').disabled=ended;
  setPauseButton();
  watchHomeUnderAttack(home);
- updateSelectionBar();updateSelectionInfo();
+ updateSelectionBar();updateSelectionInfo();updateFormationMenu();
  refreshTooltip();
 }
 
@@ -90,7 +93,7 @@ const HOME_ALERT_SECONDS=15;let homeHp=null,homeAlertAt=-Infinity;
 function watchHomeUnderAttack(home){
  if(!home){homeHp=null;return;}
  if(gameTime<homeAlertAt)homeAlertAt=-Infinity; // a new match started
- if(homeHp!==null&&home.hp<homeHp-.5&&!ended&&gameTime-homeAlertAt>HOME_ALERT_SECONDS){homeAlertAt=gameTime;addLog('Pháo đài đang bị tấn công!','danger');playSound('event.alarm');}
+ if(homeHp!==null&&home.hp<homeHp-.5&&!ended&&gameTime-homeAlertAt>HOME_ALERT_SECONDS){homeAlertAt=gameTime;addLog('Pháo đài đang bị tấn công!','danger');playSound('event.alarm');addBattleHeat(MUSIC_HEAT.alarm);}
  homeHp=home.hp;
 }
 

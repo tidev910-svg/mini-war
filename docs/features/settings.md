@@ -31,6 +31,7 @@ Kèm theo là bộ **hiệu ứng mở/đóng** cho menu và hộp thoại, theo
 | `noticeSeconds` — Thông báo tự ẩn sau | 3 / **5** / 10 giây | Thời gian dải thông báo mờ đi (`showNotice()`, `ui/panels.ts`) |
 | `aiDifficulty` — Độ khó AI | Dễ / **Thường** / Khó | Nhịp ra quân và các đợt tấn công của AI (`AI_DIFFICULTY`, [ai-opponent.md](ai-opponent.md)); cũng chọn được ở sảnh (`#aiDifficulty`). Chỉ ảnh hưởng chế độ Chơi với AI |
 | `muted` — Tắt tiếng | **tắt** / bật | Tắt mọi âm thanh; phím M ([audio.md](audio.md)) |
+| `musicVolume`, `ambienceVolume` — Nhạc nền / Tiếng môi trường | 0–100%, **50 / 50%** | Thanh trượt bước 5%, không có tiếng thử ([audio.md](audio.md)) |
 | `masterVolume`, `sfxVolume`, `uiVolume` — Âm lượng tổng / trận đánh / giao diện & sự kiện | 0–100%, **80 / 80 / 70%** | Thanh trượt bước 5%; thả tay phát thử một tiếng của nhóm đó |
 
 Thời lượng hiệu ứng: menu mở 0,26 giây, đóng 0,16 giây; hộp thoại mở 0,38 giây, đóng 0,22 giây; các mục trễ nhau 40–70 ms.
