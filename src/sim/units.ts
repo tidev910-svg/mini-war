@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Unit purchase, training queue and deployment in the muster yard (docs/features/units.md).
+import { recordTrained, recordUnitDeath } from './stats';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
 import { addLog, canAfford, ended, gameTime, localTeam, missingText, mode, notifyShortfall, netRole, nextId, normalizeUnitType, paused, setNextId, spend, state } from '../core/game';
@@ -107,6 +108,7 @@ export function updateTraining(dt){
   for(const q of trainQueueOf(team).slice(0,lanesOf(team))){
   q.left-=dt;if(q.left>1e-6)continue;
   state.trainQueue.splice(state.trainQueue.indexOf(q),1);
+  recordTrained(team);
   const unit=spawn(team,q.type,undefined,undefined,true,q.order);
   if(unit){unit.order=q.order;if(team===localTeam())addLog(specs[q.type].name+' đã huấn luyện xong.');}
   updateHUD();
@@ -119,4 +121,4 @@ export function commandAttack(team=localTeam(),ids=null){if(ended||paused)return
 // Stop (S): the chosen units drop their order and path and hold where they are.
 export function stopUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);for(const u of state.units)if(u.team===team&&want.has(u.id)){u.order='hold';u.dest=null;u.target=null;u.path=null;u.goal=null;u.moveGroup=null;}}
 // Delete: the chosen units are removed from the battlefield (no refund), like deleting units in Age of Empires.
-export function deleteUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);const before=state.units.length;state.units=state.units.filter(u=>!(u.team===team&&want.has(u.id)));const n=before-state.units.length;if(n&&team===localTeam())addLog(`Đã loại bỏ ${n} quân.`);}
+export function deleteUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);const before=state.units.length;state.units=state.units.filter(u=>!(u.team===team&&want.has(u.id)));const n=before-state.units.length;for(let i=0;i<n;i++)recordUnitDeath(team,team);if(n&&team===localTeam())addLog(`Đã loại bỏ ${n} quân.`);}

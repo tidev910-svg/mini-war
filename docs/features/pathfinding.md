@@ -1,6 +1,6 @@
 # Vật cản & tìm đường
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
 
 ## Mô tả
 Sông, hồ và vùng đá là **vật cản**: quân không đi xuyên qua được. Muốn sang bờ bên kia phải đi qua một trong 4 **cầu gỗ** bắc qua sông (một cầu nằm trên đường chính). Rừng, đồng cỏ, ruộng đi bình thường; cây và đá trang trí không chặn.
@@ -11,6 +11,10 @@ Mọi lần di chuyển (lệnh đi của người chơi, đuổi theo mục ti�
 | Thông số | Giá trị | Nguồn trong code |
 |---|---|---|
 | Ô đi được | Đồng cỏ, rừng, ruộng (`terrainType` 0, 1, 4) + ô cầu; nước (2) và đá (3) chặn | `walkable`, `buildWalkable()` |
+| Công trình chặn đường | Nông trại, tháp, tiền đồn (kể cả đang xây) và pháo đài chặn mọi ô mà khung logic (`halfW`/`halfH`, pháo đài `w`/`h`) phủ ≥ ¼ ô theo cả hai chiều (`STRUCTURE_TILE_OVERLAP`), nên đoạn thẳng không cắt góc qua công trình. Lưới `walkable` = `terrainWalkable` (địa hình + cầu) trừ `structureTiles`; dựng lại khi có công trình được đặt, kéo đi, bị phá hoặc sang trận mới | `setStructureObstacles()`, `syncStructureObstacles()` |
+| Kiểm tra bản đồ | Sinh bản đồ, công bằng và tới được (`reachableFrom()`, `walkDistances()`) chỉ xét địa hình (`terrainWalkable`) | `fresh()` |
+| Tách quân | Hai quân (bất kỳ phe) chồng lên nhau quá `SEPARATION_SPACING` = 85% tổng bán kính thì đẩy nhau ra, mỗi giây bớt `SEPARATION_RATE` = 6 lần phần chồng (tối đa toàn bộ trong 1 frame, chia đôi mỗi bên); chồng khít thì tách theo góc cố định theo `id`. Không đẩy vào nước, đá, công trình, ra ngoài `MOVE_BOUNDS` (quân đang kẹt trong ô chặn thì được đẩy ra). Lưới băm 32 px, mỗi cặp xét một lần | `separateUnits()` |
+| Đánh công trình cận chiến | Công trình chặn ô nên quân cận chiến (tầm < `MELEE_RANGE_MAX` = 60) đánh từ ngay sát khung: tầm tới tâm = max(tầm cũ, `structureReach()`); cung thủ giữ tầm cũ. Xem [combat.md](combat.md) | `attackRange()` |
 | Cầu | 4 cầu ở hàng 14%, 36%, 53,5% (đường chính), 80% chiều cao bản đồ, mỗi cầu cao `BRIDGE_WIDTH_TILES` = 3 ô, phủ hết đoạn nước của hàng | `BRIDGE_ROWS`, `bridges`, `bridgeTiles` |
 | Cầu gặp bờ đá | Mặt cầu kéo qua tối đa `BRIDGE_MAX_RAMP_TILES` = 10 ô đá; vẫn chưa tới đất thì cầu dời sang hàng gần nhất (trong `BRIDGE_ROW_SEARCH_TILES` = 12 ô) mà cả 3 hàng đều chạm đất hai bờ | `buildWalkable()` |
 | Lưới lập đường | Theo hiểu biết của phe: ô đi được thật **hoặc chưa khám phá** = mở; nước/đá đã khám phá = chặn (`planGrid(known)`, `known` = `state.fogSeen` cho xanh, `state.enemyFogSeen` cho đỏ; `knownMap(team)`). Không truyền `known` = địa hình thật (dùng khi sinh bản đồ, đo công bằng) | `planGrid()`, `knownMap()` |
@@ -43,9 +47,9 @@ Mọi lần di chuyển (lệnh đi của người chơi, đuổi theo mục ti�
 - Trước đây một đường đi chạm mép (điểm ở y = 19) khiến quân bị kéo về y = 45 mãi, đứng yên ở trạng thái `move`.
 
 ## Code liên quan
-- [src/map/paths.ts](../../src/map/paths.ts): `planGrid()`, `pathStillOpen()`, `buildWalkable()`, `walkable`, `bridgeTiles`, `bridges`, `isWalkableAt()`, `nearestWalkable()`, `lineWalkable()`, `findPath()`, `groupPaths()`, `flowField()`, `pathFromField()`, `reachableFrom()`, `tileOf()`, `tileCenter()`; hằng số `PATH_MAX_NODES`, `BRIDGE_MAX_RAMP_TILES`, `BRIDGE_ROW_SEARCH_TILES`.
+- [src/map/paths.ts](../../src/map/paths.ts): `setStructureObstacles()`, `terrainWalkable`, `structureTiles`, `STRUCTURE_TILE_OVERLAP`, `planGrid()`, `pathStillOpen()`, `buildWalkable()`, `walkable`, `bridgeTiles`, `bridges`, `isWalkableAt()`, `nearestWalkable()`, `lineWalkable()`, `findPath()`, `groupPaths()`, `flowField()`, `pathFromField()`, `reachableFrom()`, `tileOf()`, `tileCenter()`; hằng số `PATH_MAX_NODES`, `BRIDGE_MAX_RAMP_TILES`, `BRIDGE_ROW_SEARCH_TILES`.
 - [src/config/map.ts](../../src/config/map.ts): `BRIDGE_ROWS`, `BRIDGE_WIDTH_TILES`.
-- [src/sim/movement.ts](../../src/sim/movement.ts): `steerTo()`, `assignGroupMove()`, `clearPath()`, `knownMap()`; `PATH_GOAL_TOLERANCE`, `PATH_REPATH_SECONDS`, `PATH_CHECK_SECONDS`.
+- [src/sim/movement.ts](../../src/sim/movement.ts): `syncStructureObstacles()` và `separateUnits()` (gọi mỗi frame trong `update()`), `SEPARATION_RATE`, `SEPARATION_SPACING`, `SEPARATION_CELL`; `steerTo()`, `assignGroupMove()`, `clearPath()`, `knownMap()`; `PATH_GOAL_TOLERANCE`, `PATH_REPATH_SECONDS`, `PATH_CHECK_SECONDS`.
 - [src/core/match.ts](../../src/core/match.ts): ba chỗ di chuyển trong `update()` (AI, đuổi mục tiêu, lệnh `move`) gọi `steerTo()`; kiểm tra đi bộ tới được trong `fresh()`.
 - [src/core/actions.ts](../../src/core/actions.ts): `applyAction('move')` xếp ô đội hình rồi `assignGroupMove()`.
 - [src/map/terrain.ts](../../src/map/terrain.ts): `walkDistances()`.
@@ -75,8 +79,8 @@ Host tính đường (trong `applyAction('move')` và `update()`), cho phe khác
 - Đã chạy thử 2026-10-18 (bản đầu, biết hết bản đồ): `pnpm test` (8 test vật cản/tìm đường: không ô nước/đá nào đi được trừ cầu, mỗi cầu chạm đất hai đầu, bỏ cầu thì hai bờ không nối, đường qua cầu mọi đoạn đi được, đích trên nước dời vào bờ, 6 quân qua sông không lần nào đứng trên ô chặn); `pnpm smoke path` (6 quân tới đích bên kia sông sau ~88 s, 0 lần đứng trên ô chặn, một nhóm đường); AI 2 × 8 phút: >9.000 mẫu vị trí, 0 trên ô chặn; 20 quân hành quân tới nhà địch hết, 0 trên ô chặn; PvP: khách ra lệnh đi nhận đường trong snapshot.
 
 ## Giới hạn / việc tồn đọng
-- Quân không va chạm nhau (đi chồng lên nhau trên cầu).
-- Đường đi không né công trình, pháo đài; công trình không chặn đường.
+- Tách quân là đẩy nhẹ sau khi di chuyển, không phải tránh va chạm khi lập đường: nhóm đông qua cầu hẹp vẫn chen nhau, quân có thể đẩy nhau lệch khỏi ô đội hình một chút.
+- Đường đi né công trình theo lưới ô (37,5 px), nên quân đi cách mép hình công trình một khoảng không đều.
 - Đường dài vòng cầu có thể mất ~50 ms một lần A* (lúc đuổi mục tiêu sau vật cản, tối đa 1 lần/giây mỗi quân).
 - Vị trí cầu cố định theo địa hình (không ngẫu nhiên mỗi trận).
 - Đi vào vùng mù có thể phải đi dọc bờ sông/hồ khá xa trước khi thấy cầu (đúng ý thiết kế, nhưng tốn thời gian hơn bản biết hết bản đồ).

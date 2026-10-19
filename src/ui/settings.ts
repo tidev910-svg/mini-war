@@ -27,6 +27,7 @@ export const SETTINGS_SCHEMA = [
     { key: 'uiVolume', label: 'Giao diện & sự kiện', hint: 'Bấm nút, ra lệnh, chiếm cờ, cảnh báo, thắng thua.', range: true, preview: 'event.built' },
   ] },
   { id: 'controls', title: 'Điều khiển', rows: [
+    { key: 'aiDifficulty', label: 'Độ khó AI', hint: 'Chơi với AI: tốc độ ra quân, thời điểm và quy mô các đợt tấn công. Đổi giữa trận có hiệu lực ngay.', options: [['easy', 'Dễ'], ['normal', 'Thường'], ['hard', 'Khó']] },
     { key: 'scrollSpeed', label: 'Tốc độ cuộn bản đồ', hint: 'Khi dùng phím mũi tên (giữ Shift để nhanh gấp đôi).', options: [[.6, 'Chậm'], [1, 'Vừa'], [1.6, 'Nhanh']] },
     { key: 'noticeSeconds', label: 'Thông báo tự ẩn sau', hint: 'Dải thông báo phía dưới; lịch sử vẫn mở được bằng nút cuộn giấy.', options: [[3, '3 giây'], [5, '5 giây'], [10, '10 giây']] },
   ] },

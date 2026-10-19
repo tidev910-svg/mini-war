@@ -39,7 +39,7 @@ describe('obstacles', () => {
     const { west, east } = banks(0.25);
     const reach = g.reachableFrom(west.x, west.y);
     expect(reach[g.tileOf(east.y) * N() + g.tileOf(east.x)]).toBe(1);
-    g.walkable.set(g.walkable.map((w, i) => (g.bridgeTiles[i] ? 0 : w)));
+    g.terrainWalkable.set(g.terrainWalkable.map((w, i) => (g.bridgeTiles[i] ? 0 : w)));
     const cut = g.reachableFrom(west.x, west.y);
     expect(cut[g.tileOf(east.y) * N() + g.tileOf(east.x)]).toBe(0);
     g.buildWalkable();
@@ -155,3 +155,53 @@ describe('fog-aware planning', () => {
   });
 });
 
+
+describe('buildings as obstacles and unit separation', () => {
+  // An open patch of land (terrain only) at least `r` tiles around, searched from the map centre outwards.
+  function openPatch(r) {
+    for (let k = 0; k < 4000; k++) {
+      const gx = 20 + (k * 37) % (N() - 40), gy = 20 + Math.floor(k * 37 / (N() - 40)) * 7 % (N() - 40);
+      let ok = true; for (let y = gy - r; y <= gy + r && ok; y++) for (let x = gx - r; x <= gx + r; x++) if (!g.terrainWalkable[y * N() + x]) { ok = false; break; }
+      if (ok) return { x: (gx + 0.5) * T(), y: (gy + 0.5) * T() };
+    }
+    throw new Error('no open patch');
+  }
+
+  it('routes around a building footprint and frees it when it is gone', () => {
+    const state = quietMatch(g);
+    const c = openPatch(8), hw = g.BUILDING_TYPES.farm.halfW, hh = g.BUILDING_TYPES.farm.halfH;
+    state.buildings.push({ id: 9001, kind: 'farm', team: 0, x: c.x, y: c.y, hp: 180, max: 180, level: 1, progress: 1, upgrade: null });
+    g.syncStructureObstacles();
+    expect(g.isWalkableAt(c.x, c.y)).toBe(false);
+    const a = { x: c.x - 4 * T(), y: c.y }, b = { x: c.x + 4 * T(), y: c.y };
+    expect(g.lineWalkable(a.x, a.y, b.x, b.y)).toBe(false);
+    const path = g.findPath(a.x, a.y, b.x, b.y);
+    expect(path.length).toBeGreaterThan(1);
+    expect(legsWalkable(a, path)).toBe(true);
+    // No leg passes through the footprint.
+    let p = a; for (const q of path) { for (let k = 0; k <= 60; k++) { const x = p.x + (q.x - p.x) * k / 60, y = p.y + (q.y - p.y) * k / 60; expect(Math.abs(x - c.x) < hw - 4 && Math.abs(y - c.y) < hh - 4).toBe(false); } p = q; }
+    state.buildings = [];
+    g.syncStructureObstacles();
+    expect(g.isWalkableAt(c.x, c.y)).toBe(true);
+    expect(g.findPath(a.x, a.y, b.x, b.y)).toHaveLength(1);
+  });
+
+  it('blocks the fortress footprint but melee units still reach it from the edge; archers keep their range', () => {
+    const state = quietMatch(g), base = state.bases[1];
+    expect(g.isWalkableAt(base.x, base.y)).toBe(false);
+    const edge = g.nearestWalkable(base.x, base.y);
+    const inf = g.spawn(0, 'infantry'), arc = g.spawn(0, 'archer');
+    expect(Math.hypot(edge.x - base.x, edge.y - base.y)).toBeLessThan(g.attackRange(inf, base));
+    expect(g.attackRange(arc, base)).toBe(g.specs.archer.range + 35);
+    expect(g.attackRange(inf, g.spawn(1, 'cavalry'))).toBe(g.specs.infantry.range + g.specs.cavalry.r);
+  });
+
+  it('spreads a stack of units apart without pushing them onto blocked ground', () => {
+    const state = quietMatch(g), c = openPatch(4);
+    const units = Array.from({ length: 6 }, () => { const u = g.spawn(0, 'infantry'); u.x = c.x; u.y = c.y; return u; });
+    for (let k = 0; k < 40; k++) g.update(0.05);
+    const min = 2 * g.specs.infantry.r * g.SEPARATION_SPACING * 0.8;
+    for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) expect(Math.hypot(units[i].x - units[j].x, units[i].y - units[j].y)).toBeGreaterThan(min);
+    for (const u of units) { expect(g.isWalkableAt(u.x, u.y)).toBe(true); expect(Math.hypot(u.x - c.x, u.y - c.y)).toBeLessThan(3 * T()); }
+  });
+});

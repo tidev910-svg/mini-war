@@ -1,6 +1,6 @@
 # Luồng trận đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-17
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
 
 ## Mô tả
 Một trận bắt đầu khi người chơi chọn chế độ. Hai phe xuất phát ở hai đầu bản đồ, mỗi phe có một pháo đài. **Không có khoá đầu trận**: từ giây 0 có thể tuyển quân (nếu đủ tài nguyên và công trình) và đưa quân đi bất kỳ đâu. Phe nào mất pháo đài trước thì thua.
@@ -21,7 +21,7 @@ Khoá xuất quân 120 giây (`DEPLOYMENT_LOCK_SECONDS`, `isDeploymentLocked()`,
 
 Kết thúc:
 - `hurt()` làm HP pháo đài ≤ 0 → `finish(win)`; `win` tính theo **team 0** (`bases[1]` chết → thắng).
-- `finish()` đặt `ended=true`, hiện `#overlay` với tiêu đề "🏆 CHIẾN THẮNG!" / "💥 THẤT THỦ!".
+- `finish()` đặt `ended=true`, hiện `#overlay` với tiêu đề "🏆 CHIẾN THẮNG!" / "💥 THẤT THỦ!", kèm bảng thống kê và biểu đồ ([match-stats.md](match-stats.md)).
 - Nút "↻ Chơi lại" (`#overlayRestart`) gọi `fresh()` ở chế độ AI; ở PvP chỉ log hướng dẫn tạo phòng mới.
 
 Tạm dừng: nút `#pause` hoặc phím Space. Ở guest PvP gửi action `pause`; ở host/AI đổi `paused` trực tiếp.

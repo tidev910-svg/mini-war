@@ -1,6 +1,7 @@
 // @ts-nocheck
-// Player preferences (docs/features/settings.md): display and control options only — nothing here changes the match
-// rules, so they stay local to this browser (localStorage) and never go through requestAction().
+// Player preferences (docs/features/settings.md): display and control options, plus the single-player AI difficulty —
+// nothing here changes the rules of a PvP match, so they stay local to this browser (localStorage) and never go through
+// requestAction().
 export const DEFAULT_SETTINGS = {
   quality: 'medium',      // 'low' | 'medium' | 'high' — canvas resolution cap; 'low' also skips the ground speckles
   reduceMotion: false,    // UI animations (menus, dialogs, lobby) off
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS = {
   sfxVolume: .8,          // 0..1 — battle: hits, shots, falls, building
   uiVolume: .7,           // 0..1 — interface, orders and event jingles
   muted: false,           // all sound off (also the M key)
+  aiDifficulty: 'normal', // 'easy' | 'normal' | 'hard' — pace of the AI opponent (AI_DIFFICULTY in config/balance.ts)
 };
 // Canvas backing store per quality level (syncWorldMetrics() in core/view.ts): at most QUALITY_PIXELS pixels and at most
 // QUALITY_MAX_SCALE canvas pixels per CSS pixel ('low' always renders below screen resolution, the browser scales it up).

@@ -1,7 +1,9 @@
 // @ts-nocheck
 // Target selection and damage (docs/features/combat.md).
+import { recordDamage, recordUnitDeath } from './stats';
 import { dist, mode, nextFxId, selected, setSelected, state } from '../core/game';
-import { COUNTER_MULTIPLIERS, STRUCTURE_DAMAGE_MULTIPLIERS } from '../config/balance';
+import { BUILDING_TYPES, COUNTER_MULTIPLIERS, STRUCTURE_DAMAGE_MULTIPLIERS, specs } from '../config/balance';
+import { TILE_SIZE } from '../config/map';
 import { UNIT_ANIM } from '../config/visuals';
 import { finish } from '../core/match';
 import { aiCanSee, teamCanSee } from './fog';
@@ -21,6 +23,15 @@ export function nearestEnemy(u){
  for(const b of state.buildings){if(b.team===u.team||b.hp<=0)continue;if(!((mode==='ai'&&u.team===0)||teamCanSee(u.team,b.x,b.y)))continue;let d=dist(u,b);if(d<bd-15){best=b;bd=d;}}
  return best;
 }
+// Distance (centre to centre) from which `u` can hit `target`. Units: own range + target body radius. Structures: own
+// range + 35 (fortress) or + 10 (buildings), as before; melee units (range < MELEE_RANGE_MAX) instead reach from anywhere
+// next to the footprint, since buildings block their tiles (pathfinding.md) and a melee unit can only stand at the edge.
+export const MELEE_RANGE_MAX=60;
+export function structureReach(t){const hw=t.w?t.w/2:BUILDING_TYPES[t.kind]?.halfW||0,hh=t.h?t.h/2:BUILDING_TYPES[t.kind]?.halfH||0;return Math.hypot(hw+TILE_SIZE*.75,hh+TILE_SIZE*.75)+TILE_SIZE*.6;} // blocked tiles reach ≤ ¾ tile past the footprint
+export function attackRange(u,target){
+ const s=specs[u.type];if(target.type)return s.range+specs[target.type].r;
+ const base=s.range+(target.w?35:10);return s.range<MELEE_RANGE_MAX?Math.max(base,structureReach(target)):base;
+}
 export function unitTargetValid(t,u){return t&&t.hp>0&&((t.team!==undefined&&t.team!==u.team)||t.team===undefined);}
 export function damageMultiplier(attackerType,target){
  if(!attackerType||!target)return 1;
@@ -31,12 +42,13 @@ export function damageMultiplier(attackerType,target){
 export function hurt(target,damage,team,attackerType=null){
  // Combat V3.1: base damage × counter multiplier (unit targets) or × structure multiplier (buildings and fortresses).
  const finalDamage=damage*damageMultiplier(attackerType,target);
+ recordDamage(team,Math.min(finalDamage,Math.max(0,target.hp)));
  target.hp-=finalDamage;state.effects.push({id:nextFxId(),src:attackerType||'gun',x:target.x,y:target.y,life:.18,max:.18,color:team===0?'#73c8ff':'#ff747a'});
  // Display only: a dying unit leaves a falling body (travels in the snapshot to the guest).
  if(target.hp<=0){
   if(target===state.bases[0])finish(false);
   else if(target===state.bases[1])finish(true);
   else if(target.kind)destroyBuilding(target);
-  else if(target.type){state.units=state.units.filter(u=>u!==target);if(selected===target)setSelected(null);state.effects.push({id:nextFxId(),kind:'fall',type:target.type,team:target.team,facing:target.facing,x:target.x,y:target.y,life:UNIT_ANIM.fallSeconds,max:UNIT_ANIM.fallSeconds});}
+  else if(target.type){recordUnitDeath(target.team,team);state.units=state.units.filter(u=>u!==target);if(selected===target)setSelected(null);state.effects.push({id:nextFxId(),kind:'fall',type:target.type,team:target.team,facing:target.facing,x:target.x,y:target.y,life:UNIT_ANIM.fallSeconds,max:UNIT_ANIM.fallSeconds});}
  }
 }

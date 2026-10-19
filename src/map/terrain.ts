@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Procedural terrain (grass/water/rock), passability and walking distances (docs/features/rendering.md, territory.md).
 import { MAP_TILES, TILE_SIZE, forestRegions, goldRegions, lakeRegions, rockRegions } from '../config/map';
-import { nearestWalkable, walkable } from './paths';
+import { nearestWalkable, terrainWalkable } from './paths';
 
 export const terrainCanvas=document.createElement('canvas'),terrainCtx=terrainCanvas.getContext('2d'),terrainSmoothCanvas=document.createElement('canvas'),terrainSmoothCtx=terrainSmoothCanvas.getContext('2d'),terrainType=new Uint8Array(MAP_TILES*MAP_TILES),resourceTiles=[];
 terrainCanvas.width=MAP_TILES*8;
@@ -108,8 +108,8 @@ export function walkDistances(base){
  const push=(v,i)=>{let k=heapD.length;heapD.push(v);heapI.push(i);while(k>0){const p=(k-1)>>1;if(heapD[p]<=v)break;heapD[k]=heapD[p];heapI[k]=heapI[p];k=p;}heapD[k]=v;heapI[k]=i;};
  const pop=()=>{const v=heapD[0],i=heapI[0],lv=heapD.pop(),li=heapI.pop(),n=heapD.length;if(n){let k=0;for(;;){let c=2*k+1;if(c>=n)break;if(c+1<n&&heapD[c+1]<heapD[c])c++;if(heapD[c]>=lv)break;heapD[k]=heapD[c];heapI[k]=heapI[c];k=c;}heapD[k]=lv;heapI[k]=li;}return [v,i];};
  // Real walking: only walkable tiles (water and rock block, bridges cross the river), start from the nearest walkable tile.
- const cost=i=>walkable[i]?1:Infinity;
- const from=nearestWalkable(base.x,base.y)||base;
+ const cost=i=>terrainWalkable[i]?1:Infinity;
+ const from=nearestWalkable(base.x,base.y,24,terrainWalkable)||base;
  const start=Math.max(1,Math.min(MAP_TILES-2,Math.floor(from.y/TILE_SIZE)))*MAP_TILES+Math.max(1,Math.min(MAP_TILES-2,Math.floor(from.x/TILE_SIZE)));
  d[start]=0;push(0,start);
  while(heapD.length){const [v,i]=pop();if(v>d[i])continue;const x=i%MAP_TILES,y=(i-x)/MAP_TILES;

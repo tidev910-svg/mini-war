@@ -5,8 +5,11 @@ import { MAP_TILES, TILE_SIZE, BRIDGE_ROWS, BRIDGE_WIDTH_TILES } from '../config
 import { terrainType } from './terrain';
 
 const N = MAP_TILES, SIZE = N * N, SQRT2 = Math.SQRT2;
-// 1 = units can stand here. Built once from the terrain (which never changes) plus the bridge tiles.
+// 1 = units can stand here: terrainWalkable (built once from the terrain, which never changes, plus the bridge tiles)
+// minus the tiles under buildings and fortresses (structureTiles, kept in sync by setStructureObstacles()).
 export const walkable = new Uint8Array(SIZE);
+export const terrainWalkable = new Uint8Array(SIZE);
+export const structureTiles = new Uint8Array(SIZE);
 export const bridgeTiles = new Uint8Array(SIZE);
 export const bridges = []; // [{y0, y1, x0, x1}] in tiles, for drawing
 let built = false;
@@ -42,7 +45,24 @@ export function buildWalkable() {
   // The outermost ring of tiles lies outside the box units are kept in (MOVE_BOUNDS in sim/movement.ts: 22–45 world units
   // from the edges), so routes must never use it: a waypoint there could never be reached.
   for (let i = 0; i < N; i++) walkable[i] = walkable[(N - 1) * N + i] = walkable[i * N] = walkable[i * N + N - 1] = 0;
+  terrainWalkable.set(walkable);
+  for (let i = 0; i < SIZE; i++) if (structureTiles[i]) walkable[i] = 0;
   built = true;
+}
+// Buildings and fortresses block every tile their footprint ({x, y, hw, hh} rectangles) covers by at least
+// STRUCTURE_TILE_OVERLAP of a tile in both directions (a straight leg cannot clip a corner), so paths
+// go around them. Called with every structure whenever one is placed, moved or destroyed (syncStructureObstacles() in
+// sim/movement.ts); [] clears them before a new map is generated.
+export const STRUCTURE_TILE_OVERLAP = 0.25;
+export function setStructureObstacles(rects) {
+  ensure();
+  structureTiles.fill(0);
+  const o = TILE_SIZE * STRUCTURE_TILE_OVERLAP;
+  for (const r of rects) {
+    const x0 = tileOf(r.x - r.hw + o), x1 = tileOf(r.x + r.hw - o), y0 = tileOf(r.y - r.hh + o), y1 = tileOf(r.y + r.hh - o);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) structureTiles[y * N + x] = 1;
+  }
+  for (let i = 0; i < SIZE; i++) walkable[i] = terrainWalkable[i] && !structureTiles[i] ? 1 : 0;
 }
 const ensure = () => { if (!built) buildWalkable(); };
 
@@ -227,9 +247,10 @@ export function groupPaths(units, slots, cx, cy, known = null) {
   });
 }
 
-// Tiles reachable on foot from a point (BFS), for map-generation checks.
+// Tiles reachable on foot from a point (BFS), for map-generation checks (terrain only, buildings ignored).
 export function reachableFrom(x, y) {
   ensure();
+  const walkable = terrainWalkable;
   const seen = new Uint8Array(SIZE), q = new Int32Array(SIZE), s = tileOf(y) * N + tileOf(x); if (!walkable[s]) return seen;
   let h = 0, t = 0; q[t++] = s; seen[s] = 1;
   while (h < t) { const i = q[h++], cx = i % N, cy = (i - cx) / N; for (const j of [cx > 0 ? i - 1 : -1, cx < N - 1 ? i + 1 : -1, cy > 0 ? i - N : -1, cy < N - 1 ? i + N : -1]) if (j >= 0 && !seen[j] && walkable[j]) { seen[j] = 1; q[t++] = j; } }

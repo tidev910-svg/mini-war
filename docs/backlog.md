@@ -5,13 +5,11 @@
 Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưởng. Khi làm xong một mục: xoá dòng ở đây **và** dòng tương ứng trong file tính năng (quy tắc 5 trong `CLAUDE.md`). Chi tiết kỹ thuật nằm trong file tính năng được dẫn.
 
 ## Đề xuất làm tiếp
-1. **AI tổ chức tấn công** — AI chỉ đánh khi gặp địch; `enemyMemory` đã ghi nhưng chưa dùng. → [ai-opponent.md](features/ai-opponent.md)
-2. **Chơi thử cân bằng V3.1 + Combat V3.1** — 10–20 trận giữa người chơi cùng trình độ, mục tiêu trận 15–20 phút; ghi thời lượng, số quân, tài nguyên dư, tỉ lệ thắng từng chiến thuật; chốt giá/thời gian mở hàng đợi (đang là giá tạm). → [economy.md](features/economy.md), [combat.md](features/combat.md), [units.md](features/units.md)
+1. **Chơi thử cân bằng V3.1 + Combat V3.1** — 10–20 trận giữa người chơi cùng trình độ, mục tiêu trận 15–20 phút; ghi thời lượng, số quân, tài nguyên dư, tỉ lệ thắng từng chiến thuật; chốt giá/thời gian mở hàng đợi (đang là giá tạm). → [economy.md](features/economy.md), [combat.md](features/combat.md), [units.md](features/units.md)
 
 ## Lối chơi
-- [ ] Quân không va chạm nhau; đường đi không né công trình. → [pathfinding.md](features/pathfinding.md)
 - [ ] Chế độ AI: quân xanh nhắm được địch trong sương mù (không đối xứng). Cần quyết nút "Tấn công" làm gì khi chưa thấy địch. → [combat.md](features/combat.md), [fog-of-war.md](features/fog-of-war.md)
-- [ ] AI chưa tổ chức tấn công; mở rộng chậm nếu trinh sát chết sớm; nhóm chiếm cờ và thợ xây bị rút khỏi đội hình. → [ai-opponent.md](features/ai-opponent.md)
+- [ ] AI mở rộng chậm nếu trinh sát chết sớm; nhóm chiếm cờ và thợ xây bị rút khỏi đội hình. → [ai-opponent.md](features/ai-opponent.md)
 - [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3). → [territory.md](features/territory.md)
 - [ ] Tốc độ giảm tiến độ khi bỏ trống cờ (60 giây cho cả thanh) là số tạm. → [territory.md](features/territory.md)
 - [ ] **Chưa quyết thiết kế:** mỏ cạn dần hay vô hạn; có điều kiện thắng theo vùng không; thưởng lãnh thổ +10% (hiện: không). → [territory.md](features/territory.md)
@@ -32,7 +30,7 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Chỉ lính giáo có sprite 4 hướng; công trình (trừ nông trại) chưa có sprite. → [units.md](features/units.md), [buildings.md](features/buildings.md)
 - [ ] Âm thanh: thêm nhạc nền / tiếng môi trường; nghe duyệt lại các tiếng sự kiện (thua trận đang là saxophone). → [audio.md](features/audio.md)
 - [ ] Văn bản hướng dẫn (`#guideModal` trong `index.html`) viết cứng. → [hud-ui.md](features/hud-ui.md)
-- [ ] Chưa có bảng thông tin cho quân/công trình/cờ đang chọn; minimap chưa có ping. → [hud-ui.md](features/hud-ui.md), [minimap.md](features/minimap.md)
+- [ ] Minimap chưa có ping. → [minimap.md](features/minimap.md)
 - [ ] Vùng nhấp chọn pháo đài không khớp kích thước logic; sương mù căn cứ xanh không cộng tầm nhìn pháo. → [fortress.md](features/fortress.md)
 - [ ] Ở host/AI, nhóm chọn bằng khung phải dùng chuột phải để di chuyển. → [controls.md](features/controls.md)
 
@@ -45,6 +43,14 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-19 (quân không đi xuyên nhau, công trình chặn đường):** quân chồng nhau tự tách nhẹ; nông trại, tháp, tiền đồn, pháo đài chặn ô nên đường đi vòng qua; quân cận chiến đánh công trình từ sát mép, cung thủ giữ tầm cũ.
+
+**2026-10-19 (bảng thông tin đang chọn):** góc phải dưới hiện máu, sát thương, khắc chế, lệnh của quân / nhóm quân; pháo, thu nhập của pháo đài; tiến độ xây, nâng cấp, súng của công trình; tiến độ chiếm, quân trong vòng, sản lượng của cờ.
+
+**2026-10-19 (AI tấn công + độ khó):** AI gom quân ở điểm tập kết, đánh theo đợt vào công trình / cờ địch rồi pháo đài, rút khi mất nhiều quân, kéo quân về chặn địch gần nhà; 3 độ khó Dễ / Thường / Khó chọn ở sảnh hoặc Cài đặt.
+
+**2026-10-19 (thống kê cuối trận):** hộp kết quả có bảng so sánh hai phe (tuyển/mất/hạ gục/sát thương/quân đông nhất, công trình, vùng, thu/tiêu từng tài nguyên), biểu đồ số vùng và quân số theo thời gian, nút sao chép số liệu JSON cho chơi thử.
+
 **2026-10-19 (Unit Control V1.0):** phím 1–5 lọc loại lính trong nhóm đang chọn; thanh quân (bấm: chỉ loại đó, Shift + bấm: thêm/bỏ); nhóm quân lưu Ctrl + 1–9, gọi F1–F9 (Shift: thêm); tạm dừng chuyển sang F10, hướng dẫn sang phím ?.
 
 **2026-10-19 (Combat V3.1, chỉ sát thương):** ST quân 7/14/12/16/24; súng pháo đài 18, pháo thứ hai 45, tháp 30, tiền đồn 12; khắc chế giáo→kỵ ×2,2, kỵ→cung ×1,5, cung→giáo ×1,3, lính→giáo ×1,2; hệ số đánh công trình 0,5/1,1/1,0/0,6/0,8 (không nhân chồng).

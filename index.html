@@ -62,6 +62,7 @@
       </header>
       <nav class="lobby-menu" aria-label="Sảnh chính">
         <button class="lobby-btn primary" id="modeAI" type="button" style="--i:0"><svg class="ico"><use href="#i-sword"/></svg><span><strong>Chơi với AI</strong><small>Đấu với máy · không cần Internet</small></span><kbd>Enter</kbd></button>
+        <div class="ai-difficulty" id="aiDifficulty" role="radiogroup" aria-label="Độ khó AI" style="--i:0"><span>Độ khó AI</span><button type="button" role="radio" data-level="easy">Dễ</button><button type="button" role="radio" data-level="normal">Thường</button><button type="button" role="radio" data-level="hard">Khó</button></div>
         <button class="lobby-btn" id="modeFriends" type="button" style="--i:1"><svg class="ico"><use href="#i-units"/></svg><span><strong>Solo với bạn bè</strong><small>Tạo phòng hoặc nhập mã · kết nối P2P</small></span></button>
         <button class="lobby-btn ghost" id="lobbySettings" type="button" style="--i:2"><svg class="ico"><use href="#i-gear"/></svg><span><strong>Cài đặt</strong><small>Đồ hoạ, hiển thị, điều khiển</small></span></button>
         <button class="lobby-btn ghost" id="lobbyGuide" type="button" style="--i:3"><svg class="ico"><use href="#i-help"/></svg><span><strong>Hướng dẫn &amp; phím tắt</strong><small>Luật chơi, tài nguyên, lãnh thổ</small></span></button>
@@ -158,6 +159,8 @@
 
     <!-- Selection bar (Unit Control V1.0): unit types in the current selection; built by ui/selection.ts -->
     <nav class="unit-bar" id="unitBar" aria-label="Quân đang chọn" hidden></nav>
+    <!-- Selection info (ui/info.ts): health, damage, counters, order, build/upgrade/capture progress of what is selected -->
+    <aside class="sel-info" id="selInfo" aria-label="Thông tin đang chọn" hidden></aside>
 
     <!-- Drawers -->
     <section class="drawer controls" id="trainDrawer" aria-label="Huấn luyện quân" hidden>
@@ -190,7 +193,7 @@
 
   </div>
 
-  <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div>
+  <div class="overlay" id="overlay"><div class="result"><h2 id="resultTitle">Chiến thắng!</h2><p id="resultText">Bạn đã phá hủy căn cứ đối phương.</p><div class="match-stats" id="matchStats"></div><div class="result-actions"><button class="btn" id="copyStats" type="button">⧉ Sao chép số liệu</button><button class="btn primary" id="overlayRestart">↻ Chơi lại</button></div></div></div>
 </div>
 
 <!-- Guide -->

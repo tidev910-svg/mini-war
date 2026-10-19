@@ -48,6 +48,17 @@ export const FLAG_ENEMY_BASE_MIN_TILES=20,FLAG_CAPTURE_RADIUS_TILES=4,FLAG_CAPTU
 export const FLAG_DECAY_DELAY_SECONDS=5,FLAG_DECAY_SECONDS=60;
 // AI capture squads: units per flag (doubled for enemy or contested flags), flags at once grows every interval up to the max.
 export const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTERVAL=120;
+// AI difficulty (ai-opponent.md), chosen in the lobby / Settings (settings.aiDifficulty); 'normal' keeps the original
+// economic pace. tick: seconds between AI turns; maxTraining: units the AI keeps in its training queue; firstAttack: earliest
+// second the first wave gathers; waveSize + wave·waveGrowth: fighters a wave waits for at the rally point (it leaves anyway
+// with ≥ 60% after gatherSeconds); retreatAt: the wave falls back when this share of it is left; regroup: seconds before the
+// next wave gathers; fortressAfterWave: from this wave on the known enemy fortress is the preferred target;
+// defendRadius: enemy units seen this close to the AI fortress pull the free army back to defend.
+export const AI_DIFFICULTY={
+ easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520},
+ normal:{label:'Thường',tick:5,maxTraining:2,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620},
+ hard:  {label:'Khó',   tick:4,maxTraining:4,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720},
+};
 export const FORTRESS_GUN_COST={stone:150};
 // Combat V3.1 (2026-10-19, damage only): damage per shot of the fortress's built-in guns — [0] the main gun, [1] the
 // second gun bought with FORTRESS_GUN_COST. (Range, cooldown and bullet speed unchanged.)

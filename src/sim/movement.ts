@@ -4,7 +4,8 @@
 // unit heads straight into the fog and only re-routes once its own vision reveals water or rock across the way.
 import { H, TILE_SIZE, W } from '../config/map';
 import { state } from '../core/game';
-import { findPath, groupPaths, isWalkableAt, lineWalkable, nearestWalkable, pathStillOpen, planGrid } from '../map/paths';
+import { BUILDING_TYPES, specs } from '../config/balance';
+import { findPath, groupPaths, isWalkableAt, lineWalkable, nearestWalkable, pathStillOpen, planGrid, setStructureObstacles } from '../map/paths';
 
 // A path is recomputed when its goal has moved this far, but at most once per PATH_REPATH_SECONDS while chasing.
 // Every PATH_CHECK_SECONDS the remaining route is re-checked against newly explored tiles.
@@ -58,4 +59,46 @@ export function assignGroupMove(units, slots, cx, cy) {
   // Units of one order share u.moveGroup so the route is drawn once per group (render/paths.ts).
   const group = ++moveGroupCounter;
   units.forEach((u, i) => { u.dest = snapped[i]; u.goal = snapped[i]; u.order = 'move'; u.path = routes[i]; u.repath = PATH_REPATH_SECONDS; u.pathCheck = PATH_CHECK_SECONDS; u.moveGroup = group; });
+}
+
+// Buildings and fortresses as path obstacles (map/paths.ts): rebuilt only when the set of structures, or where they stand,
+// changes (placed, dragged, destroyed, new match). Called every frame from update() (host / AI side only).
+let structureKey = null;
+export function syncStructureObstacles() {
+  if (!state) return;
+  const bases = state.bases.filter(b => b.hp > 0), blds = state.buildings.filter(b => b.hp > 0);
+  const key = bases.map(b => `${b.team}@${b.x | 0},${b.y | 0}`).join() + '|' + blds.map(b => `${b.id}@${b.x | 0},${b.y | 0}`).join();
+  if (key === structureKey) return;
+  structureKey = key;
+  setStructureObstacles([...bases.map(b => ({ x: b.x, y: b.y, hw: b.w / 2, hh: b.h / 2 })), ...blds.map(b => ({ x: b.x, y: b.y, hw: BUILDING_TYPES[b.kind].halfW, hh: BUILDING_TYPES[b.kind].halfH }))]);
+}
+
+// Light separation: overlapping units (any side) push each other apart by part of the overlap each frame, so a group
+// spreads into a crowd instead of one stack. A push never moves a unit onto water, rock or a building, nor out of
+// MOVE_BOUNDS. SEPARATION_RATE: share of the overlap removed per second; SEPARATION_SPACING: bodies may overlap this much.
+export const SEPARATION_RATE = 6, SEPARATION_SPACING = .85, SEPARATION_CELL = 32;
+const sepGrid = new Map();
+export function separateUnits(dt) {
+  const units = state.units.filter(u => u.hp > 0), k = Math.min(1, SEPARATION_RATE * dt) * .5;
+  sepGrid.clear();
+  for (const u of units) { const key = Math.floor(u.x / SEPARATION_CELL) * 4096 + Math.floor(u.y / SEPARATION_CELL); let cell = sepGrid.get(key); if (!cell) sepGrid.set(key, cell = []); cell.push(u); }
+  for (const u of units) {
+    const cx = Math.floor(u.x / SEPARATION_CELL), cy = Math.floor(u.y / SEPARATION_CELL), ru = specs[u.type].r;
+    for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) {
+      const cell = sepGrid.get(gx * 4096 + gy); if (!cell) continue;
+      for (const v of cell) {
+        if (v.id <= u.id) continue; // each pair once
+        const min = (ru + specs[v.type].r) * SEPARATION_SPACING; let dx = v.x - u.x, dy = v.y - u.y; const d2 = dx * dx + dy * dy;
+        if (d2 >= min * min) continue;
+        let d = Math.sqrt(d2);
+        if (d < 1e-3) { const a = (u.id * 2.399) % (Math.PI * 2); dx = Math.cos(a); dy = Math.sin(a); d = 1; } else { dx /= d; dy /= d; } // exact stack: split along a fixed angle
+        const push = (min - Math.min(d, min)) * k;
+        nudge(u, -dx * push, -dy * push); nudge(v, dx * push, dy * push);
+      }
+    }
+  }
+}
+function nudge(u, dx, dy) {
+  const x = Math.max(MOVE_BOUNDS.left, Math.min(MOVE_BOUNDS.right, u.x + dx)), y = Math.max(MOVE_BOUNDS.top, Math.min(MOVE_BOUNDS.bottom, u.y + dy));
+  if (isWalkableAt(x, y) || !isWalkableAt(u.x, u.y)) { u.x = x; u.y = y; }
 }

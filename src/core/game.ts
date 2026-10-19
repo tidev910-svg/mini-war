@@ -35,7 +35,8 @@ export function localTeam(){return mode==='pvp'&&netRole==='guest'?1:0;}
 export function isMultiplayer(){return mode==='pvp';}
 export function teamResources(team){return state.resources[team];}
 export function canAfford(team,cost){const res=teamResources(team);return Object.entries(cost).every(([key,amount])=>res[key]>=amount);}
-export function spend(team,cost){const res=teamResources(team);for(const [key,amount] of Object.entries(cost))res[key]-=amount;}
+// Also counted in the match statistics (state.stats, sim/stats.ts).
+export function spend(team,cost){const res=teamResources(team),st=state.stats?.sides?.[team];for(const [key,amount] of Object.entries(cost)){res[key]-=amount;if(st)st.spent[key]+=amount;}}
 export function costText(cost){return Object.entries(cost).map(([key,amount])=>amount+' '+RESOURCE_NAMES[key]).join(' · ');}
 export function formatAmount(value){return String(Math.round(value*10)/10).replace('.',',');}
 export function missingText(team,cost){const res=teamResources(team);return Object.entries(cost).filter(([key,amount])=>res[key]<amount).map(([key,amount])=>Math.ceil(amount-res[key])+' '+RESOURCE_NAMES[key]).join(', ');}

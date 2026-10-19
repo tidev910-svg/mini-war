@@ -11,6 +11,7 @@ import { buildingDef, buildingDone, upgradeCost, upgradeTarget } from '../sim/bu
 import { refreshTooltip, updateUnitCards } from './panels';
 import { setFactionTheme } from './theme';
 import { updateSelectionBar } from './selection';
+import { updateSelectionInfo } from './info';
 import { setSetting, settings } from '../core/settings';
 import { playSound } from '../audio/sound';
 
@@ -80,7 +81,7 @@ export function updateHUD(){
  $('pause').disabled=ended;
  setPauseButton();
  watchHomeUnderAttack(home);
- updateSelectionBar();
+ updateSelectionBar();updateSelectionInfo();
  refreshTooltip();
 }
 

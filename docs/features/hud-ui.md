@@ -1,6 +1,6 @@
 # HUD & giao diện
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
 
 ## Mô tả
 Giao diện theo phong cách **huy hiệu & cờ hiệu**, tông màu "sắt & máu": bản đồ phủ toàn màn hình, các bảng nổi có hình khiên và dải cờ đuôi én. **Màu phe** là điểm nhấn chính. Vàng đồng chỉ dùng làm viền cho thành phần quan trọng. Hình khối vẽ bằng CSS/SVG (bộ icon đơn sắc nét viền trong `index.html`), không thêm ảnh bitmap. Toàn bộ chữ tiếng Việt.
@@ -55,6 +55,8 @@ Bảng màu **"sắt & máu"** (đổi ngày 2026-10-18, thay cho tông xanh nav
 | Minimap (dưới trái, cấp 3) | `#minimap` + 4 `.corner` | Khung có góc trang trí kiểu huy hiệu. Xem [minimap.md](minimap.md) |
 | Thông báo (dưới giữa, cấp 3) | `#chatStrip` > `#feed`, `#chatToggle` | Dải cờ ngang rộng tối đa 40% màn hình (≤ 560px), nằm giữa, ngang hàng cụm nút lệnh. `addLog(msg, tone)` thêm dòng lên đầu, giữ 12 dòng. Dòng mới nhất hiện rồi **tự mờ sau 5 giây** (class `idle`, `NOTICE_SECONDS`). Nút 📜 / bấm vào dòng mở **lịch sử** (class `open`). Dòng `tone='danger'` hiện chữ đỏ, banner viền `--danger` (class `alert`) |
 | Nút lệnh chính (dưới phải, cấp 1) | `.dock-slot` > `#openTrain`, `#openBuild`, `#attack` | Khiên huy hiệu viền `--gold` 3px. Huấn luyện và Xây dựng nền `--faction-primary`, Tấn công nền `--danger`. Nhãn nằm trên dải băng vắt ngang đáy khiên; phím tắt ở góc (H, B, A). Rê chuột: sáng lên; nhấn: thu về 0,96; bị khoá: mờ + xám, tooltip nêu lý do ("Trận đấu đang tạm dừng" / "đã kết thúc", `data-why` trên `.dock-slot`). Nút đang mở bảng có class `active` |
+
+**Bảng thông tin** (`#selInfo`, góc phải dưới, trên 3 nút khiên): máu, sát thương, khắc chế, lệnh, tiến độ xây/nâng cấp/chiếm cờ của thứ đang chọn — xem [selection-info.md](selection-info.md).
 
 **Thanh quân** (`#unitBar`, giữa phía dưới, trên dải thông báo): chỉ hiện khi đang chọn quân; mỗi loại trong nhóm một ô (biểu tượng, số lượng, phím 1–5), ô đang chọn viền `--gold` nền `--faction-dark`. Xem [controls.md](controls.md) (Unit Control V1.0).
 
@@ -137,7 +139,6 @@ HUD luôn hiển thị theo `localTeam()`. Khách có `--faction-*` đỏ, nên 
 
 ## Giới hạn / việc tồn đọng
 - Văn bản hướng dẫn trong `#guideModal` viết cứng; cần sửa tay khi luật đổi.
-- Chưa có bảng thông tin cho quân/công trình/cờ đang chọn (thông tin vẫn ghi vào nhật ký khi nhấp).
 - Thanh tiến độ trong bảng hàng đợi nhảy theo nhịp cập nhật HUD.
 - Với phe Đỏ, nền khiên Huấn luyện/Xây dựng (`--faction-primary` #B03030) gần màu nút Tấn công (`--danger` #D94A3A); nút Tấn công chỉ khác nhờ dải băng tối hơn và icon.
 - Biểu tượng trong hàng đợi và thẻ xây dựng vẫn là emoji (chưa thay bằng icon SVG).

@@ -5,9 +5,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const MODULES = ['config/map', 'config/balance', 'config/theme', 'config/visuals', 'ui/theme', 'core/game', 'core/view', 'core/match', 'core/actions',
-  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat',
-  'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
-  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/paths', 'render/draw', 'ui/panels', 'ui/selection', 'ui/hotkeys', 'ui/settings', 'core/settings', 'config/audio', 'audio/sound'];
+  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat', 'sim/stats',
+  'ai/attack', 'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
+  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/paths', 'render/draw', 'ui/panels', 'ui/selection', 'ui/results', 'ui/info', 'ui/hotkeys', 'ui/settings', 'core/settings', 'config/audio', 'audio/sound'];
 
 // A 2D context whose methods do nothing; pixel buffers are real so fog/tint code can fill them.
 function fakeContext(canvas) {

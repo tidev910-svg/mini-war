@@ -7,6 +7,7 @@ import { queueTraining, trainQueueOf } from '../sim/units';
 import { foodPerMinute, upkeepPerMinute } from '../sim/economy';
 import { isTeamAreaExplored } from '../sim/fog';
 import { activeFortressGuns } from '../map/bases';
+import { aiLevel, runAttackPlan } from './attack';
 import { buildTurret, buildingDone, findBuildSpot, needsBuilder, outpostRegions, placeBuilding, startOutpost, startUpgrade } from '../sim/buildings';
 
 // Economic AI for the red side (ai-opponent.md). Runs every 5 seconds; each step spends only when affordable.
@@ -36,14 +37,14 @@ export function runEnemyAI(){
   const have=squad(r).length;if(!have&&active>=limit)continue;
   const need=(r.owner>=0||r.contested?AI_CAPTURE_SQUAD*2:AI_CAPTURE_SQUAD)-have;if(need<=0)continue;
   // Nearest free fighters (scouts cannot capture).
-  const free=state.units.filter(u=>u.team===team&&u.hp>0&&u.type!=='scout'&&!u.buildTarget&&u.captureTarget==null).sort((p,q)=>Math.hypot(p.x-r.cp.x,p.y-r.cp.y)-Math.hypot(q.x-r.cp.x,q.y-r.cp.y));
+  const free=state.units.filter(u=>u.team===team&&u.hp>0&&u.type!=='scout'&&!u.buildTarget&&u.captureTarget==null&&!u.aiRole).sort((p,q)=>Math.hypot(p.x-r.cp.x,p.y-r.cp.y)-Math.hypot(q.x-r.cp.x,q.y-r.cp.y));
   for(const u of free.slice(0,need)){u.captureTarget=r.id;u.dest=flagStandSpot(r);u.order='explore';}
   if(!have&&free.length)break;
  }
  // Builders: each outpost under construction gets the nearest free unit.
  for(const b of own.filter(needsBuilder)){
   if(state.units.some(u=>u.team===team&&u.hp>0&&u.buildTarget===b.id))continue;
-  const free=state.units.filter(u=>u.team===team&&u.hp>0&&!u.buildTarget).sort((p,q)=>Math.hypot(p.x-b.x,p.y-b.y)-Math.hypot(q.x-b.x,q.y-b.y));
+  const free=state.units.filter(u=>u.team===team&&u.hp>0&&!u.buildTarget&&!u.aiRole).sort((p,q)=>Math.hypot(p.x-b.x,p.y-b.y)-Math.hypot(q.x-b.x,q.y-b.y));
   if(free[0]){free[0].buildTarget=b.id;free[0].dest={x:b.x,y:b.y+30};free[0].order='explore';}
  }
  // 4. Upgrades and defence when stone and gold allow.
@@ -58,7 +59,7 @@ export function runEnemyAI(){
  // Queued and training units are already paid for and will eat once they deploy, so their upkeep counts against the food margin.
  // The AI keeps at most 2 units in training so it does not hoard paid units in the queue.
  const queuedUpkeep=[...state.pendingSpawns.filter(p=>p.team===team),...training].reduce((t,p)=>t+specs[p.type].upkeep,0);
- const aiBuy=type=>{if(training.length>=2||!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-queuedUpkeep-specs[type].upkeep<0)return false;spend(team,specs[type].cost);queueTraining(team,type,type==='scout'?'explore':'hold');return true;};
+ const aiBuy=type=>{if(training.length>=aiLevel().maxTraining||!canAfford(team,specs[type].cost)||foodPerMinute(team)-upkeepPerMinute(team)-queuedUpkeep-specs[type].upkeep<0)return false;spend(team,specs[type].cost);queueTraining(team,type,type==='scout'?'explore':'hold');return true;};
  if(aiScouts<2&&aiBuy('scout')){}
  else if(Math.random()<.14&&aiBuy('cavalry')){}
  else if(Math.random()<.42&&aiBuy('spearman')){}
@@ -66,4 +67,6 @@ export function runEnemyAI(){
  else if(aiBuy('infantry')){}
  else aiBuy('spearman');
  if(activeFortressGuns(base)<2&&canAfford(team,FORTRESS_GUN_COST)&&Math.random()<.25)buildTurret(team);
+ // 6. Attack waves and home defence (ai/attack.ts).
+ runAttackPlan();
 }

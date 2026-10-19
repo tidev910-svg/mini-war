@@ -8,7 +8,7 @@ Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung th�
 ## Luật & thông số
 | Thông số | Giá trị | Nguồn |
 |---|---:|---|
-| Tầm đánh thực tế | `specs.range` + bán kính mục tiêu (`r` của quân; 35 nếu mục tiêu có `w` (pháo đài); 10 cho công trình) | `update()` |
+| Tầm đánh thực tế | `specs.range` + bán kính mục tiêu (`r` của quân; 35 nếu mục tiêu có `w` (pháo đài); 10 cho công trình). Quân cận chiến (tầm < `MELEE_RANGE_MAX` = 60) đánh công trình/pháo đài từ sát khung: lấy max với `structureReach()` = √((halfW + ¾ ô)² + (halfH + ¾ ô)²) + 0,6 ô, vì công trình chặn đường ([pathfinding.md](pathfinding.md)) | `attackRange()` |
 | Đạn cung thủ | tốc độ 280, sống 2 giây, xuất phát `y−3` | `update()` |
 | Đạn pháo pháo đài | ST 18 (khẩu chính) / 45 (khẩu thứ hai), tốc độ 320, sống 1.2 giây | `FORTRESS_GUN_DAMAGE`, `update()` |
 | Súng tháp / tiền đồn | ST 30 / 12 | `BUILDING_TYPES.tower.gun`, `.outpost.gun` |
@@ -58,7 +58,7 @@ Chết: `hurt()` xoá quân khỏi `state.units` khi HP ≤ 0; pháo đài HP �
 Súng: pháo đài 18 (trước 17), pháo thứ hai 45 (trước 17), tháp 30 (trước 17), tiền đồn 12 (trước 10).
 
 ## Code liên quan
-- [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.
+- [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `attackRange()`, `structureReach()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.
 - `commandAttack(team, ids)` đặt `order='attack'` cho các quân được chọn.
 - Dữ liệu: `state.bullets[] = {x, y, target, damage, team, speed, life, attackerType?}`, `state.effects[] = {x, y, life, max, color}`.
 

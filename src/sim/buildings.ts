@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Farms, outposts, towers: placement, construction, upgrades, destruction (docs/features/buildings.md, farms.md).
+import { recordBuildingLost, recordBuilt } from './stats';
 import { H, TILE_SIZE, W } from '../config/map';
 import { tilePassable } from '../map/terrain';
 import { addLog, canAfford, costText, draggingFarm, ended, localTeam, missingText, mode, nextFxId, nextId, notifyShortfall, paused, selectedBuilding, setDraggingFarm, setNextId, setSelectedBuilding, spend, state } from '../core/game';
@@ -60,6 +61,7 @@ export function placeBuilding(team,kind,x,y){
  const b={id:(setNextId(nextId+1)-1),kind,team,x,y,hp:def.hp*.2,max:def.hp,level:1,progress:0,upgrade:null,cool:0,regionId:def.where==='flag'?regionAt(x,y).id:null,waiting:false};
  state.buildings.push(b);
  if(mine)addLog(`Bắt đầu xây ${def.name} (${def.buildTime} giây).`+(kind==='outpost'?' Cần ít nhất một quân của bạn đứng cạnh thì mới xây.':''));
+ recordBuilt(team);
  updateHUD();return b;
 }
 export function upgradeCost(b){return b.kind==='farm'?FARM_LEVELS[b.level+1]?.cost||null:null;}
@@ -99,6 +101,7 @@ export function completeBuilding(b){
 export function needsBuilder(b){return b.kind==='outpost'&&!buildingDone(b);}
 export function hasBuilder(b){const r=BUILDER_RADIUS_TILES*TILE_SIZE;return state.units.some(u=>u.team===b.team&&u.hp>0&&Math.hypot(u.x-b.x,u.y-b.y)<=r);}
 export function destroyBuilding(b){
+ recordBuildingLost(b.team);
  state.buildings=state.buildings.filter(x=>x!==b);
  if(selectedBuilding===b)setSelectedBuilding(null);if(draggingFarm===b)setDraggingFarm(null);
  if(b.team===localTeam())addLog(`${buildingName(b)} đã bị phá hủy.`,'danger');

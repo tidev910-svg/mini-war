@@ -1,5 +1,7 @@
 // @ts-nocheck
 // Match lifecycle: fresh() map and state, the simulation step update(), finish() and the frame loop (docs/features/match-flow.md).
+import { newStats, recordGathered, sampleStats, updateStats } from '../sim/stats';
+import { showMatchStats } from '../ui/results';
 import { DEFAULT_ZOOM, camX, camY, centerCameraOnHome, setCamX, setCamY, setZoom, zoom } from './view';
 import { BASE_MIN_SEPARATION, H, MAP_FAIRNESS_TOLERANCE, MAP_GENERATION_TRIES, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { $, addLog, dist, ended, nextFxId, gameStarted, gameTime, localTeam, mode, netRole, nextId, paused, selected, selectedBuilding, selectedFlag, selectedFortress, setEnded, setGameTime, setNextId, setPaused, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setState, setSuppressNextCanvasClick, state, suppressNextCanvasClick, teamResources } from './game';
@@ -13,12 +15,13 @@ import { baseSiteClear, fortressGunPosition, musterYard } from '../map/bases';
 import { buildRegionMap, generateRegions } from '../map/regions';
 import { setPauseButton, updateHUD, updateMatchClockHUD, updateTrainQueueHUD } from '../ui/hud';
 import { buildingDone, buildingVision, needsBuilder, updateBuildings } from '../sim/buildings';
-import { hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
+import { attackRange, hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
+import { aiLevel, aiUnitGoal, newAIPlan } from '../ai/attack';
 import { buildWorldDecor } from '../render/terrain';
 import { draw } from '../render/draw';
-import { clampToBounds, clearPath, steerTo } from '../sim/movement';
-import { nearestWalkable, reachableFrom, tileOf } from '../map/paths';
+import { clampToBounds, clearPath, separateUnits, steerTo, syncStructureObstacles } from '../sim/movement';
+import { nearestWalkable, reachableFrom, setStructureObstacles, tileOf } from '../map/paths';
 
 export let last=0;
 export let aiTimer=0,incomeTimer=0;
@@ -26,6 +29,7 @@ export let lastHudSecond=-1,pendingSpawnRetryTimer=0;
 export let snapshotClock=0;
 const HUD_REFRESH_MS=100;let hudRefreshedAt=-Infinity;
 export function fresh(){
+ setStructureObstacles([]); // the last match's buildings must not shape this map's checks
  endPlacement();setSuppressNextCanvasClick(false);setSelectedFortress(null);setSelectedBuilding(null);setSelectedFlag(null);
  // Random fortresses anywhere on the map, at least BASE_MIN_SEPARATION of the map width apart, with their regions, mines
  // and flags (generateRegions, territory.md). Re-roll until both sides have every resource type at a similar walking
@@ -49,7 +53,8 @@ export function fresh(){
  }
  const {regions,mines,blueBase,redBase}=best;
  buildRegionMap(regions);
- setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null]});
+ setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan()});
+ syncStructureObstacles();
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
  centerCameraOnHome();
@@ -57,22 +62,22 @@ export function fresh(){
  addLog('Trận đấu bắt đầu. Vị trí căn cứ được chọn ngẫu nhiên trong mỗi trận!');
  updateHUD();
 }
-export function finish(win){if(ended)return;setEnded(true);$('resultTitle').textContent=win?'🏆 CHIẾN THẮNG!':'💥 THẤT THỦ!';$('resultText').textContent=win?'Bạn đã phá hủy căn cứ địch. Chỉ huy xuất sắc!':'Căn cứ của bạn đã bị phá hủy. Hãy thử chiến thuật khác!';$('overlay').classList.add('show');addLog(win?'Chiến thắng!':'Thất bại!');updateHUD();}
+export function finish(win){if(ended)return;setEnded(true);sampleStats();$('resultTitle').textContent=win?'🏆 CHIẾN THẮNG!':'💥 THẤT THỦ!';$('resultText').textContent=win?'Bạn đã phá hủy căn cứ địch. Chỉ huy xuất sắc!':'Căn cứ của bạn đã bị phá hủy. Hãy thử chiến thuật khác!';$('overlay').classList.add('show');showMatchStats();addLog(win?'Chiến thắng!':'Thất bại!');updateHUD();}
 export function update(dt){
  if(!gameStarted|| (mode==='pvp'&&netRole==='guest') || paused||ended)return;const before=gameTime;setGameTime(gameTime+(dt));incomeTimer+=dt;aiTimer+=dt;
  const shownSecond=Math.floor(gameTime);if(shownSecond!==lastHudSecond){lastHudSecond=shownSecond;updateMatchClockHUD();updateTrainQueueHUD(localTeam());}
- updateTraining(dt);updateQueueLanes(dt);
+ updateTraining(dt);updateQueueLanes(dt);updateStats(dt);
  pendingSpawnRetryTimer+=dt;if(pendingSpawnRetryTimer>=.35){pendingSpawnRetryTimer=0;processPendingSpawns();}
  // Income once a second: fortress base income, farms, and the mines of held regions.
  while(incomeTimer>=1){incomeTimer-=1;
-  for(const b of state.bases)if(b.hp>0){const res=teamResources(b.team);for(const [k,v] of Object.entries(FORTRESS_INCOME_PER_MINUTE))res[k]+=v/60;}
-  for(const b of state.buildings)if(b.kind==='farm'&&buildingDone(b))teamResources(b.team).food+=farmFoodPerMinute(b)/60;
+  for(const b of state.bases)if(b.hp>0){const res=teamResources(b.team);for(const [k,v] of Object.entries(FORTRESS_INCOME_PER_MINUTE)){res[k]+=v/60;recordGathered(b.team,k,v/60);}}
+  for(const b of state.buildings)if(b.kind==='farm'&&buildingDone(b)){const f=farmFoodPerMinute(b)/60;teamResources(b.team).food+=f;recordGathered(b.team,'food',f);}
   // Mines pay whoever owns their region (a finished flag or outpost).
-  for(const mine of state.mines){const r=state.regions[mine.regionId];mine.owner=r?r.owner:-1;if(mine.owner>=0)teamResources(mine.owner)[mine.resource]+=mine.income;}
+  for(const mine of state.mines){const r=state.regions[mine.regionId];mine.owner=r?r.owner:-1;if(mine.owner>=0){teamResources(mine.owner)[mine.resource]+=mine.income;recordGathered(mine.owner,mine.resource,mine.income);}}
   updateSupply(0);updateSupply(1);
  }
- if(mode==='ai'&&aiTimer>=5){aiTimer=0;runEnemyAI();}
- updateBuildings(dt);
+ if(mode==='ai'&&aiTimer>=aiLevel().tick){aiTimer=0;runEnemyAI();}
+ updateBuildings(dt);syncStructureObstacles();
  // unit movement and combat
  for(const u of [...state.units]){
   if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
@@ -85,7 +90,10 @@ export function update(dt){
    // Capture squads stay at their flag until the region is the AI's with no enemy progress on it.
    const flag=u.captureTarget!=null?state.regions[u.captureTarget]:null;
    if(flag&&(!flag.cp||(flag.owner===1&&!flag.cap)))u.captureTarget=null;
+   // Attack-planner roles (ai/attack.ts): rally point, wave target, defence or retreat.
+   const goal=!job&&u.captureTarget==null?aiUnitGoal(u):null;
    if(job){if(!u.dest||Math.hypot(u.dest.x-job.x,u.dest.y-job.y)>60)u.dest={x:job.x,y:job.y+30};}
+   else if(goal){u.dest={x:goal.x,y:goal.y};u.order='explore';}
    else if(u.captureTarget!=null){if(!u.dest||Math.hypot(u.dest.x-flag.cp.x,u.dest.y-flag.cp.y)>FLAG_CAPTURE_RADIUS_TILES*TILE_SIZE*.6)u.dest=flagStandSpot(flag);}
    else if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
     const cols=MAP_TILES,rows=MAP_TILES,cw=W/cols,ch=H/rows;
@@ -97,11 +105,10 @@ export function update(dt){
     u.dest=candidate;u.order='explore';
    }
    // Walk the path; an errand whose spot cannot be reached is dropped so a new one is picked next frame.
-   if(Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>5&&steerTo(u,u.dest.x,u.dest.y,speed,dt)&&Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>35&&u.captureTarget==null&&!u.buildTarget){u.dest=null;clearPath(u);}
+   if(Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>5&&steerTo(u,u.dest.x,u.dest.y,speed,dt)&&Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>35&&u.captureTarget==null&&!u.buildTarget&&!goal){u.dest=null;clearPath(u);}
   }
   if(target){
-   const d=dist(u,target),tr=target.type?specs[target.type]:null;
-   const range=s.range+(tr?tr.r:target.w?35:10);
+   const d=dist(u,target),range=attackRange(u,target);
    if(d<=range){
     if(u.attackTimer<=0){u.attackTimer=cooldown;
       if(u.type==='archer'){state.bullets.push({id:nextFxId(),x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
@@ -120,8 +127,9 @@ export function update(dt){
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
   if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY,u.facing);
-  else if(target&&dist(u,target)<=s.range+(target.type?specs[target.type].r:target.w?35:10))u.facing=facingFrom(target.x-u.x,target.y-u.y);
+  else if(target&&dist(u,target)<=attackRange(u,target))u.facing=facingFrom(target.x-u.x,target.y-u.y);
  }
+ separateUnits(dt);
  // bullets track moving target
  for(const b of [...state.bullets]){
   if(!b.target||b.target.hp<=0){state.bullets=state.bullets.filter(q=>q!==b);continue;}
@@ -163,7 +171,9 @@ export function update(dt){
   const minY=Math.max(0,Math.floor((source.y-source.r)/cellH)),maxY=Math.min(rows-1,Math.ceil((source.y+source.r)/cellH));
   const radiusSq=source.r*source.r;for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){const dx=(gx+.5)*cellW-source.x,dy=(gy+.5)*cellH-source.y;if(dx*dx+dy*dy<=radiusSq)state.enemyFogSeen[gy*cols+gx]=1;}
  }
- const blueBase=state.bases[0];if(aiCanSee(blueBase.x,blueBase.y))state.enemyMemory.base={x:blueBase.x,y:blueBase.y,age:0};
+ // The blue fortress is spotted when its centre is in sight or any red unit's sight reaches its walls.
+ const blueBase=state.bases[0],spotted=aiCanSee(blueBase.x,blueBase.y)||aiSources.some(s=>Math.hypot(s.x-blueBase.x,s.y-blueBase.y)<=s.r+Math.max(blueBase.w,blueBase.h)/2);
+ if(spotted)state.enemyMemory.base={x:blueBase.x,y:blueBase.y,age:0};
  for(const u of state.units){if(u.team===0&&aiCanSee(u.x,u.y)){const old=state.enemyMemory.targets.find(m=>m.id===u.id);if(old){old.x=u.x;old.y=u.y;old.age=0;}else state.enemyMemory.targets.push({id:u.id,x:u.x,y:u.y,age:0});}}
  for(const m of state.enemyMemory.targets)m.age+=dt;state.enemyMemory.targets=state.enemyMemory.targets.filter(m=>m.age<90);
  if(state.enemyMemory.base)state.enemyMemory.base.age+=dt;

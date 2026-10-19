@@ -6,6 +6,7 @@ import { setNetStatus } from './peer';
 import { revealTeamVision } from '../sim/fog';
 import { ensureRegionMap } from '../map/regions';
 import { setPauseButton, updateHUD } from '../ui/hud';
+import { showMatchStats } from '../ui/results';
 
 export function serializeSnapshot(){
  // Keep explored fog maps local to each browser; serialize only live simulation state.
@@ -32,5 +33,5 @@ export function applySnapshot(packet){
  setSelectedBuilding(state.buildings.find(b=>b.id===selectedBuildingId)||null);
  setSelected(state.units.find(u=>u.selected)||null);
  revealTeamVision(0);revealTeamVision(1);updateHUD();
- if(ended)$('overlay').classList.add('show');else $('overlay').classList.remove('show');
+ if(ended){if(!$('overlay').classList.contains('show'))showMatchStats();$('overlay').classList.add('show');}else $('overlay').classList.remove('show');
 }
