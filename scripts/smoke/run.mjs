@@ -240,17 +240,25 @@ if (solo.length) {
     }
 
     if (want('vision')) {
-      const t = checker('vision: giữ cờ thấy cả vùng, mất cờ thì mất tầm nhìn');
-      const r = await c.game(`fresh();setMode('test');setGameStarted(true);const base=state.bases[0];
+      const t = checker('vision: sương mù V3.1 — bán kính, giữ cờ thấy 450, vùng mờ nhớ lần cuối');
+      const r = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];const base=state.bases[0];
         const f=state.regions.filter(r=>r.cp).sort((a,b)=>Math.hypot(a.cp.x-base.x,a.cp.y-base.y)-Math.hypot(b.cp.x-base.x,b.cp.y-base.y))[0];
-        let far=null,fd=0;for(let i=0;i<regionMap.length;i++)if(regionMap[i]===f.id){const x=(i%MAP_TILES+.5)*TILE_SIZE,y=((i-i%MAP_TILES)/MAP_TILES+.5)*TILE_SIZE,d=Math.hypot(x-f.cp.x,y-f.cp.y);if(d>fd){fd=d;far={x,y,i};}}
-        const before=teamCanSee(0,far.x,far.y);f.owner=0;const held=teamCanSee(0,far.x,far.y),redHeld=teamCanSee(1,far.x,far.y);
-        revealOwnedRegions(0,state.fogSeen);const explored=!!state.fogSeen[far.i];
-        f.owner=1;const lost=teamCanSee(0,far.x,far.y),redNow=teamCanSee(1,far.x,far.y);
-        return {fd:Math.round(fd/TILE_SIZE),before,held,redHeld,explored,lost,redNow,stillExplored:!!state.fogSeen[far.i]};`);
-      t.ok(!r.before && r.held && !r.redHeld, 'trước khi giữ không thấy; giữ cờ thì thấy ô xa nhất, đối phương không thấy', r);
+        // A direction from the flag that stays on the map and away from both fortresses for 480 px.
+        const ok=p=>p.x>40&&p.y>40&&p.x<W-40&&p.y<H-40&&state.bases.every(b=>Math.hypot(b.x-p.x,b.y-p.y)>BUILDING_VISION+20);
+        const dir=[...Array(16)].map((_,k)=>({ux:Math.cos(k*Math.PI/8),uy:Math.sin(k*Math.PI/8)})).find(({ux,uy})=>ok({x:f.cp.x+ux*430,y:f.cp.y+uy*430})&&ok({x:f.cp.x+ux*480,y:f.cp.y+uy*480}));const {ux,uy}=dir;
+        const near={x:f.cp.x+ux*430,y:f.cp.y+uy*430},out={x:f.cp.x+ux*480,y:f.cp.y+uy*480};
+        const tile=p=>Math.floor(p.y/TILE_SIZE)*MAP_TILES+Math.floor(p.x/TILE_SIZE);
+        const before=teamCanSee(0,near.x,near.y);f.owner=0;const held=teamCanSee(0,near.x,near.y),beyond=teamCanSee(0,out.x,out.y),redHeld=teamCanSee(1,near.x,near.y);
+        update(.05);updateIntel();const explored=!!state.fogSeen[tile(near)];
+        f.owner=1;const lost=teamCanSee(0,near.x,near.y),redNow=teamCanSee(1,near.x,near.y);update(.05);
+        const radii=Object.entries(UNIT_VISION).map(([type,r])=>{state.units=[];const u=spawn(0,type);u.x=W/2;u.y=H/2;return teamCanSee(0,W/2+r-3,H/2)&&!teamCanSee(0,W/2+r+3,H/2);});
+        updateIntel();const shownOwner=knownFlag(f).owner;
+        return {before,held,beyond,redHeld,explored,lost,redNow,stillExplored:!!state.fogSeen[tile(near)],radii,shownOwner,real:f.owner};`);
+      t.ok(!r.before && r.held && !r.beyond && !r.redHeld, 'giữ cờ thấy trong 450 quanh cờ, ngoài 450 không thấy, đối phương không thấy', r);
       t.ok(r.explored && !r.lost && r.redNow && r.stillExplored, 'đổi chủ → tầm nhìn sang phe mới, phe cũ vẫn nhớ địa hình', r);
-      results.push(t.report({ 'ô xa nhất (ô)': r.fd }));
+      t.ok(r.radii.every(Boolean), 'bán kính 5 loại quân đúng bảng V3.1', r.radii);
+      t.ok(r.shownOwner === 1 && r.real === 1, 'cờ của mình bị chiếm ngoài tầm nhìn: phe mình vẫn biết đã mất', r);
+      results.push(t.report());
     }
 
     if (want('economy')) {
@@ -353,12 +361,20 @@ if (want('pvp')) {
       await sleep(900);
       const gf = await guest.game(`const f=(state.formations||[]).find(f=>f.team===1);return f?{kind:f.kind,n:f.ids.length,fighters:state.units.filter(u=>u.team===1&&u.type!=='scout').length}:null`);
       t.ok(gf && gf.kind === 'defense' && gf.n === gf.fighters, 'khách xếp đội hình → chủ phòng xếp, khách thấy qua snapshot', gf);
-      // Guest captures a flag: its whole region becomes visible to the guest only.
+      // Guest captures a flag: the guest sees TERRITORY_VISION around it (fog of war V3.1).
       const target = await host.game(`const b=state.bases[1],r=state.regions.filter(r=>r.cp).sort((a,c)=>Math.hypot(a.cp.x-b.x,a.cp.y-b.y)-Math.hypot(c.cp.x-b.x,c.cp.y-b.y))[0];
         r.owner=1;r.cap=0;return r.id`);
       await sleep(1500);
-      const vis = await guest.game(`refreshFog(state.enemyFogSeen);let n=0,v=0;for(let i=0;i<regionMap.length;i++)if(regionMap[i]===${target}){n++;if(fogVisible[i])v++;}return {n,v}`);
-      t.ok(vis.n > 0 && vis.v === vis.n, 'vùng khách giữ hiện đủ tầm nhìn trên máy khách', vis);
+      const vis = await guest.game(`refreshFog(state.enemyFogSeen);const r=state.regions[${target}];let n=0,v=0;for(let i=0;i<MAP_TILES*MAP_TILES;i++){const x=(i%MAP_TILES+.5)*TILE_SIZE,y=(Math.floor(i/MAP_TILES)+.5)*TILE_SIZE;if(Math.hypot(x-r.cp.x,y-r.cp.y)<=TERRITORY_VISION-TILE_SIZE){n++;if(fogVisible[i])v++;}}return {n,v}`);
+      t.ok(vis.n > 0 && vis.v === vis.n, 'cờ khách giữ cho khách tầm nhìn 450 quanh cờ', vis);
+      // Guest garrisons its units in that flag (flag-defense.md): the host takes them off the field into state.garrisons.
+      await host.game(`const r=state.regions[${target}];state.units.filter(u=>u.team===1).forEach((u,i)=>{u.x=r.cp.x+60+i*8;u.y=r.cp.y+30;u.order='hold';u.dest=null;u.path=null;});return 1`);
+      await sleep(400);
+      await guest.game(`const ids=state.units.filter(u=>u.team===1).map(u=>u.id);requestAction('garrison',{ids,regionId:${target}});return ids.length`);
+      await sleep(4000);
+      const gar = await host.game(`return {inside:(state.garrisons||[]).filter(u=>u.team===1&&u.garrison===${target}).length,onField:state.units.filter(u=>u.team===1).length}`);
+      const garGuest = await guest.game(`return (state.garrisons||[]).filter(u=>u.team===1).length`);
+      t.ok(gar.inside > 0 && gar.onField === 0 && garGuest === gar.inside, 'khách đưa quân vào đồn trú → chủ phòng cất quân vào cờ, khách thấy qua snapshot', { gar, garGuest });
       await guest.shot(OUT, 'pvp-guest');
     }
     t.ok(!host.errors.length && !guest.errors.length, 'không lỗi JavaScript', { host: host.errors, guest: guest.errors });

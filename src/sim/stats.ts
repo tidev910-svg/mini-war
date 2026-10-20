@@ -20,7 +20,7 @@ export function recordBuildingLost(team) { const s = sideOf(team); if (s) s.buil
 // One timeline point: regions held (home included) and living army per side.
 export function sampleStats() {
   const st = state?.stats; if (!st) return;
-  const regions = [0, 1].map(t => state.regions.filter(r => r.owner === t).length), army = [0, 1].map(t => state.units.filter(u => u.team === t && u.hp > 0).length);
+  const regions = [0, 1].map(t => state.regions.filter(r => r.owner === t).length), army = [0, 1].map(t => [...state.units, ...(state.garrisons || [])].filter(u => u.team === t && u.hp > 0).length);
   for (const t of [0, 1]) st.sides[t].peakArmy = Math.max(st.sides[t].peakArmy, army[t]);
   const last = st.timeline[st.timeline.length - 1];
   if (last && Math.abs(last.t - gameTime) < .5) st.timeline.pop();

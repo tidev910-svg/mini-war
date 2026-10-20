@@ -3,7 +3,7 @@
 import { TILE_SIZE } from '../config/map';
 import { addLog, localTeam, state } from '../core/game';
 import { FLAG_CAPTURE_BASE_SECONDS, FLAG_CAPTURE_EXPONENT, FLAG_CAPTURE_MAX_UNITS, FLAG_CAPTURE_RADIUS_TILES, FLAG_DECAY_DELAY_SECONDS, FLAG_DECAY_SECONDS, FLAG_SCOUTS_CAPTURE, RESOURCE_NAMES } from '../config/balance';
-import { revealRegion, teamCanSee } from './fog';
+import { teamCanSee } from './fog';
 import { regionLabel } from '../map/regions';
 
 // ---- Flag capture (territory.md). Runs on the host every simulation step. ----
@@ -31,6 +31,8 @@ export function updateCaptures(dt){
   }
   r.idle=0;
   if(contested||team<0)continue;
+  // A garrison inside the flag must be killed or leave before anyone else can capture it (flag-defense.md).
+  if(team!==r.owner&&r.owner>=0&&(state.garrisons||[]).some(u=>u.garrison===r.id))continue;
   const step=dt/captureSeconds(n[team]);
   if(team===r.owner||(r.capTeam!==team&&r.cap>0)){
    if(r.cap>0){r.cap=Math.max(0,r.cap-step);if(r.cap===0){r.capTeam=-1;r.stage2=-1;}}
@@ -40,7 +42,7 @@ export function updateCaptures(dt){
   r.cap=Math.min(1,r.cap+step);if(r.cap<1)continue;
   r.cap=0;
   if(r.owner<0){
-   r.owner=team;r.capTeam=-1;r.stage2=-1;revealRegion(team===0?state.fogSeen:state.enemyFogSeen,r.id);
+   r.owner=team;r.capTeam=-1;r.stage2=-1; // its flag now gives TERRITORY_VISION (sim/fog.ts)
    if(team===me)addLog(`Đã chiếm ${regionLabel(r)}: mỏ trong vùng bắt đầu sinh ${RESOURCE_NAMES[r.resource]}.`);
    else if(teamCanSee(me,r.cp.x,r.cp.y))addLog(`Đối phương đã chiếm ${regionLabel(r)}.`);
   }else{

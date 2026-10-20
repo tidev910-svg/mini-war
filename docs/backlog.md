@@ -38,11 +38,14 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Bật kiểm tra kiểu TypeScript: bỏ `// @ts-nocheck` từng file (bắt đầu từ `src/config/`), thêm interface `GameState`, `Unit`, `Region`, `Building`. → [architecture.md](architecture.md)
 - [ ] Gỡ các import ngược lớp còn lại (sim/net gọi `updateHUD()`, `sim/combat` gọi `finish()`…), để `sim/` chạy được không cần DOM. → [architecture.md](architecture.md)
 - [ ] Code chết: `state.guards` (quái canh mỏ), biến `guiding`, `aiExploreTarget`. → [economy.md](features/economy.md), [controls.md](features/controls.md), [ai-opponent.md](features/ai-opponent.md)
-- [ ] Bán kính tầm nhìn AI lệch `unitVisionRadius()` (giáo 120 vs 150, cung 105 vs 130). → [fog-of-war.md](features/fog-of-war.md)
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-20 (phòng thủ cột cờ V3.1):** chuột phải lên cờ của mình để đồn trú (không giới hạn, ẩn với địch, vẫn ăn lúa); cờ có chủ tự bắn 10 / 2 giây tầm 180; địch tới gần thì 100% quân đồn trú xuất kích, yên 3 giây thì tự về; lệnh riêng được ưu tiên; còn đồn trú thì không chiếm được cờ.
+
+**2026-10-20 (sương mù V3.1):** bán kính nhìn mới (trinh sát 500, lính / giáo 320, cung 360, kỵ 420, công trình và pháo đài 350, vùng đang giữ 450 quanh cờ), chung cho người chơi và AI; vùng mờ hiện cờ, mỏ, màu lãnh thổ, công trình và pháo đài địch như lần cuối nhìn thấy, không hiện quân địch.
+
 **2026-10-19 (âm thanh tự tạo):** nhạc nền tạo bằng code (nền trầm + đàn gảy trên Rê thứ, trống trận dồn theo độ căng giao tranh), tiếng gió và chim trong trận, 8 tiếng sự kiện làm lại bằng trống / tù và / chuông (thua trận hết saxophone); thêm âm lượng Nhạc nền, Tiếng môi trường trong Cài đặt.
 
 **2026-10-19 (đội hình V3.1):** nút Đội hình / phím G: Phòng thủ, Mũi nhọn, Bao vây hai cánh; Giữ đội hình (đi theo quân chậm nhất, xoay theo hướng đi, qua cầu thành hàng dọc rồi dàn lại) hoặc Di chuyển tự do; rời chỗ để đánh rồi tự tập hợp; ra lệnh riêng thì tách khỏi đội hình; trinh sát không tham gia.

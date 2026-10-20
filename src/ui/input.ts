@@ -109,7 +109,7 @@ export let selectingBox=false,boxStart=null,boxPointerId=null,guiding=false;
   setCamY(panCamStart.y-(e.clientY-panStart.y)*sy/zoom);
   clampCamera();
  });
- export function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});showMoveMarker(pos.x,pos.y);setSelected(null);}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
+ export function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){const own=state.regions.find(r=>r.cp&&r.owner===localTeam()&&flagHit(r,pos.x,pos.y));if(own){requestAction('garrison',{ids:chosen.map(u=>u.id),regionId:own.id});showMoveMarker(own.cp.x,own.cp.y);}else{requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});showMoveMarker(pos.x,pos.y);}setSelected(null);}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
  canvas.addEventListener('pointerup',stopPan);
 canvas.addEventListener('pointercancel',stopPan);
 canvas.addEventListener('click',e=>{

@@ -131,7 +131,7 @@ export function updateSoundscape() {
   buildings = nextBuildings;
   // New own units (trained) and the selection growing.
   const units = new Set();
-  for (const u of state.units) if (u.team === team) { units.add(u.id); if (primed && !ownUnits.has(u.id)) playSound('event.trained'); }
+  for (const u of [...state.units, ...(state.garrisons || [])]) if (u.team === team) { units.add(u.id); if (primed && !ownUnits.has(u.id)) playSound('event.trained'); }
   ownUnits = units;
   if (primed && localSelectedIds.size > selectedCount) playSound('order.select');
   selectedCount = localSelectedIds.size;

@@ -43,19 +43,18 @@ describe('flag capture', () => {
 });
 
 describe('region vision', () => {
-  it('shows the whole held region to its owner only, and moves with ownership', () => {
-    const state = quietMatch(g), flag = nearestFlag(state, 0);
-    let far = null, best = 0;
-    for (let i = 0; i < g.regionMap.length; i++) if (g.regionMap[i] === flag.id) {
-      const x = (i % g.MAP_TILES + 0.5) * g.TILE_SIZE, y = (Math.floor(i / g.MAP_TILES) + 0.5) * g.TILE_SIZE, d = Math.hypot(x - flag.cp.x, y - flag.cp.y);
-      if (d > best) { best = d; far = { x, y }; }
-    }
-    expect(g.teamCanSee(0, far.x, far.y)).toBe(false);
+  it('a held region shows TERRITORY_VISION (450) around its flag to its owner only, and moves with ownership', () => {
+    const state = quietMatch(g), flag = nearestFlag(state, 0), base = state.bases[0];
+    const d = Math.hypot(flag.cp.x - base.x, flag.cp.y - base.y), ux = (flag.cp.x - base.x) / d, uy = (flag.cp.y - base.y) / d;
+    const inside = { x: flag.cp.x + ux * 440, y: flag.cp.y + uy * 440 }, outside = { x: flag.cp.x + ux * 470, y: flag.cp.y + uy * 470 };
+    expect(g.TERRITORY_VISION).toBe(450);
+    expect(g.teamCanSee(0, inside.x, inside.y)).toBe(false);
     flag.owner = 0;
-    expect(g.teamCanSee(0, far.x, far.y)).toBe(true);
-    expect(g.teamCanSee(1, far.x, far.y)).toBe(false);
+    expect(g.teamCanSee(0, inside.x, inside.y)).toBe(true);
+    expect(g.teamCanSee(0, outside.x, outside.y)).toBe(false);
+    expect(g.teamCanSee(1, inside.x, inside.y)).toBe(false);
     flag.owner = 1;
-    expect(g.teamCanSee(0, far.x, far.y)).toBe(false);
-    expect(g.teamCanSee(1, far.x, far.y)).toBe(true);
+    expect(g.teamCanSee(0, inside.x, inside.y)).toBe(false);
+    expect(g.teamCanSee(1, inside.x, inside.y)).toBe(true);
   });
 });

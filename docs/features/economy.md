@@ -1,6 +1,6 @@
 # Kinh tế & tài nguyên
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
 
 ## Mô tả
 Bốn tài nguyên: **lúa, gỗ, đá, vàng**. Ba nguồn thu cộng dồn:
@@ -58,7 +58,7 @@ Chỉ thoát khi **nông trại đủ nuôi quân** (lúa ròng ≥ 0), không p
 ## Code liên quan
 - [src/config/balance.ts](../../src/config/balance.ts): hằng số `RESOURCE_NAMES`, `STARTING_RESOURCES`, `FORTRESS_GUN_COST`, `MINE_TYPES` (ngay sau `specs`).
 - Tiện ích tài nguyên: `teamResources(team)`, `canAfford(team, cost)`, `spend(team, cost)`, `costText(cost)`, `missingText(team, cost)`, `formatAmount(value)` (số thập phân kiểu Việt, dấu phẩy).
-- Lúa duy trì: `foodPerMinute(team)`, `upkeepPerMinute(team)`, `updateSupply(team)`, `supplyFactor(team, kind)`; hằng số `SUPPLY_GRACE_SECONDS`, `SUPPLY_SPEED_FACTOR`, `SUPPLY_ATTACK_SPEED_FACTOR`; dữ liệu `state.supply[team] = {status: 'ok'|'warning'|'starving', grace}`. Giá luôn là object dạng `{food, wood, stone, gold}` (chỉ ghi khoá cần).
+- Lúa duy trì: `foodPerMinute(team)`, `upkeepPerMinute(team)` (tính cả quân đồn trú trong cờ, [flag-defense.md](flag-defense.md)), `updateSupply(team)`, `supplyFactor(team, kind)`; hằng số `SUPPLY_GRACE_SECONDS`, `SUPPLY_SPEED_FACTOR`, `SUPPLY_ATTACK_SPEED_FACTOR`; dữ liệu `state.supply[team] = {status: 'ok'|'warning'|'starving', grace}`. Giá luôn là object dạng `{food, wood, stone, gold}` (chỉ ghi khoá cần).
 - Khối thu nhập trong `update()` (vòng `while(incomeTimer>=1)`).
 - Sinh mỏ theo vùng trong `fresh()` — xem [territory.md](territory.md).
 - Dữ liệu: `state.resources = [{food, wood, stone, gold}, {…}]` (chỉ số = team); `state.mines[] = {x, y, resource, regionId, income (mỗi giây), owner(-1|0|1)}`.

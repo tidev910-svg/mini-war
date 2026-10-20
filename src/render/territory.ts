@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Territory tint and glowing borders (docs/features/territory.md).
+import { knownRegionOwner } from './intel';
 import { ctx, zoom } from '../core/view';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { localTeam, state } from '../core/game';
@@ -14,11 +15,11 @@ export const regionTintCanvas=document.createElement('canvas');
 regionTintCanvas.width=MAP_TILES;
 regionTintCanvas.height=MAP_TILES;
 export const regionTintCtx=regionTintCanvas.getContext('2d');
-// Translucent owner colours per tile, redrawn only when ownership changes.
+// Translucent owner colours per tile (as the local side knows them, render/intel.ts), redrawn only when that changes.
 export function refreshRegionTint(){
- const key=state.regions.map(r=>r.owner).join('');if(key===regionTintKey||!regionMap)return;setRegionTintKey(key);
+ const key=state.regions.map(knownRegionOwner).join(',');if(key===regionTintKey||!regionMap)return;setRegionTintKey(key);
  const img=regionTintCtx.createImageData(MAP_TILES,MAP_TILES),colors={0:hexRgb(TEAM_COLORS[0].light),1:hexRgb(TEAM_COLORS[1].light)};
- for(let i=0;i<regionMap.length;i++){const r=state.regions[regionMap[i]];const c=r&&colors[r.owner];if(!c)continue;img.data[i*4]=c[0];img.data[i*4+1]=c[1];img.data[i*4+2]=c[2];img.data[i*4+3]=34;}
+ for(let i=0;i<regionMap.length;i++){const r=state.regions[regionMap[i]];const c=r&&colors[knownRegionOwner(r)];if(!c)continue;img.data[i*4]=c[0];img.data[i*4+1]=c[1];img.data[i*4+2]=c[2];img.data[i*4+3]=34;}
  regionTintCtx.putImageData(img,0,0);
 }
 // layer 'under' (before units): tint plus the borders away from the fog edge, so borders never cover units.
@@ -37,7 +38,7 @@ export function drawTerritory(viewLeft,viewTop,viewRight,viewBottom,layer='under
   if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;if((fogMask[e[6]]||fogMask[e[7]]||!fogVisible[e[6]]||!fogVisible[e[7]]?1:0)!==(over?1:0))continue;
   // Rivers and lakes already separate regions: skip borders on or along water. Between two neutral regions nothing is drawn.
   if(terrainType[e[6]]===2||terrainType[e[7]]===2)continue;
-  const a=state.regions[e[4]]?.owner??-1,b=state.regions[e[5]]?.owner??-1;
+  const a=knownRegionOwner(state.regions[e[4]]),b=knownRegionOwner(state.regions[e[5]]);
   if(a<0&&b<0)continue;
   buckets[a>=0&&b>=0&&a!==b?me:a>=0?a:b].push(e);
  }

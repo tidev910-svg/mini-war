@@ -2,6 +2,7 @@
 // Minimap in the bottom-left frame: terrain, territory colours, fog, explored mines and bridges, flags, buildings,
 // units and the camera view (docs/features/minimap.md). Colours come from the design tokens (config/theme.ts):
 // the local side's things in its faction colour, enemies seen right now in --danger.
+import { ghostBuildings, knownRegionOwner } from './intel';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { FOG_RGB, FOG_MEMORY_ALPHA } from '../config/visuals';
 import { TEAM_COLORS, THEME, hexRgb } from '../config/theme';
@@ -34,7 +35,7 @@ function buildLayer() {
   for (let i = 0; i < MAP_TILES * MAP_TILES; i++) {
     const o = i * 4;
     if (!seen || !seen[i]) { d[o] = FOG_RGB[0]; d[o + 1] = FOG_RGB[1]; d[o + 2] = FOG_RGB[2]; d[o + 3] = 255; continue; }
-    const owner = regionMap ? state.regions[regionMap[i]]?.owner : -1, c = TINT[owner];
+    const owner = regionMap ? knownRegionOwner(state.regions[regionMap[i]]) : -1, c = TINT[owner];
     const dim = !fogVisible[i];
     if (c) { d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = dim ? MINIMAP_TINT_ALPHA + 40 : MINIMAP_TINT_ALPHA; }
     else if (dim) { d[o] = FOG_RGB[0]; d[o + 1] = FOG_RGB[1]; d[o + 2] = FOG_RGB[2]; d[o + 3] = FOG_MEMORY_ALPHA; }
@@ -76,11 +77,11 @@ export function drawMinimap() {
     const x = r.cp.x * sx, y = r.cp.y * sy;
     mctx.strokeStyle = THEME['text-on-map-stroke']; mctx.lineWidth = 1.5; mctx.beginPath(); mctx.moveTo(x, y + 3); mctx.lineTo(x, y - 6); mctx.stroke();
     mctx.beginPath(); mctx.moveTo(x, y - 6); mctx.lineTo(x + 6, y - 4); mctx.lineTo(x, y - 2); mctx.closePath();
-    mctx.fillStyle = r.owner >= 0 ? TEAM_COLORS[r.owner].light : THEME['text-main']; mctx.fill(); mctx.lineWidth = 1; mctx.stroke();
+    const owner = knownRegionOwner(r); mctx.fillStyle = owner >= 0 ? TEAM_COLORS[owner].light : THEME['text-main']; mctx.fill(); mctx.lineWidth = 1; mctx.stroke();
   }
-  // Buildings: own always, enemy only while seen.
-  for (const b of state.buildings) {
-    const mine = b.team === team; if (!mine && !teamCanSee(team, b.x, b.y)) continue;
+  // Buildings: own always, enemy while seen or as last seen (render/intel.ts).
+  for (const b of [...state.buildings, ...ghostBuildings()]) {
+    const mine = b.team === team; if (!mine && !teamCanSee(team, b.x, b.y) && !ghostBuildings().includes(b)) continue;
     mctx.fillStyle = mine ? own : foe; mctx.fillRect(b.x * sx - 2.5, b.y * sy - 2.5, 5, 5);
   }
   // Fortresses (the enemy's once explored): a framed square.

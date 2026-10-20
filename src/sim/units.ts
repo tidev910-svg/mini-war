@@ -4,7 +4,7 @@ import { recordTrained, recordUnitDeath } from './stats';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
 import { addLog, canAfford, ended, gameTime, localTeam, missingText, mode, notifyShortfall, netRole, nextId, normalizeUnitType, paused, setNextId, spend, state } from '../core/game';
-import { BUILDING_TYPES, QUEUE_LANE_UPGRADES, SCOUT_VISION, TRAIN_LANES_START, TRAIN_QUEUE_WAITING, specs } from '../config/balance';
+import { BUILDING_TYPES, QUEUE_LANE_UPGRADES, TRAIN_LANES_START, TRAIN_QUEUE_WAITING, specs } from '../config/balance';
 import { requestAction } from '../core/actions';
 import { baseDir, musterYard } from '../map/bases';
 import { updateHUD } from '../ui/hud';
@@ -19,7 +19,8 @@ export function facingFrom(dx,dy,prev){
  if(p>=0){let d=Math.abs(a-p*step)%(Math.PI*2);if(d>Math.PI)d=Math.PI*2-d;if(d<=step/2+FACING_HYSTERESIS)return prev;}
  return FACINGS[((Math.round(a/step)%8)+8)%8];
 }
-export function unitVisionRadius(type){switch(normalizeUnitType(type)){case 'spearman':return 150;case 'archer':return 130;case 'scout':return SCOUT_VISION;default:return 105;}}
+// Sight radius by type (UNIT_VISION, fog of war V3.1).
+export { unitVisionRadius } from './fog';
 export function spawn(team,type,x,y,queueIfBlocked=true,pendingOrder='hold'){
  const spec=specs[type],left=team===0;
  const base=state.bases.find(b=>b.team===team)||{team,x:left?75:W-75,y:H/2,w:TILE_SIZE*5.5,h:TILE_SIZE*5};

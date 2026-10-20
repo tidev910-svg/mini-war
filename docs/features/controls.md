@@ -90,6 +90,7 @@ Bước cuộn của phím mũi tên nhân với cài đặt **Tốc độ cuộ
 ## Kiểm thử thủ công
 - [ ] Kéo khung chọn 5 quân → log "5 lính được chọn"; nhấp phải → quân dàn đội hình, không chồng lên nhau.
 - [ ] Shift + nhấp thêm/bỏ quân.
+- [ ] Chuột phải lên cờ của mình với quân đang chọn → đồn trú ([flag-defense.md](flag-defense.md)); lên chỗ khác → lệnh đi.
 - [ ] Zoom bằng con lăn giữ đúng điểm dưới con trỏ; kéo camera bằng chuột phải.
 - [ ] Khoanh nhiều loại quân, bấm 5 chỉ còn kỵ binh (quân bị bỏ chọn giữ lệnh), bấm 1 khi không có trinh sát thì giữ nguyên và có thông báo; thanh quân: bấm biểu tượng chỉ chọn loại đó, Shift + bấm thêm/bỏ. Ctrl+1 lưu nhóm, Esc bỏ chọn, F1 gọi lại, bấm F1 hai lần camera tới nhóm; F5 không tải lại trang; H rồi Q/T huấn luyện; B rồi F đặt nông trại; S dừng; Delete loại bỏ; dấu phẩy chọn quân rảnh; F3 tạm dừng; F1 hướng dẫn.
 - Đã chạy thử 2026-10-18: `pnpm smoke hotkeys` đạt toàn bộ các phím trên.

@@ -34,11 +34,7 @@ function pickTarget(from, plan, lvl) {
   if (options.length) return options.sort((a, b) => a.cost - b.cost)[0];
   const seen = [...(state.enemyMemory?.targets || [])].filter(m => m.age < 30).sort((a, b) => a.age - b.age)[0];
   if (seen) return { kind: 'explore', x: seen.x, y: seen.y };
-  // Like most RTS AIs it roughly knows where the enemy started: a spot RUMOUR_MIN..RUMOUR_MAX px from the enemy
-  // fortress, fixed per match. The wave still has to see the fortress itself before it targets it.
-  const rumour = rumourOf(plan);
-  if (rumour && !isTeamAreaExplored(TEAM, rumour.x, rumour.y)) return { kind: 'explore', x: rumour.x, y: rumour.y };
-  // Search: of 96 random unexplored spots, the one far from the AI's own fortress (the enemy lives at least
+  // Otherwise search — the AI does not know where the enemy lives (decision 4.1, 2026-10-20). Of 96 random unexplored spots, the one far from the AI's own fortress (the enemy lives at least
   // BASE_MIN_SEPARATION away) but not too far from the army, so waves sweep outward instead of crossing the map at random.
   const home = state.bases[TEAM]; let best = null, bestScore = -Infinity;
   for (let k = 0; k < 96; k++) {
@@ -47,14 +43,6 @@ function pickTarget(from, plan, lvl) {
   }
   const p = best && nearestWalkable(best.x, best.y);
   return p ? { kind: 'explore', x: p.x, y: p.y } : null;
-}
-const RUMOUR_MIN = 150, RUMOUR_MAX = 350;
-function rumourOf(plan) {
-  if (plan.rumour === undefined) {
-    const enemy = state.bases[1 - TEAM], a = Math.random() * Math.PI * 2, d = RUMOUR_MIN + Math.random() * (RUMOUR_MAX - RUMOUR_MIN);
-    plan.rumour = enemy ? nearestWalkable(enemy.x + Math.cos(a) * d, enemy.y + Math.sin(a) * d) : null;
-  }
-  return plan.rumour;
 }
 function targetDone(t, wave) {
   if (!t) return true;

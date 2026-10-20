@@ -1,6 +1,6 @@
 # Vùng lãnh thổ & cột cờ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
 
 ## Mô tả
 Bản đồ (256 × 256 ô) được chia thành **đúng 20 vùng lãnh thổ** có cờ, cộng 2 vùng nhà chứa pháo đài. Ranh giới vùng là ranh giới tự nhiên, bám theo sông và vùng đá. Mỗi vùng có **đúng một loại tài nguyên** (lúa, gỗ, đá hoặc vàng), **một mỏ** loại đó, và **một cột cờ có sẵn** ở gần tâm vùng.
@@ -58,7 +58,7 @@ Kết quả chạy thử 2026-10-17 trước đó (bản 16–20 vùng) với 40
 | Thời gian | 60 s | ~40 s | ~23 s | ~15 s |
 
 - Chỉ một phe trong vòng:
-  - **Cờ trung lập:** `r.cap` tăng tới 1, khi đó `r.owner = phe đó` và `revealRegion()` đánh dấu mọi ô của vùng là đã khám phá cho phe đó. Guest giữ sương mù riêng nên mỗi snapshot gọi `revealOwnedRegions()` (trong `revealTeamVision()`) cho các vùng có cờ mình đang giữ.
+  - **Cờ trung lập:** `r.cap` tăng tới 1, khi đó `r.owner = phe đó` (từ đó cờ cho tầm nhìn 450, [fog-of-war.md](fog-of-war.md); trước 2026-10-20 `revealRegion()` đánh dấu mọi ô của vùng là đã khám phá cho phe đó. Guest giữ sương mù riêng nên mỗi snapshot gọi `revealOwnedRegions()` (trong `revealTeamVision()`) cho các vùng có cờ mình đang giữ.
   - **Tầm nhìn trực tiếp:** khi giữ cờ, `teamCanSee()` trả về đúng cho mọi điểm trong vùng (kiểm tra bằng `regionAt()`), nên quân/công trình địch trong vùng hiện ra và bị nhắm bắn như trong tầm nhìn thường; `teamVisibleTiles()` cũng tính cả vùng nên lớp sương mờ không phủ lên. Mất cờ thì tầm nhìn chuyển sang phe mới; phe cũ vẫn giữ phần "đã khám phá" (địa hình dưới lớp sương mờ) và vẫn nhìn được bằng quân/công trình riêng. Sương mù hai phe tính độc lập.
   - **Cờ của địch:** giai đoạn 1: `r.cap` tăng tới 1 thì cờ **về trung lập** (`owner = -1`, `r.stage2 = phe đó`). Giai đoạn 2: chiếm tiếp từ 0. Tổng thời gian gấp đôi. `captureStage(r)` trả về 1, 2, hoặc 0 nếu là cờ trung lập thường.
   - **Phe khác đang có tiến độ dở:** tiến độ của họ giảm về 0 trước, rồi mới tới lượt phe đang đứng.
@@ -105,7 +105,7 @@ Chưa chốt, đang làm tạm:
 - [src/map/regions.ts](../../src/map/regions.ts), [src/core/game.ts](../../src/core/game.ts), [src/map/terrain.ts](../../src/map/terrain.ts), [src/render/territory.ts](../../src/render/territory.ts), [src/ui/hud.ts](../../src/ui/hud.ts), [src/core/match.ts](../../src/core/match.ts), [src/map/bases.ts](../../src/map/bases.ts):
   - Khối "Territory map": `regionMap` (Int16Array, **biến cấp module, không nằm trong `state`**), `buildRegionMap()`, `ensureRegionMap()`, `regionSeedKey()`, `walkDistances()`, `landPatchSizes()`, `generateRegions()`, `refreshRegionTint()`, `drawTerritory()`, `setShowTerritory()`; `regionEdges`.
   - Trong `fresh()`: vòng chọn lại vị trí nhà; `baseSiteClear()`, `baseDir()` (hướng `base.dir` về phía địch).
-- Sáng vùng khi chiếm: `revealRegion()`, `revealOwnedRegions()`; tầm nhìn trực tiếp: `teamCanSee()`, `teamVisibleTiles()`.
+- Tầm nhìn của vùng đang giữ: 450 quanh cờ (`TERRITORY_VISION`, `visionSources()`; `revealRegion()` / `revealOwnedRegions()` đã bỏ); tầm nhìn trực tiếp: `teamCanSee()`, `teamVisibleTiles()`.
 - Chiếm cờ: `updateCaptures()`, `captureSeconds()`, `flagCapturers()`, `captureStage()`, `regionOutpost()`. Thưởng vùng lúa: `farmFoodPerMinute()`.
 - Vẽ: `drawFlag()`, `flagScale()`, `flagHit()` (vùng nhấp chọn cờ).
 - Hằng số:
@@ -120,6 +120,7 @@ Chưa chốt, đang làm tạm:
 - Biến giao diện `selectedFlag` (id vùng, chỉ ở máy người chơi). Nút `#toggleTerritory`; phím T trong `keydown`.
 
 ## Tương tác
+- [flag-defense.md](flag-defense.md): cờ có chủ tự bắn (10 sát thương / 2 giây, tầm 180); cờ còn quân đồn trú thì phe khác không chiếm được; cờ về trung lập thì thả quân đồn trú.
 - [buildings.md](buildings.md): tiền đồn giữ cờ; điều kiện lãnh thổ cho tháp; khoảng cách tới cờ.
 - [economy.md](economy.md): mỏ sinh lúa/gỗ/đá/vàng; mỏ lúa tính vào `foodPerMinute()`.
 - [fog-of-war.md](fog-of-war.md): cờ và ranh giới chỉ hiện ở chỗ đã khám phá.

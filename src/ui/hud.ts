@@ -57,7 +57,7 @@ export function updateHUD(){
   setData($('res'+cap),'tip',`${RESOURCE_NAMES[k][0].toUpperCase()+RESOURCE_NAMES[k].slice(1)}: ${Math.floor(res[k])}\nPháo đài +${formatAmount(base)}/phút\nMỏ trong vùng đã chiếm +${formatAmount(mine)}/phút`);
  }
  updateMatchClockHUD();
- const ours=state.units.filter(u=>u.team===team),queued=state.pendingSpawns.filter(u=>u.team===team).length;
+ const ours=[...state.units,...(state.garrisons||[])].filter(u=>u.team===team),queued=state.pendingSpawns.filter(u=>u.team===team).length;
  updateTrainQueueHUD(team);setText($('unitCount'),String(ours.length+queued));
  setHTML($('unitBreakdown'),armyRow(ours,queued));
  const spearmanCounter=$('spearmanCount');if(spearmanCounter)spearmanCounter.textContent=ours.filter(u=>u.type==='spearman').length;

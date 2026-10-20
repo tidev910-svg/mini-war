@@ -1,5 +1,7 @@
 // @ts-nocheck
 // Region flags with control ring and capture bar (docs/features/territory.md).
+import { localTeam } from '../core/game';
+import { garrisonOf } from '../sim/garrison';
 import { ctx, drawUprightAt, zoom } from '../core/view';
 import { TILE_SIZE } from '../config/map';
 import { selectedFlag } from '../core/game';
@@ -50,7 +52,9 @@ export function drawFlag(r){
   // Text keeps at least FLAG_LABEL_MIN_PX on screen; colours from the design tokens.
   const fs=Math.max(13,FLAG_LABEL_MIN_PX/(s*zoom));
   ctx.font=`900 ${fs}px ${THEME['font-ui']}`;ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.lineWidth=fs*.3;ctx.strokeStyle=THEME['text-on-map-stroke'];ctx.fillStyle=r.owner>=0?TEAM_COLORS[r.owner].light:THEME['text-main'];
-  for(const [text,ty] of [[name,40+fs*1.1],[status,40+fs*2.3]])if(text){ctx.strokeText(text,0,ty);ctx.fillText(text,0,ty);}
+  // Garrison count (sim/garrison.ts): only on the local side's own flags, never shown to the enemy.
+  const inside=r.owner===localTeam()?garrisonOf(r).length:0,guard=inside?(short?'🛡 '+inside:'ĐỒN TRÚ '+inside+' QUÂN'):'';
+  for(const [text,ty] of [[name,40+fs*1.1],[status,40+fs*2.3],[guard,40+fs*(status?3.5:2.3)]])if(text){ctx.strokeText(text,0,ty);ctx.fillText(text,0,ty);}
   if(selectedHere){ctx.strokeStyle='#fff4a8';ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.beginPath();ctx.ellipse(0,0,66,26,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
   ctx.restore();
  });

@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Frame composition: draw() calls every layer in order (docs/features/rendering.md).
+import { ghostBases, ghostBuildings, knownFlag, knownMine, updateIntel } from './intel';
 import { TEAM_COLORS, THEME } from '../config/theme';
 import { settings } from '../core/settings';
 import { updateSoundscape } from '../audio/sound';
@@ -48,13 +49,14 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  ctx.strokeStyle='#9a7d59aa';ctx.lineWidth=26;ctx.stroke();ctx.strokeStyle='#f0d9a3cc';ctx.lineWidth=18;ctx.stroke();ctx.restore(); // Once a mine is discovered, keep its location visible on explored terrain.
  // Unexplored mines remain hidden by fog; current vision is not required after discovery.
  // Territory layer: owner tint and borders (only where explored); toggled with T. Flags are drawn with the scene (drawFlag).
+ updateIntel(); // what the local side last saw in the veil (render/intel.ts)
  refreshFog(localTeam()===0?state.fogSeen:state.enemyFogSeen);
  drawBridges(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
  // Everything below is culled to the camera (plus a margin that grows when zoomed out, where flags and labels get larger).
  const cullPad=Math.max(260,130/viewScale),leftWorld=camX-cullPad,topWorld=camY-cullPad,rightWorld=camX+VIEW_W/viewScale+cullPad,bottomWorld=camY+VIEW_H/viewScale+cullPad;
  const inView=o=>o.x>=leftWorld&&o.x<=rightWorld&&o.y>=topWorld&&o.y<=bottomWorld;
- for(const m of state.mines){
+ for(let mi=0;mi<state.mines.length;mi++){const m=knownMine(state.mines[mi],mi);
   if(!inView(m)||(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y)))continue;
   drawUprightAt(m.x,m.y,()=>{
   // Colorful collectible mine with stacked stones, gold crystals and a team-control ring.
@@ -86,7 +88,10 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
   for(const item of shoreDecor)if(inView(item))enqueue(item.y,()=>drawDecor(item));
  }
  for(const b of state.bases){if(!inView(b)||(b.team!==localTeam()&&!currentlyVisible(b.x,b.y)))continue;drawMusterYard(b);enqueue(b.y+106,()=>drawBase(b));}
- for(const r of state.regions){if(!r.cp||!inView(r.cp)||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(r));}
+ // Enemy fortress and buildings out of sight: drawn as last seen, under the veil.
+ for(const b of ghostBases())if(inView(b)){drawMusterYard(b);enqueue(b.y+106,()=>drawBase(b));}
+ for(const b of ghostBuildings())if(inView(b))enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));
+ for(const r of state.regions){if(!r.cp||!inView(r.cp)||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(knownFlag(r)));}
  for(const b of state.buildings){if(!inView(b)||(b.team!==localTeam()&&!currentlyVisible(b.x,b.y)))continue;enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));}
  for(const g of state.guards){if(g.hp<=0||!currentlyVisible(g.x,g.y))continue;enqueue(g.y+9,()=>drawUprightAt(g.x,g.y,()=>{ctx.fillStyle='#24412f45';ctx.beginPath();ctx.ellipse(g.x+2,g.y+8,14,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d4ba9';ctx.beginPath();ctx.arc(g.x,g.y,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#eed8ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#f9ecff';ctx.beginPath();ctx.arc(g.x-3,g.y-2,2.2,0,Math.PI*2);ctx.arc(g.x+3,g.y-2,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#26152f';ctx.fillRect(g.x-11,g.y-16,22,4);ctx.fillStyle='#ef5350';ctx.fillRect(g.x-10,g.y-15,20*Math.max(0,g.hp/g.max),2);}));}
  // Fallen units lie in the depth-sorted scene (enemy ones only where the local side sees).

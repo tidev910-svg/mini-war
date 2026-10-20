@@ -1,6 +1,6 @@
 # Đối thủ AI
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
 
 ## Mô tả
 Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển, với 3 độ khó **Dễ / Thường / Khó** chọn ở sảnh (dưới nút "Chơi với AI") hoặc Cài đặt → Điều khiển; đổi giữa trận có hiệu lực ngay. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; mọi loại quân tuyển tại pháo đài. AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
@@ -24,7 +24,7 @@
    - **build** → chờ tới giây `firstAttack` (và `nextWaveAt` sau đợt trước), chọn mục tiêu, chuyển **gather**.
    - **gather**: mọi quân chiến đấu rảnh (không trinh sát, không chiếm cờ, không làm thợ xây) nhận vai `rally`, đi tới điểm tập kết cách pháo đài đỏ tối đa 260 px (40% quãng đường) về phía mục tiêu. Đủ `waveSize + đợt·waveGrowth` quân trong bán kính 220 px thì xuất phát; quá `gatherSeconds` mà có ≥ 60% số đó cũng xuất phát.
    - **attack**: quân vai `wave` đi tới mục tiêu (cờ: đứng rải trong 2 ô quanh cờ để chiếm; công trình/pháo đài: gặp là đánh). Xong mục tiêu thì chọn mục tiêu kế tiếp gần đợt quân nhất. Mục tiêu "dò đường" được thay ngay khi biết mục tiêu thật. Còn ≤ `retreatAt` quân so với lúc đi → **regroup**: quân vai `retreat` về pháo đài (tới gần 200 px thì hết vai), đợt sau gom sau `regroup` giây.
-   - **Chọn mục tiêu** (`pickTarget()`): công trình địch đã khám phá (tháp tính xa gấp 1,8), cờ do địch giữ đã khám phá (không tính vùng nhà), pháo đài địch nếu đã thấy (`enemyMemory.base`; ưu tiên từ đợt `fortressAfterWave`, trước đó tính xa gấp 2,5) — chọn chi phí nhỏ nhất. Không biết gì thì tới chỗ thấy quân địch gần đây nhất trong `enemyMemory.targets` (< 30 giây); không có thì tới **tin đồn** — một điểm cố định mỗi trận cách pháo đài địch 150–350 px (`rumourOf()`, giống các AI RTS biết đại khái vị trí xuất phát; vẫn phải nhìn thấy pháo đài mới nhắm nó); đã khám phá chỗ đó thì dò điểm chưa khám phá: trong 96 điểm ngẫu nhiên, chọn điểm xa pháo đài đỏ nhưng gần đợt quân (điểm = cách nhà − 1,2 × cách đợt quân). Mục tiêu dò đường xong khi nửa đợt quân tới trong 200 px.
+   - **Chọn mục tiêu** (`pickTarget()`): công trình địch đã khám phá (tháp tính xa gấp 1,8), cờ do địch giữ đã khám phá (không tính vùng nhà), pháo đài địch nếu đã thấy (`enemyMemory.base`; ưu tiên từ đợt `fortressAfterWave`, trước đó tính xa gấp 2,5) — chọn chi phí nhỏ nhất. Không biết gì thì tới chỗ thấy quân địch gần đây nhất trong `enemyMemory.targets` (< 30 giây); không có thì **dò** điểm chưa khám phá: trong 96 điểm ngẫu nhiên, chọn điểm xa pháo đài đỏ nhưng gần đợt quân (điểm = cách nhà − 1,2 × cách đợt quân). AI **không biết trước vị trí nhà người chơi** (quyết định 4.1, 2026-10-20; trước đó có "tin đồn" lệch 150–350 px, đã bỏ). Mục tiêu dò đường xong khi nửa đợt quân tới trong 200 px.
    - **Phòng thủ:** ≥ 2 quân địch thấy trong 6 giây qua, cách pháo đài đỏ < `defendRadius` → quân rảnh và quân đang tập kết nhận vai `defend`, đi tới tâm nhóm địch; hết địch thì quay lại vai cũ. Đợt đang tấn công không bị gọi về.
 
    | Độ khó | `tick` | `maxTraining` | Đợt đầu | Quân đợt 1 / +mỗi đợt | Rút khi còn | Nghỉ giữa đợt | Nhắm pháo đài từ đợt | Bán kính phòng thủ |
@@ -45,17 +45,17 @@ AI không qua `buy()`/`applyAction()` nên không có log.
 - Có mục tiêu thì luôn đuổi (không cần lệnh tấn công), ngay từ đầu trận.
 
 **Tầm nhìn & trí nhớ**:
-- Bản đồ khám phá riêng `state.enemyFogSeen` (khu đất nhà khám phá sẵn); bán kính: trinh sát 260 (`SCOUT_VISION`), giáo 120, khác 105, căn cứ đỏ 160, công trình theo `buildingVision()`.
+- Bản đồ khám phá riêng `state.enemyFogSeen` (khu đất nhà khám phá sẵn); bán kính giống hệt người chơi (sương mù V3.1, `visionSources(1)`: trinh sát 500, lính / giáo 320, cung 360, kỵ 420, pháo đài và công trình 350, vùng đang giữ 450 quanh cờ) — xem [fog-of-war.md](fog-of-war.md).
 - `state.enemyMemory.base` lưu vị trí pháo đài xanh khi thấy tâm pháo đài hoặc khi tầm nhìn một nguồn của AI chạm tường pháo đài (khoảng cách ≤ bán kính nhìn + nửa cạnh lớn của pháo đài); `state.enemyMemory.targets` lưu quân xanh đã thấy, xoá sau 90 giây.
 - AI chọn mục tiêu chỉ trong vùng `aiCanSee()` (cùng `teamCanSee(1)`).
 
 **Kết quả chạy thử** (AI một mình, 2026-10-17, cờ có sẵn, mô phỏng nhanh, trước khi bỏ nhà lính): phút 2: 1–2 vùng ngoài vùng nhà; phút 4: 3; phút 6: 6; phút 8: 8–10 vùng, 2 nông trại, nhà lính bộ (đôi khi cả nhà lính cung), không thiếu tiếp tế. Trước đó (2026-10-16, AI tự xây cờ): phút 2: vùng nhà + 1 vùng gỗ (đã chiếm xong), 2 nông trại, nhà lính bộ. Lần chạy trước (vùng nhà còn phải cắm cờ): phút 9 có 3 vùng, nhà lính bộ + nhà lính cung, 8 lính bộ. Gỗ là nút thắt (≈ 30 gỗ/phút mỗi vùng gỗ).
 
 ## Code liên quan
-- [src/ai/attack.ts](../../src/ai/attack.ts): `aiLevel()`, `newAIPlan()`, `runAttackPlan()`, `aiUnitGoal()`, các hàm cục bộ `pickTarget()`, `rumourOf()`, `targetDone()`, `rallyPoint()`, `retreat()`, `spot()`; hằng số `AI_DIFFICULTY`, `settings.aiDifficulty`; bộ chọn `#aiDifficulty` ở sảnh (`ui/modeScreen.ts`).
+- [src/ai/attack.ts](../../src/ai/attack.ts): `aiLevel()`, `newAIPlan()`, `runAttackPlan()`, `aiUnitGoal()`, các hàm cục bộ `pickTarget()`, `targetDone()`, `rallyPoint()`, `retreat()`, `spot()`; hằng số `AI_DIFFICULTY`, `settings.aiDifficulty`; bộ chọn `#aiDifficulty` ở sảnh (`ui/modeScreen.ts`).
 - [src/ai/enemy.ts](../../src/ai/enemy.ts), [src/core/match.ts](../../src/core/match.ts), [src/config/balance.ts](../../src/config/balance.ts): `runEnemyAI()` (gọi trong `update()` khi `mode==='ai'&&aiTimer>=aiLevel().tick`), các hàm cục bộ `build()`, `regionHas()`, `squad()`, `aiBuy()`; `flagStandSpot()`; hằng số `AI_CAPTURE_SQUAD`, `AI_MAX_CAPTURE_TARGETS`, `AI_CAPTURE_TARGET_INTERVAL`; nhánh `mode==='ai'&&u.team===1&&!target` trong vòng quân; khối "AI has its own independent vision map".
 - Dùng lại: `findBuildSpot()`, `placeBuilding()`, `startUpgrade()`, `startOutpost()`, `outpostRegions()`, `hasBuilding()`, `foodPerMinute()`, `upkeepPerMinute()`, `queueTraining()`, `trainQueueOf()`, `buildTurret()`, `aiCanSee()`, `nearestEnemy()`.
-- Dữ liệu: `state.aiPlan` (`phase`, `target`, `rally`, `wave`, `launched`, `since`, `nextWaveAt`, `defend`, `rumour`), `u.aiRole` (`rally` / `wave` / `defend` / `retreat`), `u.aiSpot`, `state.enemyMemory`, `state.enemyFogSeen`, `state.aiExploreTarget` (khai báo nhưng chưa dùng).
+- Dữ liệu: `state.aiPlan` (`phase`, `target`, `rally`, `wave`, `launched`, `since`, `nextWaveAt`, `defend`), `u.aiRole` (`rally` / `wave` / `defend` / `retreat`), `u.aiSpot`, `state.enemyMemory`, `state.enemyFogSeen`, `state.aiExploreTarget` (khai báo nhưng chưa dùng).
 
 ## Tương tác
 - [buildings.md](buildings.md), [territory.md](territory.md), [economy.md](economy.md), [units.md](units.md), [fortress.md](fortress.md), [fog-of-war.md](fog-of-war.md), [combat.md](combat.md).
@@ -75,11 +75,12 @@ Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 - [ ] Mỗi độ khó: đợt đầu tới đúng khoảng thời gian trong bảng; quân đỏ tụ ở điểm tập kết rồi đi cùng nhau; thua nặng thì rút về.
 - [ ] Đưa quân xanh tới gần pháo đài đỏ → quân đỏ rảnh kéo ra chặn.
 - Unit test: `tests/ai.test.ts`. Đã chạy thử 2026-10-19 (người chơi chỉ có 4 quân giữ nhà, 15 phút): Dễ tập kết 425 s, xuất phát 474 s, phá pháo đài 761 s; Thường 273 s / 323 s, phá 485 s; Khó 182 s / 259 s, rút 535 s, phá 596 s (sau khi thêm tin đồn và công trình chặn đường). Không lỗi.
+- Đã chạy thử 2026-10-20 (bỏ tin đồn, sương mù V3.1, người chơi chỉ có 4 quân giữ nhà, 15 phút, 2 lượt × 3 độ khó): phá pháo đài ở 5/6 trận (Dễ 643 / 712 s, Thường 608 s, Khó 690 / 696 s); 1 trận Thường không tìm thấy nhà người chơi trong 15 phút. Không lỗi.
 
 ## Giới hạn / việc tồn đọng
 - Kinh tế & hàng đợi V2 (2026-10-18): AI dùng cùng 4 hàng đợi song song nhưng vẫn tự giới hạn 2 quân trong hàng đợi và chưa biết mua thêm hàng đợi (không đổi hành vi AI theo yêu cầu V2).
 - Đợt tấn công gom mọi quân rảnh, không chọn thành phần quân theo đối thủ; đợt đang đi không quay về cứu nhà.
+- AI tự dò tìm nhà người chơi nên có trận tìm chậm (hơn 10 phút) trên bản đồ lớn.
 - Độ khó chỉ đổi nhịp độ (tiền và tầm nhìn như nhau); "Dễ" vẫn tích quân nhiều nếu người chơi không gây áp lực.
 - AI chỉ nhắm cờ ở chỗ đã khám phá; nếu trinh sát chết sớm, AI mở rộng chậm. Nhóm chiếm cờ và thợ xây là quân chiến đấu bị rút khỏi đội hình. AI không tự xoá tiến độ dở của địch ở cờ mình nếu không có quân đứng đó.
 - `aiExploreTarget` chưa dùng.
-- Bán kính tầm nhìn AI khác `unitVisionRadius()` (giáo 120 vs 150, cung 105 vs 130).

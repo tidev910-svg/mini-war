@@ -1,8 +1,11 @@
 // @ts-nocheck
 // Selection info panel (docs/features/selection-info.md): what the selected units, building, fortress or flag are and do —
 // health, damage, counters, current order, build / upgrade / capture progress. Read-only; refreshed from updateHUD().
+import { garrisonOf, sortieOf } from '../sim/garrison';
+import { requestAction } from '../core/actions';
+import { knownFlag } from '../render/intel';
 import { $, formatAmount, localTeam, selectedBuilding, selectedFlag, selectedFortress, state } from '../core/game';
-import { BUILDING_TYPES, COUNTER_MULTIPLIERS, FARM_LEVELS, FLAG_CAPTURE_RADIUS_TILES, FARM_UPGRADE_SECONDS, FORTRESS_GUN_DAMAGE, FORTRESS_INCOME_PER_MINUTE, RESOURCE_NAMES, STRUCTURE_DAMAGE_MULTIPLIERS, specs } from '../config/balance';
+import { BUILDING_TYPES, COUNTER_MULTIPLIERS, FARM_LEVELS, FLAG_CAPTURE_RADIUS_TILES, FLAG_GUN, FARM_UPGRADE_SECONDS, FORTRESS_GUN_DAMAGE, FORTRESS_INCOME_PER_MINUTE, RESOURCE_NAMES, STRUCTURE_DAMAGE_MULTIPLIERS, specs } from '../config/balance';
 import { buildingDone, hasBuilder } from '../sim/buildings';
 import { farmFoodPerMinute, supplyFactor } from '../sim/economy';
 import { captureSeconds, captureStage, flagCapturers, regionOutpost } from '../sim/territory';
@@ -13,7 +16,7 @@ import { selectedOwnUnits } from './selection';
 import { formationOf } from '../sim/formation';
 import { FORMATION_KINDS, FORMATION_MODES } from '../config/formation';
 
-const ORDER_NAMES = { hold: 'Đứng giữ vị trí', move: 'Đang di chuyển', attack: 'Tấn công', explore: 'Đi tự do', formation: 'Theo đội hình' };
+const ORDER_NAMES = { hold: 'Đứng giữ vị trí', move: 'Đang di chuyển', attack: 'Tấn công', explore: 'Đi tự do', formation: 'Theo đội hình', sortie: 'Xuất kích bảo vệ cờ' };
 const num = n => formatAmount(n);
 const mult = m => '×' + String(Math.round(m * 100) / 100).replace('.', ',');
 const pct = p => `${Math.round(Math.max(0, Math.min(1, p)) * 100)}%`;
@@ -31,6 +34,7 @@ export function counterLines(type) {
 function orderOf(u) {
   if (u.buildTarget) return 'Đang xây tiền đồn';
   if (u.captureTarget != null) return 'Đang chiếm cờ';
+  if (u.garrisonTarget != null) return 'Đang về đồn trú';
   return ORDER_NAMES[u.order] || ORDER_NAMES.hold;
 }
 
@@ -81,6 +85,12 @@ function fortressHtml(base) {
     ${row('Hàng huấn luyện', `${state.queueLanes?.[base.team] ?? '—'} hàng song song`)}</dl>`;
 }
 
+// Garrison of the local side's own flag (hidden from the enemy, so only ever shown to the owner).
+function garrisonRows(r) {
+  const inside = garrisonOf(r), out = sortieOf(r), mix = list => [...new Set(list.map(u => u.type))].map(t => `${list.filter(u => u.type === t).length} ${specs[t].name.toLowerCase()}`).join(', ');
+  return row('Đồn trú', inside.length ? `${inside.length} quân: ${mix(inside)}` : 'Trống — chuột phải vào cờ để đưa quân vào') + (out.length ? row('Đang xuất kích', `${out.length} quân${r.defense?.returning ? ' · đang rút về' : ''}`) : '');
+}
+const garrisonActions = r => (garrisonOf(r).length ? `<button type="button" class="btn info-action" data-garrison-exit="${r.id}">Cho toàn bộ quân ra</button>` : '');
 function flagHtml(r) {
   const me = localTeam(), stage = captureStage(r);
   const mines = state.mines.filter(m => m.regionId === r.id), perMin = mines.reduce((t, m) => t + m.income * 60, 0);
@@ -95,7 +105,8 @@ function flagHtml(r) {
   const speed = mine && !theirs && r.owner !== me ? ` (~${Math.round(captureSeconds(mine))} giây mỗi giai đoạn)` : '';
   return `<header><b>Cờ ${regionLabel(r)}</b><small>${sideName(r.owner)}</small></header>${lines.join('')}
     <dl>${row('Sinh', perMin ? `${num(perMin)} ${RESOURCE_NAMES[r.resource]}/phút cho phe giữ cờ` : 'Không có mỏ')}${row('Trong vòng cờ', capturers + speed)}
-    ${row('Tiền đồn', regionOutpost(r) ? (buildingDone(regionOutpost(r)) ? 'Có' : 'Đang xây') : 'Chưa có')}</dl>`;
+    ${row('Tiền đồn', regionOutpost(r) ? (buildingDone(regionOutpost(r)) ? 'Có' : 'Đang xây') : 'Chưa có')}
+    ${r.owner >= 0 ? row('Tự vệ', `${FLAG_GUN.damage} sát thương mỗi ${FLAG_GUN.cooldown} giây · tầm ${FLAG_GUN.range}`) : ''}${r.owner === me ? garrisonRows(r) : ''}</dl>${r.owner === me ? garrisonActions(r) : ''}`;
 }
 
 // The panel shows one thing at a time, in the same priority the click handler selects them.
@@ -107,7 +118,10 @@ export function updateSelectionInfo() {
   if (units.length) html = unitsHtml(units);
   else if (selectedFortress) { const base = state.bases.find(b => b.team === selectedFortress.team); if (base) html = fortressHtml(base); }
   else if (selectedBuilding) { const b = state.buildings.find(q => q.id === selectedBuilding.id); if (b) html = buildingHtml(b); }
-  else if (selectedFlag != null && state.regions[selectedFlag]) html = flagHtml(state.regions[selectedFlag]);
+  else if (selectedFlag != null && state.regions[selectedFlag]) html = flagHtml(knownFlag(state.regions[selectedFlag])); // as the side last saw it
   if (html !== shown) { shown = html; box.innerHTML = html; }
   box.hidden = !html;
 }
+
+// The only button in the panel: let the garrison of the selected own flag out (an action, so the host decides in PvP).
+$('selInfo')?.addEventListener('click', e => { const b = e.target.closest?.('[data-garrison-exit]'); if (b) requestAction('garrisonExit', { regionId: Number(b.dataset.garrisonExit) }); });

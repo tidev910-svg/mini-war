@@ -1,6 +1,6 @@
 # Chiến đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
 
 ## Mô tả
 Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung thủ và pháo bắn đạn bay đuổi theo mục tiêu; các loại khác gây sát thương ngay. Lính giáo khắc chế kỵ binh.
@@ -55,7 +55,7 @@ Chết: `hurt()` xoá quân khỏi `state.units` khi HP ≤ 0; pháo đài HP �
 |---|---:|---:|---:|---:|---:|
 | Hệ số | ×0,5 | ×1,1 | ×1,0 | ×0,6 | ×0,8 |
 
-Súng: pháo đài 18 (trước 17), pháo thứ hai 45 (trước 17), tháp 30 (trước 17), tiền đồn 12 (trước 10).
+Súng: pháo đài 18 (trước 17), pháo thứ hai 45 (trước 17), tháp 30 (trước 17), tiền đồn 12 (trước 10). Cột cờ có chủ (từ 2026-10-20): 10 mỗi 2 giây, tầm 180, hệ số ×1 ([flag-defense.md](flag-defense.md)).
 
 ## Code liên quan
 - [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `attackRange()`, `structureReach()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.

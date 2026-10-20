@@ -1,30 +1,43 @@
 # Sương mù chiến tranh & tầm nhìn
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20 · Theo đặc tả "MINI WAR V3.1 — Hệ thống sương mù chiến tranh và tầm nhìn"
 
 ## Mô tả
-Bản đồ phủ sương xanh xám đục. Vùng quân mình từng đi qua được **khám phá** và hiện địa hình vĩnh viễn; chỗ đã khám phá mà hiện không ai nhìn thấy được phủ **lớp sương mờ** (vẫn thấy địa hình). Quân và công trình địch chỉ hiện khi đang nằm trong vùng **đang nhìn thấy**. Mỏ đã khám phá thì luôn hiện.
+Ba trạng thái cho mỗi ô và mỗi phe:
+
+| Trạng thái | Địa hình | Mỏ / tài nguyên | Công trình, pháo đài địch | Cờ / màu lãnh thổ | Quân địch |
+|---|---|---|---|---|---|
+| **Sương đậm** — chưa khám phá | Không thấy | Không thấy | Không thấy | Không thấy | Không thấy |
+| **Sương mờ** — đã khám phá, không đang nhìn thấy | Thấy (dưới lớp mờ) | Thấy như lần cuối (màu chủ cũ) | **Như lần cuối nhìn thấy** (kể cả khi đã bị phá ngoài tầm nhìn) | **Như lần cuối nhìn thấy** | **Không thấy** |
+| **Sáng rõ** — đang nhìn thấy | Thấy | Hiện trạng | Hiện trạng | Hiện trạng | Thấy |
+
+- Ô đã khám phá **không bao giờ** về lại sương đậm; hết nguồn nhìn thì sáng rõ chuyển thành mờ.
+- Phe mình luôn biết vùng **của mình** (đang giữ, hoặc vừa mất), tiến độ cờ **mình đang chiếm**, và công trình, quân của mình.
+- Nhiều nguồn chồng nhau: chỉ cần **một** nguồn còn nhìn thấy là ô sáng rõ.
 
 ## Luật & thông số
-| Nguồn nhìn | Bán kính | Nguồn |
+| Nguồn nhìn | Bán kính (đơn vị thế giới) | Nguồn |
 |---|---:|---|
-| Trinh sát / Cung thủ / Lính giáo | 260 (`SCOUT_VISION`, tăng từ 145 ngày 2026-10-18) / 130 / 150 | `unitVisionRadius()` |
-| Lính / Kỵ binh | 105 | `unitVisionRadius()` |
-| Pháo đài | 175 | `teamCanSee()`, `revealTeamVision()` |
-| Mỗi pháo đang bật | 105 (chỉ cho "đang nhìn thấy") | `teamCanSee()` |
-| Vùng có cờ đang giữ | Toàn bộ vùng thành "đã khám phá" lúc chiếm xong (`revealRegion()`; guest: `revealOwnedRegions()`) **và** "đang nhìn thấy" chừng nào còn giữ cờ (`teamCanSee()` qua `regionAt()`) | [territory.md](territory.md) |
-| Công trình | theo loại (nông trại 90, tiền đồn 14 ô, tháp 200); đang xây: 60. Cột cờ không cho tầm nhìn | `buildingVision()`, `visionOf()` |
+| Trinh sát | **500** | `UNIT_VISION.scout` |
+| Lính bộ / Lính giáo | **320** / **320** | `UNIT_VISION` |
+| Cung thủ | **360** | `UNIT_VISION.archer` |
+| Kỵ binh | **420** | `UNIT_VISION.cavalry` |
+| Vùng lãnh thổ đang giữ | **450** quanh cột cờ, chừng nào còn giữ (mất vùng thì mất nguồn nhìn này) | `TERRITORY_VISION` |
+| Công trình của mình (nông trại, tháp, tiền đồn — kể cả đang xây) và pháo đài | **350** | `BUILDING_VISION` |
 | Khu đất nhà | 14 ô quanh pháo đài, khám phá sẵn từ đầu trận (không phải "đang nhìn thấy") | `revealHomeTerritory()` |
-| Lưới sương mù | 256 × 256 ô (`MAP_TILES`) | — |
-| Màu ô chưa khám phá | Gần đen, **đục hoàn toàn**: `FOG_RGB` = `--ui-fog` #0E0A08 (14, 10, 8), đen ám nâu trong `config/theme.ts`, tối hơn hẳn mọi panel HUD để giao diện không chìm vào sương. Mỗi ô lệch sáng tối ngẫu nhiên ± `MAP_UI.fogNoise` = 9 nên sau khi làm mờ trông như mây. Không nhìn thấy gì của địa hình bên dưới. Mép mềm khoảng 2 ô, nằm hoàn toàn ở phía đã khám phá | `refreshFog()`, `drawFog()` |
-| Ô đã khám phá, không đang nhìn thấy | Cùng màu, alpha `FOG_MEMORY_ALPHA` = 115/255 (≈ 45%): địa hình vẫn thấy rõ | `teamVisibleTiles()`, `refreshFog()` |
+| Lưới sương mù | 256 × 256 ô (`MAP_TILES`), ô 37,5 đơn vị | — |
+| Màu ô chưa khám phá | Gần đen, **đục hoàn toàn**: `FOG_RGB` = `--ui-fog` #0E0A08; mỗi ô lệch sáng tối ngẫu nhiên ± `MAP_UI.fogNoise` = 9 | `config/theme.ts` |
+| Ô đã khám phá, không đang nhìn thấy | Cùng màu, alpha `FOG_MEMORY_ALPHA` = 115/255 (≈ 45%) | `teamVisibleTiles()`, `refreshFog()` |
+
+**Người chơi và AI dùng chung một bộ nguồn nhìn** (`visionSources(team)`), nên hai bên nhìn xa như nhau. Trước 2026-10-20: trinh sát 260, giáo 150, cung 130, lính và kỵ 105, pháo đài 175 (AI 160), mỗi pháo 105, công trình theo loại (đang xây 60), giữ cờ thì thấy và khám phá **cả vùng**.
 
 Hai khái niệm luôn tách riêng:
 - **Đã khám phá**: `state.fogSeen` (team 0) và `state.enemyFogSeen` (team 1), `Uint8Array` 0/1. Đọc bằng `isTeamAreaExplored(team, x, y)`.
-- **Đang nhìn thấy**: tính lại mỗi lần gọi `teamCanSee(team, x, y)` từ quân còn sống, pháo đài, công trình, pháo và vùng có cờ đang giữ. Để vẽ, `teamVisibleTiles(team, out)` tính cùng các nguồn đó ra lưới 256 × 256 (`fogVisible`).
+- **Đang nhìn thấy**: tính lại mỗi lần gọi `teamCanSee(team, x, y)` từ `visionSources(team)` (quân còn sống, pháo đài còn đứng, công trình, cờ vùng đang giữ; so bình phương khoảng cách). Để vẽ, `teamVisibleTiles(team, out)` tính cùng các nguồn đó ra lưới 256 × 256 (`fogVisible`).
+- **Ký ức vùng mờ** (chỉ để hiển thị, `render/intel.ts`): `updateIntel()` mỗi frame ghi lại cờ, mỏ, công trình và pháo đài địch mà phe mình đang thấy; `knownFlag()`, `knownRegionOwner()`, `knownMine()`, `ghostBuildings()`, `ghostBases()` trả về bản ghi lần cuối cho chỗ không đang thấy. Công trình địch bị quên khi phe mình nhìn lại chỗ đó và thấy trống. Không nằm trong `state`, không gửi qua mạng. AI dùng trí nhớ riêng (`state.enemyMemory`).
 
 Ai cập nhật bản đồ khám phá:
-- Host/AI trong `update()`: team 0 từ quân + pháo đài xanh; team 1 theo bán kính riêng của AI (xem [ai-opponent.md](ai-opponent.md)).
+- Host/AI trong `update()`: `revealTeamVision(0)` và `revealTeamVision(1)` — đánh dấu đã khám phá mọi ô đang nhìn thấy. Mỗi nguồn chỉ được đánh dấu lại khi đổi ô (hoặc mới xuất hiện), vì ô đã khám phá không bao giờ tối lại; bộ nhớ đệm gắn với mảng khám phá nên trận mới bắt đầu lại từ đầu.
 - Guest: lúc vào phòng (`startGuestFromSnapshot()`) xoá fog của bản đồ riêng, áp snapshot rồi gọi `revealHomeTerritory()`; sau đó mỗi `applySnapshot()` giữ bản đồ khám phá của mình (snapshot không gửi fog) và gọi `revealTeamVision(0)`, `revealTeamVision(1)` (gồm cả tầm nhìn công trình).
 
 Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) dựng ảnh sương, `drawFog()` vẽ phủ sau quân. Chọn bản đồ theo `localTeam()`.
@@ -38,7 +51,10 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
   - Mỗi lần dựng lại ≈ 0,7–1 ms (trước ≈ 3,8 ms, gây giật định kỳ).
 
 ## Code liên quan
-- [src/sim/fog.ts](../../src/sim/fog.ts), [src/sim/units.ts](../../src/sim/units.ts), [src/core/match.ts](../../src/core/match.ts), [src/render/fog.ts](../../src/render/fog.ts), [src/config/visuals.ts](../../src/config/visuals.ts), [src/render/draw.ts](../../src/render/draw.ts): `teamCanSee()`, `aiCanSee()`, `unitVisionRadius()`, `revealTeamVision()`, `isTeamAreaExplored()`, các khối fog cuối `update()`, `teamVisibleTiles()`, `refreshFog()`, `drawFog()` (hằng số `FOG_RGB`, `FOG_EDGE_TILES`, `FOG_BLUR_SCALE`, `FOG_PAD`, `FOG_MEMORY_ALPHA`; `fogMask`, `fogVisible`, canvas `fogCanvas`, `fogSoftCanvas`), hàm lồng `currentlyVisible()` trong `draw()`.
+- [src/config/balance.ts](../../src/config/balance.ts): `UNIT_VISION`, `BUILDING_VISION`, `TERRITORY_VISION`.
+- [src/sim/fog.ts](../../src/sim/fog.ts): `visionSources()`, `teamCanSee()`, `aiCanSee()`, `unitVisionRadius()`, `revealTeamVision()`, `revealCircle()`, `revealHomeTerritory()`, `teamVisibleTiles()`, `isTeamAreaExplored()`.
+- [src/render/intel.ts](../../src/render/intel.ts): ký ức vùng mờ (xem trên); dùng trong `draw()` (mỏ, cờ, công trình và pháo đài địch), `refreshRegionTint()` / `drawTerritory()`, minimap và bảng thông tin cờ.
+- [src/render/fog.ts](../../src/render/fog.ts), [src/config/visuals.ts](../../src/config/visuals.ts), [src/core/match.ts](../../src/core/match.ts)., `revealTeamVision()`, `isTeamAreaExplored()`, các khối fog cuối `update()`, `teamVisibleTiles()`, `refreshFog()`, `drawFog()` (hằng số `FOG_RGB`, `FOG_EDGE_TILES`, `FOG_BLUR_SCALE`, `FOG_PAD`, `FOG_MEMORY_ALPHA`; `fogMask`, `fogVisible`, canvas `fogCanvas`, `fogSoftCanvas`), hàm lồng `currentlyVisible()` trong `draw()`.
 - `serializeSnapshot()` bỏ `fogSeen`, `enemyFogSeen` khỏi gói gửi.
 
 ## Tương tác
@@ -53,18 +69,18 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
 Fog là dữ liệu cục bộ của từng trình duyệt, không đồng bộ. Host vẫn tính `enemyFogSeen` cho phe đỏ để kiểm tra đặt nông trại của guest; guest tự tính bản đồ của mình từ snapshot. Hai bản có thể lệch nhau nhẹ.
 
 ## Kiểm thử thủ công
-- [ ] Đầu trận chỉ thấy quanh căn cứ; đi trinh sát mở rộng vùng sáng và vùng đó giữ nguyên khi quân rời đi.
+- [ ] Đầu trận chỉ thấy quanh căn cứ (350 quanh pháo đài, đất nhà khám phá sẵn); trinh sát mở vùng sáng 500, đi qua thì vùng đó thành mờ, không tối lại.
 - [ ] Quân đỏ biến mất khi ra khỏi tầm nhìn dù ô đã khám phá.
-- [ ] Chỗ đã khám phá mà quân đã rời đi → phủ sương mờ, vẫn thấy địa hình; vùng có cờ đang giữ thì sáng hẳn.
-- Đã chạy thử 2026-10-17: mở 45 ô quanh pháo đài → chỉ vòng 175 quanh pháo đài sáng, phần còn lại sương mờ thấy địa hình, viền vùng vẫn rõ; ngoài vòng 45 ô vẫn đục.
-- [ ] PvP: guest thấy fog của phe đỏ, không thấy vùng phe xanh đã khám phá.
-- [ ] Vùng chưa khám phá đục hoàn toàn (không thấy địa hình mờ mờ), mép mềm, phân biệt được với đá/nước; zoom xa vẫn rõ.
-- Đã chạy thử 2026-10-17 (sau khi đổi sang đục): đọc điểm ảnh canvas ở ô chưa khám phá đầu tiên sát mép → (31, 41, 61), các ô xa hơn → đúng (30, 40, 60); ô đã khám phá vẫn thấy địa hình; ảnh zoom mặc định và zoom nhỏ nhất không còn lộ địa hình.
-- Đã chạy thử 2026-10-17: ảnh chụp ở zoom mặc định, zoom xa và zoom nhỏ nhất — mép mềm, không còn bậc thang ô vuông đen.
+- [ ] Chiếm cờ → sáng 450 quanh cờ; mất cờ → vùng đó thành mờ.
+- [ ] Thấy công trình địch rồi đi khỏi: công trình vẫn hiện dưới lớp mờ; địch phá/đổi cờ ngoài tầm nhìn thì không cập nhật tới khi nhìn lại.
+- [ ] PvP: khách thấy theo phe đỏ, không thấy vùng phe xanh đã khám phá.
+- Unit test: `tests/fog.test.ts`, `tests/territory.test.ts` (vùng lãnh thổ 450). Smoke `vision` (bán kính 5 loại quân, 450 quanh cờ, đổi chủ, ký ức), `pvp` (khách giữ cờ thấy 450).
+- Đã chạy thử 2026-10-20: ảnh chụp trinh sát thấy nông trại đỏ rồi đi khỏi — nông trại vẫn hiện trong vùng mờ; toàn bộ smoke đạt; `draw()` 2,8 ms/frame; AI 8 phút × 3 bản đồ không lỗi.
 
 ## Giới hạn / việc tồn đọng
-- Bán kính nhìn của AI trong `update()` khác `unitVisionRadius()`.
 - Ở chế độ AI, quân xanh vẫn nhắm được mục tiêu trong sương mù ([combat.md](combat.md)).
 - Khoảng 2 ô ở mép vùng đã khám phá bị phủ mờ một phần (đổi lấy việc ô chưa khám phá không lộ chút nào).
 - Cờ, mỏ và công trình của mình ở chỗ không đang nhìn thấy nằm dưới lớp sương mờ (hơi tối đi).
+- Ký ức vùng mờ tính ở máy mỗi người từ `state`; đặt công trình, chọn cờ để chiếm vẫn kiểm tra theo bản đồ đã khám phá như trước.
+- Bán kính lớn hơn trước 3–4 lần: cả hai phe (kể cả AI) thấy địch sớm hơn, giao tranh bắt đầu từ xa hơn.
 - Ở guest, `enemyFogSeen` của host và của guest có thể khác nhau → host có thể từ chối chỗ đặt nông trại mà guest thấy hợp lệ.

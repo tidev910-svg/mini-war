@@ -1,6 +1,6 @@
 # Công trình (xây dựng, nâng cấp, tiền đồn, tháp)
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
 
 ## Mô tả
 Mọi công trình người chơi xây (nông trại, tiền đồn, tháp phòng thủ) dùng chung một hệ thống. Nhà lính bộ, nhà lính cung và chuồng ngựa **đã bỏ** ngày 2026-10-17 ("Yêu cầu sửa game RTS 1vs1 — 17/10/2026"):
@@ -16,9 +16,9 @@ Cột cờ (có sẵn, không phải công trình) và vùng lãnh thổ: xem [t
 **Các loại công trình** (`BUILDING_TYPES`):
 | `kind` | Tên | Giá | Thời gian xây | Máu | Nửa kích thước (`halfW×halfH`) | Tầm nhìn | Được đặt ở (`where`) | Tác dụng |
 |---|---|---|---:|---:|---|---:|---|---|
-| `farm` | Nông trại | 120 gỗ | 3s | 180 | 31×34 | 90 | `explored` | +35/50/70 lúa/phút theo cấp (V3.1) |
-| `outpost` | Tiền đồn | 150 gỗ, 80 đá | 35s, **cần quân đứng cạnh** | 1.500 | 26×24 | 14 ô (`visionTiles`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 12 (V3.1), 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
-| `tower` | Tháp phòng thủ | 120 gỗ, 120 đá, 30 vàng | 30s | 520 | 22×24 | 200 | `territory` | Súng: tầm 190, ST 30 (V3.1), 1 phát/giây |
+| `farm` | Nông trại | 120 gỗ | 3s | 180 | 31×34 | 350 | `explored` | +35/50/70 lúa/phút theo cấp (V3.1) |
+| `outpost` | Tiền đồn | 150 gỗ, 80 đá | 35s, **cần quân đứng cạnh** | 1.500 | 26×24 | 350 (`BUILDING_VISION`) | `flag` (cạnh cờ vùng mình đã chiếm, ≤ 4 ô) | Súng: tầm 160, ST 12 (V3.1), 1 phát/1,2 giây; **giữ cờ**: còn tiền đồn thì đối phương không chiếm được cờ vùng đó |
+| `tower` | Tháp phòng thủ | 120 gỗ, 120 đá, 30 vàng | 30s | 520 | 22×24 | 350 | `territory` | Súng: tầm 190, ST 30 (V3.1), 1 phát/giây |
 
 **Nâng cấp**
 | Nâng cấp | Giá | Thời gian | Kết quả |
@@ -52,7 +52,7 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
   - `updateBuildings(dt)` (gọi `updateCaptures()`, rồi xây, nâng cấp, súng, thợ xây), `completeBuilding()`, `destroyBuilding()` (gọi từ `hurt()`), `needsBuilder()`, `hasBuilder()`.
   - UI: `beginPlacement(kind)`, `endPlacement()`, biến `placement {kind, x, y, valid, problem}`, `selectedBuilding`.
   - Vẽ: `drawBuilding(b, preview)`, `drawFarm()`, `drawBuildingOverlay()` (thanh tiến độ/máu, vòng chọn, nhãn).
-- Dữ liệu: `state.buildings[] = {id, kind, team, x, y, hp, max, level, progress (0..1), upgrade: null|{progress, time}, cool, regionId (tiền đồn), waiting}`. Tầm nhìn khai báo bằng `vision` (đơn vị thế giới) hoặc `visionTiles` (ô) — đọc qua `visionOf()`. Công trình dùng trường `kind` (quân dùng `type`).
+- Dữ liệu: `state.buildings[] = {id, kind, team, x, y, hp, max, level, progress (0..1), upgrade: null|{progress, time}, cool, regionId (tiền đồn), waiting}`. Tầm nhìn: mọi công trình 350 (`BUILDING_VISION`, kể cả đang xây; [fog-of-war.md](fog-of-war.md)) — đọc qua `visionOf()`. Công trình dùng trường `kind` (quân dùng `type`).
 - Nút trong [index.html](../../index.html): `#farm`, `#upgradeFarm`, `#upgradeOutpost` ("Xây tiền đồn"), `#buildTower`. Nhãn giá sinh từ `BUILDING_TYPES` lúc tải trang (loại không có `button` — tiền đồn — được bỏ qua trong vòng gán nút).
 
 ## Tương tác
@@ -60,7 +60,7 @@ Trong lúc nâng cấp công trình vẫn hoạt động ở mức cũ; thanh ti
 - [farms.md](farms.md): nông trại là một loại công trình; kéo nông trại.
 - [units.md](units.md): tuyển quân (không còn nhà lính).
 - [combat.md](combat.md): quân nhắm công trình địch; tháp và tiền đồn bắn.
-- [fog-of-war.md](fog-of-war.md): công trình cho tầm nhìn (đang xây: 60).
+- [fog-of-war.md](fog-of-war.md): công trình cho tầm nhìn 350 (kể cả đang xây).
 - [economy.md](economy.md): giá công trình, lúa từ nông trại.
 - [ai-opponent.md](ai-opponent.md): AI xây theo thứ tự ưu tiên.
 

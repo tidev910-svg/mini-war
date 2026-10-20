@@ -4,7 +4,7 @@ import { recordBuildingLost, recordBuilt } from './stats';
 import { H, TILE_SIZE, W } from '../config/map';
 import { tilePassable } from '../map/terrain';
 import { addLog, canAfford, costText, draggingFarm, ended, localTeam, missingText, mode, nextFxId, nextId, notifyShortfall, paused, selectedBuilding, setDraggingFarm, setNextId, setSelectedBuilding, spend, state } from '../core/game';
-import { BUILDER_RADIUS_TILES, BUILDING_TYPES, FARM_LEVELS, FARM_UPGRADE_SECONDS, FORTRESS_GUN_COST, specs } from '../config/balance';
+import { BUILDER_RADIUS_TILES, BUILDING_TYPES, FARM_LEVELS, FARM_UPGRADE_SECONDS, FORTRESS_GUN_COST, specs, BUILDING_VISION } from '../config/balance';
 import { isTeamAreaExplored, teamCanSee } from './fog';
 import { activeFortressGuns, musterYard } from '../map/bases';
 import { inOwnTerritory, regionAt } from '../map/regions';
@@ -14,8 +14,8 @@ import { updateCaptures } from './territory';
 export function buildingDef(b){return BUILDING_TYPES[b.kind];}
 export function buildingDone(b){return b.progress>=1;}
 export function buildingName(b){return buildingDef(b).name;}
-export function visionOf(def){return def.visionTiles?def.visionTiles*TILE_SIZE:def.vision;}
-export function buildingVision(b){return !buildingDone(b)?60:visionOf(buildingDef(b));}
+// Every building of a side sees BUILDING_VISION around it, also while it is being built (fog of war V3.1).
+export function buildingVision(b){return BUILDING_VISION;}
 export function buildingGun(b){return buildingDone(b)?buildingDef(b).gun||null:null;}
 export function hasBuilding(team,kind){return state.buildings.some(b=>b.team===team&&b.kind===kind&&buildingDone(b));}
 // Returns '' when the footprint is valid, otherwise the reason shown to the player.
