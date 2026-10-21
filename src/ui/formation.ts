@@ -47,7 +47,7 @@ export function updateFormationMenu() {
 
 menu()?.addEventListener('click', e => {
   const ids = selectedOwnUnits().map(u => u.id), b = e.target.closest?.('button'); if (!b || !ids.length) return;
-  if (b.dataset.kind) { requestAction('formation', { ids, kind: b.dataset.kind }); playSound('order.move'); }
+  if (b.dataset.kind) { requestAction('formation', { ids, kind: b.dataset.kind }); }
   else if (b.dataset.mode) requestAction('formationMode', { ids, mode: b.dataset.mode });
   else if (b.id === 'formationCancel') requestAction('formationCancel', { ids });
   else if (b.dataset.close != null) { toggleFormationMenu(false); return; }

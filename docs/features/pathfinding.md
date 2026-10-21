@@ -80,6 +80,7 @@ Host tính đường (trong `applyAction('move')` và `update()`), cho phe khác
 - Đã chạy thử 2026-10-18 (bản đầu, biết hết bản đồ): `pnpm test` (8 test vật cản/tìm đường: không ô nước/đá nào đi được trừ cầu, mỗi cầu chạm đất hai đầu, bỏ cầu thì hai bờ không nối, đường qua cầu mọi đoạn đi được, đích trên nước dời vào bờ, 6 quân qua sông không lần nào đứng trên ô chặn); `pnpm smoke path` (6 quân tới đích bên kia sông sau ~88 s, 0 lần đứng trên ô chặn, một nhóm đường); AI 2 × 8 phút: >9.000 mẫu vị trí, 0 trên ô chặn; 20 quân hành quân tới nhà địch hết, 0 trên ô chặn; PvP: khách ra lệnh đi nhận đường trong snapshot.
 
 ## Giới hạn / việc tồn đọng
+- Smoke `path` đôi khi hỏng (1 lần ngày 2026-10-21: quân không tới đích trong 300 giây sau 82 lần lập lại đường; chạy lại 5/5 đạt). Chưa tìm ra bản đồ gây lỗi.
 - Tách quân là đẩy nhẹ sau khi di chuyển, không phải tránh va chạm khi lập đường: nhóm đông qua cầu hẹp vẫn chen nhau, quân có thể đẩy nhau lệch khỏi ô đội hình một chút.
 - Đường đi né công trình theo lưới ô (37,5 px), nên quân đi cách mép hình công trình một khoảng không đều.
 - Đường dài vòng cầu có thể mất ~50 ms một lần A* (lúc đuổi mục tiêu sau vật cản, tối đa 1 lần/giây mỗi quân).

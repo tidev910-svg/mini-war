@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Frame composition: draw() calls every layer in order (docs/features/rendering.md).
+import { drawFx, drawProjectiles, updateFx } from './fx';
 import { ghostBases, ghostBuildings, knownFlag, knownMine, updateIntel } from './intel';
 import { TEAM_COLORS, THEME } from '../config/theme';
 import { settings } from '../core/settings';
@@ -107,8 +108,10 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Selection rings remain legible above canopy sprites, while the actor itself still respects Y-depth.
  for(const u of state.units)if((selected===u||u.selected)&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
  // Projectiles and effects stay on their own foreground layer.
- for(const b of state.bullets){if(!inView(b))continue;drawUprightAt(b.x,b.y,()=>{ctx.strokeStyle=b.team===0?'#a8e2ff':'#ffadb0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-5,b.y+3);ctx.stroke();});}
- for(const e of state.effects){if(e.kind||!inView(e))continue;drawUprightAt(e.x,e.y,()=>{ctx.globalAlpha=Math.max(0,e.life/e.max);ctx.strokeStyle=e.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,12+(1-e.life/e.max)*10,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;});}
+ // Arrows, gun shots and particles (render/fx.ts); shots and particles in the fog are hidden by the veil drawn next.
+ updateFx();
+ drawProjectiles(b=>inView(b)&&(b.team===localTeam()||currentlyVisible(b.x,b.y)));
+ drawFx(inView);
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
  drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');

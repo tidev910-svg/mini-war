@@ -34,6 +34,7 @@
 - Dữ liệu: `state.garrisons[]` (quân trong cờ, có `u.garrison = regionId`, lệnh `'garrison'`, không nằm trong `state.units`); trên quân ngoài sân: `u.garrisonTarget` (đang đi vào), `u.sortie` (đang xuất kích, lệnh `'sortie'`); trên vùng: `r.defense = {alarm, calm, returning, cool}`.
 
 ## Tương tác
+- [audio.md](audio.md): tiếng `event.garrison` (vào cờ), `event.sortie` (xuất kích), `combat.flag` (cờ bắn).
 - [territory.md](territory.md): chặn chiếm cờ khi có đồn trú; cờ về trung lập thì thả quân.
 - [combat.md](combat.md): súng cờ là nguồn sát thương mới (`attackerType: 'flag'`, hệ số ×1); quân xuất kích đánh bằng luật cũ.
 - [fog-of-war.md](fog-of-war.md): quân trong cờ không phải nguồn nhìn (cờ đã cho 450); đối phương không thấy chúng.

@@ -1,6 +1,6 @@
 # Đối thủ AI
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-21
 
 ## Mô tả
 Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển, với 3 độ khó **Dễ / Thường / Khó** chọn ở sảnh (dưới nút "Chơi với AI") hoặc Cài đặt → Điều khiển; đổi giữa trận có hiệu lực ngay. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; mọi loại quân tuyển tại pháo đài. AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
@@ -33,7 +33,20 @@
    | Thường | 5 s | 2 | 270 s | 8 / +3 | 30% | 120 s | 2 | 620 |
    | Khó | 4 s | 4 | 180 s | 10 / +4 | 20% | 75 s | 1 | 720 |
 
-   Nguồn: `AI_DIFFICULTY` trong `config/balance.ts`. Độ khó không cho AI thêm tài nguyên hay tầm nhìn.
+   **Kinh tế và chiến thuật theo độ khó** (2026-10-21):
+
+   | Độ khó | Nông trại (`farmsMax`, thêm 1 mỗi `farmEvery`) | `maxTraining` | Hàng đợi tối đa (`lanesMax`) | Chọn quân khắc chế (`smartMix`) | Tiếp viện (`reinforce`, giữ nhà `homeGuard`) | Ưu tiên phá nông trại (`harass`) |
+   |---|---:|---:|---:|---|---|---|
+   | Dễ | 2 (chỉ thêm khi thiếu lúa) | 1 | 4 | Không (thứ tự ngẫu nhiên cũ) | Không | Không |
+   | Thường | 6, mỗi 110 s | 3 | 5 | Có | Có, giữ 3 | Không |
+   | Khó | 9, mỗi 75 s | 6 | 6 | Có | Có, giữ 4 | Có (nông trại tính gần ×0,6) |
+
+   - **Chọn quân khắc chế** (`pickUnit()` trong `ai/enemy.ts`): mỗi loại (lính, giáo, cung, kỵ) được trọng số = (điểm khắc chế)² × (dùng vàng / gỗ đang thừa) × (0,35 nếu loại đó đã chiếm > 45% đội quân). Điểm khắc chế tính trên các loại quân địch AI **đã thấy** trong 2 phút qua (`enemyMemory.targets[].type`), theo `COUNTER_MULTIPLIERS`. Mỗi lượt mua tối đa `maxTraining` quân, vẫn giữ lúa ròng ≥ 0.
+   - **Mua thêm hàng đợi** (`buyQueueLane()`): khi các hàng đang bận gần hết và còn dư 60 mỗi loại tài nguyên so với giá, tới `lanesMax`.
+   - **Tiếp viện:** quân mới ra trong lúc đang tấn công nhập vào đợt quân **theo nhóm ≥ 4** (`REINFORCE_GROUP`; đi lẻ từng quân thì chết dần ở tuyến phòng thủ), giữ lại `homeGuard` quân ở nhà.
+   - **Trinh sát** dò điểm chưa khám phá bằng `exploreSpot()` (xa pháo đài đỏ, gần trinh sát): quét dần ra ngoài thay vì đi ngẫu nhiên. Không biết trước nhà người chơi.
+
+   Nguồn: `AI_DIFFICULTY` trong `config/balance.ts`. Độ khó không cho AI thêm tài nguyên, tầm nhìn hay thông tin.
 
 AI không qua `buy()`/`applyAction()` nên không có log.
 
@@ -76,10 +89,13 @@ Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 - [ ] Đưa quân xanh tới gần pháo đài đỏ → quân đỏ rảnh kéo ra chặn.
 - Unit test: `tests/ai.test.ts`. Đã chạy thử 2026-10-19 (người chơi chỉ có 4 quân giữ nhà, 15 phút): Dễ tập kết 425 s, xuất phát 474 s, phá pháo đài 761 s; Thường 273 s / 323 s, phá 485 s; Khó 182 s / 259 s, rút 535 s, phá 596 s (sau khi thêm tin đồn và công trình chặn đường). Không lỗi.
 - Đã chạy thử 2026-10-20 (bỏ tin đồn, sương mù V3.1, người chơi chỉ có 4 quân giữ nhà, 15 phút, 2 lượt × 3 độ khó): phá pháo đài ở 5/6 trận (Dễ 643 / 712 s, Thường 608 s, Khó 690 / 696 s); 1 trận Thường không tìm thấy nhà người chơi trong 15 phút. Không lỗi.
+- Bài thử cố định 2026-10-21 (người chơi giữ nhà bằng 8 giáo, 6 cung, 2 tháp, không làm gì thêm; 18 phút): trước khi sửa — Thường phá pháo đài ở 718 / 774 s, Khó ở 769 / 1076 s (Khó không nhanh hơn Dễ, có trận còn thừa 2.223 vàng, luôn 2 nông trại). Sau khi sửa (4 trận mỗi mức) — Khó thắng 4/4, trung bình 766 s (655–934 s), 4–7 nông trại; Thường 725–886 s (không khá hơn).
+- Smoke `ai` (từ 2026-10-21): AI tự chơi 8 phút trên 3 bản đồ, phe xanh không có quân. Đạt khi AI phá được pháo đài trống, **hoặc** sau 8 phút giữ ≥ 2 vùng và có ≥ 5 quân (từ sương mù V3.1, AI nhìn xa hơn nên hay thấy và phá pháo đài trống trong 5–7 phút).
 
 ## Giới hạn / việc tồn đọng
 - Kinh tế & hàng đợi V2 (2026-10-18): AI dùng cùng 4 hàng đợi song song nhưng vẫn tự giới hạn 2 quân trong hàng đợi và chưa biết mua thêm hàng đợi (không đổi hành vi AI theo yêu cầu V2).
-- Đợt tấn công gom mọi quân rảnh, không chọn thành phần quân theo đối thủ; đợt đang đi không quay về cứu nhà.
+- Đợt tấn công gom mọi quân rảnh; đợt đang đi không quay về cứu nhà.
+- Lúa và gỗ là nút thắt: AI vẫn để thừa nhiều vàng và đá (không có chợ đổi tài nguyên); hàng đợi thứ 5–6 hiếm khi mua được vì thiếu gỗ. Mức Thường chưa mạnh hơn rõ rệt so với trước 2026-10-21.
 - AI tự dò tìm nhà người chơi nên có trận tìm chậm (hơn 10 phút) trên bản đồ lớn.
 - Độ khó chỉ đổi nhịp độ (tiền và tầm nhìn như nhau); "Dễ" vẫn tích quân nhiều nếu người chơi không gây áp lực.
 - AI chỉ nhắm cờ ở chỗ đã khám phá; nếu trinh sát chết sớm, AI mở rộng chậm. Nhóm chiếm cờ và thợ xây là quân chiến đấu bị rút khỏi đội hình. AI không tự xoá tiến độ dở của địch ở cờ mình nếu không có quân đứng đó.

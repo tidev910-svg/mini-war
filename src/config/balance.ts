@@ -63,10 +63,15 @@ export const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTER
 // with ≥ 60% after gatherSeconds); retreatAt: the wave falls back when this share of it is left; regroup: seconds before the
 // next wave gathers; fortressAfterWave: from this wave on the known enemy fortress is the preferred target;
 // defendRadius: enemy units seen this close to the AI fortress pull the free army back to defend.
+// Economy and tactics (2026-10-21): farmsMax / farmEvery: farms it aims for (2 at start, one more every farmEvery seconds,
+// 0 = only when food runs short); lanesMax: training lanes it buys up to; smartMix: picks units that counter the enemy
+// types it has seen and spends the resources it has piled up (off = the old fixed random order); reinforce: units made
+// during an attack join the wave, homeGuard of them stay home; harass: enemy farms count as nearer targets.
+// None of these give the AI resources, sight or knowledge the player does not have.
 export const AI_DIFFICULTY={
- easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520},
- normal:{label:'Thường',tick:5,maxTraining:2,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620},
- hard:  {label:'Khó',   tick:4,maxTraining:4,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720},
+ easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520,farmsMax:2,farmEvery:0,  lanesMax:4,smartMix:false,reinforce:false,homeGuard:0,harass:false},
+ normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false},
+ hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true},
 };
 export const FORTRESS_GUN_COST={stone:150};
 // Combat V3.1 (2026-10-19, damage only): damage per shot of the fortress's built-in guns — [0] the main gun, [1] the

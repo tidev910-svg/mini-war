@@ -48,6 +48,7 @@ Chọn một nhóm quân (kéo chuột, Ctrl + A, nhóm F1–F9…), bấm **Đ�
 - Giao diện: `#formationMenu`, `#formationKinds`, `#formationModes`, `#formationCancel`, `#formationCount` trong [index.html](../../index.html); class `.formation-*`, `.fd-*` trong [src/style.css](../../src/style.css).
 
 ## Tương tác
+- [audio.md](audio.md): trống `order.formation` khi xếp hoặc đổi đội hình.
 - [controls.md](controls.md): chọn quân, lệnh đi / dừng / tấn công, thanh lọc quân (vẫn dùng bình thường để chọn riêng từng loại).
 - [pathfinding.md](pathfinding.md): điểm neo và từng quân đi bằng `findPath()` / `steerTo()`; tách quân nhẹ vẫn chạy.
 - [combat.md](combat.md): quy tắc đánh không đổi, chỉ thêm giới hạn đuổi theo của quân trong đội hình.

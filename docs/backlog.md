@@ -8,6 +8,7 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 1. **Chơi thử cân bằng V3.1 + Combat V3.1** — 10–20 trận giữa người chơi cùng trình độ, mục tiêu trận 15–20 phút; ghi thời lượng, số quân, tài nguyên dư, tỉ lệ thắng từng chiến thuật; chốt giá/thời gian mở hàng đợi (đang là giá tạm). → [economy.md](features/economy.md), [combat.md](features/combat.md), [units.md](features/units.md)
 
 ## Lối chơi
+- [ ] **Lỗi thỉnh thoảng:** smoke `path` hỏng 1 lần (2026-10-21): 6 quân lập lại đường 82 lần, không tới đích trong 300 giây (chạy lại 5/5 đạt). Nghi liên quan công trình chặn đường / tách quân (2026-10-19). → [pathfinding.md](features/pathfinding.md)
 - [ ] Chế độ AI: quân xanh nhắm được địch trong sương mù (không đối xứng). Cần quyết nút "Tấn công" làm gì khi chưa thấy địch. → [combat.md](features/combat.md), [fog-of-war.md](features/fog-of-war.md)
 - [ ] AI mở rộng chậm nếu trinh sát chết sớm; nhóm chiếm cờ và thợ xây bị rút khỏi đội hình. → [ai-opponent.md](features/ai-opponent.md)
 - [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3). → [territory.md](features/territory.md)
@@ -42,6 +43,12 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-21 (hiệu ứng trận đánh):** mũi tên có hình, đạn súng là cầu lửa có vệt + chớp lửa và khói ở nòng; trúng đòn có vệt chém, tia lửa, mảnh gỗ, nổ nhỏ; quân ngã có bụi; công trình bị phá có khói và gạch đá; xây xong, chiếm cờ, vào cờ, xuất kích đều có hiệu ứng; đạn không còn lộ trong sương mù.
+
+**2026-10-21 (AI mạnh hơn theo độ khó):** Thường / Khó xây thêm nông trại theo thời gian, mua thêm hàng đợi, chọn quân khắc chế loại quân đã thấy và dùng tài nguyên thừa, tiếp viện theo nhóm; Khó ưu tiên phá nông trại; trinh sát dò có hệ thống. Bài thử cố định: Khó thắng 4/4, nhanh hơn trước ≈ 17%; Thường chưa khá hơn.
+
+**2026-10-21 (hoàn thiện hiệu ứng âm thanh):** tiếng đánh riêng cho giáo, kỵ binh, trinh sát (3 bản mỗi loại), tiếng nỏ khi cờ bắn; tiếng cho xếp đội hình, vào cờ, xuất kích, nâng cấp xong, cạn lúa, địch lọt vào lãnh thổ — đều tự tạo bằng code.
+
 **2026-10-20 (phòng thủ cột cờ V3.1):** chuột phải lên cờ của mình để đồn trú (không giới hạn, ẩn với địch, vẫn ăn lúa); cờ có chủ tự bắn 10 / 2 giây tầm 180; địch tới gần thì 100% quân đồn trú xuất kích, yên 3 giây thì tự về; lệnh riêng được ưu tiên; còn đồn trú thì không chiếm được cờ.
 
 **2026-10-20 (sương mù V3.1):** bán kính nhìn mới (trinh sát 500, lính / giáo 320, cung 360, kỵ 420, công trình và pháo đài 350, vùng đang giữ 450 quanh cờ), chung cho người chơi và AI; vùng mờ hiện cờ, mỏ, màu lãnh thổ, công trình và pháo đài địch như lần cuối nhìn thấy, không hiện quân địch.

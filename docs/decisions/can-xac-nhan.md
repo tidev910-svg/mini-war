@@ -40,7 +40,7 @@
 
 | # | Trạng thái | Việc còn lại |
 |---|---|---|
-| 7.1 | **Giữ tạm để thử nghiệm** (2026-10-20), chưa duyệt chất lượng | Nghe trực tiếp nhạc nền và 8 tiếng sự kiện, quyết định giữ hay sửa trước bản phát hành |
+| 7.1 | **Giữ tạm để thử nghiệm** (2026-10-20), chưa duyệt chất lượng | Nghe trực tiếp nhạc nền, 8 tiếng sự kiện và 17 tiếng tự tạo thêm ngày 2026-10-21 (đánh nhau theo loại quân, cờ bắn, đội hình, đồn trú, xuất kích, nâng cấp, cạn lúa, địch xâm nhập — [audio.md](../features/audio.md)), quyết định giữ hay sửa trước bản phát hành |
 
 ## 8. Thiết kế còn bỏ ngỏ ([backlog.md](../backlog.md))
 

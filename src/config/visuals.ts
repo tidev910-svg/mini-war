@@ -27,3 +27,6 @@ export const FOG_RGB=hexRgb(THEME['ui-fog']),FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,F
 
 // A unit that dies leaves a falling sprite (effect kind 'fall', render/units.ts drawFallenUnit) for fallSeconds.
 export const UNIT_ANIM={fallSeconds:1.4};
+// Visual effects (render/fx.ts, docs/features/rendering.md): particle colours and how many particles at most.
+export const FX_COLORS={spark:'#ffe9a8',sparkHot:'#ffb347',slash:'#f4f1ea',dust:'#a08a6a',smoke:'#5d5650',debris:'#6b5640',wood:'#9c7a4c',fire:'#ff9a3c',glow:'#ffd27a',gold:'#ffd75e',arrowShaft:'#6e4f2c',arrowHead:'#cfd5dc'};
+export const FX_MAX_PARTICLES=450;

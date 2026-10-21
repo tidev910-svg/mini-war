@@ -299,9 +299,11 @@ if (solo.length) {
     if (want('ai')) {
       const t = checker('ai: AI tự chơi 8 phút trên 3 bản đồ');
       const runs = [];
-      for (let k = 0; k < 3; k++) runs.push(await c.game(`fresh();setMode('ai');setGameStarted(true);for(let i=0;i<8*60*20;i++)update(.05);
-        return {regions:state.regions.filter(r=>r.owner===1&&r.cp).length,units:state.units.filter(u=>u.team===1).length,farms:state.buildings.filter(b=>b.team===1&&b.kind==='farm').length};`));
-      t.ok(runs.every(x => x.regions >= 2 && x.units >= 5), 'AI chiếm ≥ 2 vùng và có ≥ 5 quân', runs);
+      // The blue side has no army here, so the AI may well raze its fortress before 8 minutes (it sees farther since the fog
+      // of war V3.1). Either outcome shows the AI making progress: it won, or after 8 minutes it holds ≥ 2 regions and ≥ 5 units.
+      for (let k = 0; k < 3; k++) runs.push(await c.game(`fresh();setMode('ai');setGameStarted(true);for(let i=0;i<8*60*20&&!ended;i++)update(.05);
+        return {won:ended&&state.bases[0].hp<=0,minutes:+(gameTime/60).toFixed(1),regions:state.regions.filter(r=>r.owner===1&&r.cp).length,units:state.units.filter(u=>u.team===1).length,farms:state.buildings.filter(b=>b.team===1&&b.kind==='farm').length};`));
+      t.ok(runs.every(x => x.won || (x.regions >= 2 && x.units >= 5)), 'AI phá được pháo đài trống, hoặc sau 8 phút giữ ≥ 2 vùng và có ≥ 5 quân', runs);
       results.push(t.report({ runs }));
     }
 

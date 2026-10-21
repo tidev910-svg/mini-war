@@ -1,6 +1,6 @@
 # Âm thanh
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-21
 
 ## Mô tả
 Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh và các sự kiện lớn, cùng nhạc nền và tiếng môi trường.
@@ -23,7 +23,11 @@ Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh v�
 | Chọn quân (số quân chọn tăng) | `order.select` | `order/select-1..3` | RPG `cloth2..4` |
 | Ra lệnh đi | `order.move` | `order/move-1..3` | Impact `footstep_grass_001..003` |
 | Ra lệnh tấn công (phím A / nút) | `order.attack` | `order/attack-1..3` | RPG `drawKnife1..3` |
-| Đòn cận chiến trúng | `combat.clash` | `combat/clash-1..5` | Impact `impactMetal_medium_000..004` |
+| Đòn cận chiến trúng của lính bộ (và quái canh mỏ) | `combat.clash` | `combat/clash-1..5` | Impact `impactMetal_medium_000..004` |
+| Lính giáo đâm trúng | `combat.spear` | `synth:hitSpear#1..3` — tiếng vung, cán gỗ va, chút thép | Tự tạo |
+| Kỵ binh chém trúng | `combat.cavalry` | `synth:hitCavalry#1..3` — vó ngựa, đòn nặng, tiếng kiếm ngân | Tự tạo |
+| Trinh sát đánh trúng | `combat.scout` | `synth:hitScout#1..3` — vung dao nhẹ, đòn nhẹ | Tự tạo |
+| Cột cờ tự bắn ([flag-defense.md](flag-defense.md)) | `combat.flag` | `synth:flagShot#1..2` — dây nỏ bật, mũi tên bay | Tự tạo |
 | Cung thủ bắn | `combat.bow` | `combat/bow-1..2` | RPG `knifeSlice`, `knifeSlice2` |
 | Tên / đạn pháo trúng | `combat.arrowHit` | `combat/arrow-hit-1..3` | Impact `impactWood_light_000..002` |
 | Pháo đài, tháp, tiền đồn bắn | `combat.cannon` | `combat/cannon-1..3` | Impact `impactPunch_heavy_000..002` |
@@ -35,6 +39,12 @@ Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh v�
 | Mất vùng / chiếm vùng | `event.lost`, `event.capture` | `synth:lost` — kèn đi xuống La → Fa + trống; `synth:capture` — kèn lệnh đi lên Rê – Fa# – La | Tự tạo |
 | Công trình xây xong; quân huấn luyện xong | `event.built`, `event.trained` | `synth:built` — hai nhát búa + chuông nhỏ; `synth:trained` — gõ trống + kèn ngắn | Tự tạo |
 | Thắng / thua | `event.victory`, `event.defeat` | `synth:victory` — hồi trống, kèn lệnh ba tiếng, hợp âm Rê trưởng, chũm chọe, chuông; `synth:defeat` — ba hồi chuông trầm trên nền kèn u buồn (thay đoạn saxophone cũ) | Tự tạo |
+| Xếp hoặc đổi đội hình ([formations.md](formations.md)) | `order.formation` | `synth:formation` — ba tiếng trống, tiếng cuối mạnh | Tự tạo |
+| Quân vào cờ đồn trú | `event.garrison` | `synth:garrison` — cửa nặng đóng, tiếng chốt | Tự tạo |
+| Quân đồn trú xuất kích | `event.sortie` | `synth:sortie` — hai trống + tù và gọi đi lên | Tự tạo |
+| Nâng cấp xong (cấp nông trại, mở thêm hàng đợi) | `event.upgraded` | `synth:upgraded` — nhát búa + chuỗi đàn đi lên | Tự tạo |
+| Kho lúa cạn (bắt đầu cảnh báo thiếu tiếp tế) | `event.starving` | `synth:starving` — hai tiếng chuông trầm, nhỏ | Tự tạo |
+| Thấy quân địch gần pháo đài (< 700) hoặc trong vùng mình giữ, sau một lúc yên | `event.intruder` | `synth:intruder` — một hồi tù và ngắn (khác báo động pháo đài hai hồi dài); cách nhau ≥ 25 giây | Tự tạo |
 
 Tổng cộng 45 file, khoảng 610 KB.
 
@@ -54,8 +64,8 @@ Tổng cộng 45 file, khoảng 610 KB.
 
 ## Code liên quan
 - [src/config/audio.ts](../../src/config/audio.ts): `SOUNDS`, `AUDIO_*`, `COINS_MIN_SPEND`, `MUSIC_BPM`, `MUSIC_LOOKAHEAD`, `MUSIC_HEAT_SECONDS`, `MUSIC_HEAT`. Đổi tiếng file thì chép file mới vào `public/assets/audio/` và sửa bảng này; tiếng tự tạo ghi `synth('<công thức>')`.
-- [src/audio/instruments.ts](../../src/audio/instruments.ts): nhạc cụ tổng hợp dùng chung `drum()`, `horn()`, `bell()`, `pluck()`, `knock()`, `cymbal()`, `makeReverb()`, `noise()`, `midi()`.
-- [src/audio/synth.ts](../../src/audio/synth.ts): `SYNTH_RECIPES` (start, alarm, lost, capture, built, trained, victory, defeat), `renderSynth(name)` dựng một công thức thành AudioBuffer bằng `OfflineAudioContext` lúc tải trang.
+- [src/audio/instruments.ts](../../src/audio/instruments.ts): nhạc cụ tổng hợp dùng chung `drum()`, `horn()`, `bell()`, `pluck()`, `knock()`, `cymbal()`, `whoosh()`, `clang()`, `twang()`, `makeReverb()`, `noise()`, `midi()`.
+- [src/audio/synth.ts](../../src/audio/synth.ts): `SYNTH_RECIPES` (start, alarm, lost, capture, built, trained, victory, defeat, hitSpear, hitCavalry, hitScout, flagShot, formation, garrison, sortie, upgraded, starving, intruder), `renderSynth(name)` dựng một công thức thành AudioBuffer (tên `công-thức#n` là bản thứ n, lệch cao độ theo `VARIANT_PITCH` để tiếng đánh nhau không lặp y hệt) bằng `OfflineAudioContext` lúc tải trang.
 - [src/audio/music.ts](../../src/audio/music.ts): `updateMusic(graph)` (gọi đầu `updateSoundscape()` mỗi frame), `addBattleHeat(v)`, `musicStatus()`; bên trong `setup()`, `playStep()`, `bird()`.
 - [src/audio/sound.ts](../../src/audio/sound.ts):
   - `playSound(name, pos?)`: chuỗi Web Audio source → gain → stereo pan → bus (`ui`, `sfx`, `event`) → master. Thêm bus `music`, `ambience` cho `audio/music.ts`; `audioGraph()` trả `{ac, buses}`.
@@ -63,7 +73,9 @@ Tổng cộng 45 file, khoảng 610 KB.
   - Tiếng giao tranh phát được thì cộng độ căng nhạc (`addBattleHeat()`); `ui/hud.ts` cộng thêm khi pháo đài bị tấn công.
   - `updateSoundscape()`: gọi cuối mỗi `draw()`, so trạng thái trận giữa các frame:
     - hiệu ứng trúng đòn/ngã và đạn mới (theo `id`), chỉ chỗ phe mình nhìn thấy;
-    - cờ đổi chủ; công trình của mình mới đặt hoặc vừa xây xong; quân mới; số quân chọn tăng; kho giảm đột ngột;
+    - tiếng trúng đòn theo loại quân ra đòn (`HIT_SOUND`); đạn của cờ;
+    - cờ đổi chủ; công trình của mình mới đặt hoặc vừa xây xong; quân mới (kể cả trong cờ); số quân chọn tăng; kho giảm đột ngột;
+    - đội hình mới / đổi kiểu; quân trong cờ tăng; số quân xuất kích tăng; cấp nông trại hoặc số hàng đợi tăng; kho lúa chuyển sang cảnh báo; quân địch đầu tiên lọt vào lãnh thổ (`INTRUDER_RANGE` = 700 quanh pháo đài, hoặc trong vùng mình giữ);
     - vào trận, kết thúc trận.
   - `soundStats`, `audioStatus()` dùng cho kiểm thử.
 - Gọi trực tiếp: `openPanel()`, `toggleMenu()`, `closeMenu()`, tiếng bấm chung (`ui/panels.ts`); thiếu tài nguyên và pháo đài bị tấn công (`ui/hud.ts`); nút và phím tấn công (`ui/input.ts`, `ui/hotkeys.ts`); lệnh đi (`showMoveMarker()` trong `render/paths.ts`); tab và công tắc Cài đặt (`ui/settings.ts`).
@@ -87,6 +99,9 @@ Không gửi âm thanh qua mạng. `updateSoundscape()` chỉ đọc `state`, n�
 - [ ] Sảnh có nhạc nhẹ; vào trận có gió, chim; giao tranh trong khung nhìn thì trống dồn lên, hết đánh thì lắng lại; hết trận nhạc tắt dần.
 - [ ] Thanh trượt Nhạc nền / Tiếng môi trường có tác dụng ngay; M tắt cả nhạc.
 - Đã chạy thử 2026-10-19 (Chrome headless): 45 tiếng sẵn sàng (37 file + 8 tự tạo); 8 công thức đỉnh 0,10–0,88 (không méo), đuôi tắt hẳn; thu 40 giây nhạc trong trận: yên bình ≈ −32 dB RMS, giao tranh ≈ −27 dB, rồi lắng xuống; không lỗi JavaScript.
+- [ ] Giáo, kỵ binh, trinh sát, lính bộ đánh nhau nghe khác nhau; cờ bắn nghe tiếng nỏ.
+- [ ] Xếp đội hình có trống; đưa quân vào cờ có tiếng cửa; quân đồn trú xuất kích có tù và; nâng nông trại / mở hàng đợi có chuỗi đàn; cạn lúa có chuông trầm; địch lọt vào lãnh thổ có một hồi tù và ngắn.
+- Đã chạy thử 2026-10-21 (Chrome headless): 62/62 tiếng sẵn sàng (37 file + 25 tự tạo); dựng một trận thử có đủ các tình huống trên → mọi tiếng mới đều phát (`soundStats`); đỉnh 0,20–0,75, không méo; không lỗi JavaScript.
 - [ ] Phím M tắt/bật; thanh trượt âm lượng có tác dụng ngay, thả tay nghe thử.
 - [ ] PvP: máy khách nghe trận đánh của mình.
 - Đã chạy thử 2026-10-18 (Chrome headless, có bấm chuột thật):
@@ -99,4 +114,5 @@ Không gửi âm thanh qua mạng. `updateSoundscape()` chỉ đọc `state`, n�
 - Tiếng tự tạo và nhạc chưa được người nghe duyệt kỹ; chỉnh bằng tham số trong `SYNTH_RECIPES` / `audio/music.ts`.
 - Nhạc là đàn gảy ngẫu hứng trên một vòng hợp âm, không có đoạn nhạc soạn sẵn; nghe lâu có thể đơn điệu.
 - Tiếng file Kenney (giao diện, trận đánh) chọn theo tên và độ dài, chưa nghe duyệt kỹ.
-- Chưa có tiếng riêng cho từng loại quân (kỵ binh, giáo đều dùng tiếng kim loại).
+- Lính bộ dùng tiếng kiếm của Kenney, cung thủ dùng tiếng tên; giáo, kỵ binh, trinh sát dùng tiếng tự tạo nên chất âm hai nhóm có thể hơi khác nhau.
+- Tiếng đánh nhau chỉ phân theo loại quân **ra đòn**, chưa theo loại bị đánh.

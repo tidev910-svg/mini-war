@@ -11,6 +11,7 @@ import { isTeamAreaExplored } from '../sim/fog';
 import { nearestWalkable } from '../map/paths';
 
 const TEAM = 1;
+const REINFORCE_GROUP = 4;
 const RALLY_DISTANCE = 260, RALLY_RADIUS = 220, ARRIVE_RADIUS = 200;
 export const aiLevel = () => AI_DIFFICULTY[settings.aiDifficulty] || AI_DIFFICULTY.normal;
 // phase: 'build' (economy only) → 'gather' (free fighters walk to the rally point) → 'attack' (the wave walks to target)
@@ -27,22 +28,28 @@ const setRole = (list, role) => { for (const u of list) { u.aiRole = role; u.aiS
 // the remembered fortress (preferred from lvl.fortressAfterWave), else the last sighting of an enemy unit, else an unexplored spot.
 function pickTarget(from, plan, lvl) {
   const options = [];
-  for (const b of state.buildings) if (b.team !== TEAM && b.hp > 0 && isTeamAreaExplored(TEAM, b.x, b.y)) options.push({ kind: 'building', id: b.id, x: b.x, y: b.y, cost: hyp(from, b) * (b.kind === 'tower' ? 1.8 : 1) });
+  // Towers count as farther away; with lvl.harass the enemy's farms count as nearer (hit the economy).
+  for (const b of state.buildings) if (b.team !== TEAM && b.hp > 0 && isTeamAreaExplored(TEAM, b.x, b.y)) options.push({ kind: 'building', id: b.id, x: b.x, y: b.y, cost: hyp(from, b) * (b.kind === 'tower' ? 1.8 : b.kind === 'farm' && lvl.harass ? .6 : 1) });
   for (const r of state.regions) if (r.cp && r.owner >= 0 && r.owner !== TEAM && r.home == null && isTeamAreaExplored(TEAM, r.cp.x, r.cp.y)) options.push({ kind: 'region', id: r.id, x: r.cp.x, y: r.cp.y, cost: hyp(from, r.cp) });
   const base = state.enemyMemory?.base;
   if (base) options.push({ kind: 'base', x: base.x, y: base.y, cost: hyp(from, base) * (plan.wave >= lvl.fortressAfterWave ? .4 : 2.5) });
   if (options.length) return options.sort((a, b) => a.cost - b.cost)[0];
   const seen = [...(state.enemyMemory?.targets || [])].filter(m => m.age < 30).sort((a, b) => a.age - b.age)[0];
   if (seen) return { kind: 'explore', x: seen.x, y: seen.y };
-  // Otherwise search — the AI does not know where the enemy lives (decision 4.1, 2026-10-20). Of 96 random unexplored spots, the one far from the AI's own fortress (the enemy lives at least
-  // BASE_MIN_SEPARATION away) but not too far from the army, so waves sweep outward instead of crossing the map at random.
+  // Otherwise search — the AI does not know where the enemy lives (decision 4.1, 2026-10-20).
+  const p = exploreSpot(from);
+  return p ? { kind: 'explore', x: p.x, y: p.y } : null;
+}
+// An unexplored spot to look at from `from`: of 96 random unexplored spots, the one far from the AI's own fortress (the
+// enemy lives at least BASE_MIN_SEPARATION away) but not too far from `from`, so waves and scouts sweep outward from home
+// instead of crossing the map at random. Also used by the AI's scouts (core/match.ts).
+export function exploreSpot(from) {
   const home = state.bases[TEAM]; let best = null, bestScore = -Infinity;
   for (let k = 0; k < 96; k++) {
     const x = Math.random() * W, y = Math.random() * H; if (isTeamAreaExplored(TEAM, x, y)) continue;
     const score = hyp({ x, y }, home) - 1.2 * hyp({ x, y }, from); if (score > bestScore) { bestScore = score; best = { x, y }; }
   }
-  const p = best && nearestWalkable(best.x, best.y);
-  return p ? { kind: 'explore', x: p.x, y: p.y } : null;
+  return best && nearestWalkable(best.x, best.y);
 }
 function targetDone(t, wave) {
   if (!t) return true;
@@ -79,7 +86,10 @@ export function runAttackPlan() {
       plan.target = pickTarget(plan.rally, plan, lvl) || plan.target;
     }
   } else if (plan.phase === 'attack') {
-    const wave = role('wave');
+    let wave = role('wave');
+    // Reinforcements: fighters made during the attack join it in groups of REINFORCE_GROUP or more (one at a time they
+    // just die on the defences), except lvl.homeGuard of them who stay home.
+    if (lvl.reinforce && !plan.defend) { const extra = army.filter(free).slice(lvl.homeGuard); if (extra.length >= REINFORCE_GROUP) { setRole(extra, 'wave'); plan.launched += extra.length; wave = role('wave'); } }
     if (wave.length <= plan.launched * lvl.retreatAt) retreat(plan, lvl, wave);
     else if (targetDone(plan.target, wave)) { plan.target = pickTarget(centre(wave), plan, lvl); if (!plan.target) retreat(plan, lvl, wave); }
     else if (plan.target.kind === 'explore') { const known = pickTarget(centre(wave), plan, lvl); if (known && known.kind !== 'explore') plan.target = known; } // found something real

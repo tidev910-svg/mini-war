@@ -5,6 +5,7 @@
 // sound at once), minGap (seconds before it may start again), pitch (± random playback-rate spread). Data only.
 const n = (base, count) => Array.from({ length: count }, (_, i) => `${base}-${i + 1}.ogg`);
 const synth = name => [`synth:${name}`];
+const takes = (name, count) => Array.from({ length: count }, (_, i) => `synth:${name}#${i + 1}`);
 export const SOUNDS = {
   'ui.click': { files: ['ui/click.ogg'], bus: 'ui', volume: .5, maxVoices: 2, minGap: .04 },
   'ui.open': { files: ['ui/open.ogg'], bus: 'ui', volume: .55 },
@@ -22,6 +23,11 @@ export const SOUNDS = {
   'combat.bow': { files: n('combat/bow', 2), bus: 'sfx', volume: .25, maxVoices: 3, minGap: .05, pitch: .15 },
   'combat.arrowHit': { files: n('combat/arrow-hit', 3), bus: 'sfx', volume: .35, maxVoices: 3, minGap: .04, pitch: .12 },
   'combat.cannon': { files: n('combat/cannon', 3), bus: 'sfx', volume: .55, maxVoices: 3, minGap: .08, pitch: .08 },
+  // Melee hit by attacker type (infantry keeps the sword clash above); made in code, 3 takes each.
+  'combat.spear': { files: takes('hitSpear', 3), bus: 'sfx', volume: .45, maxVoices: 4, minGap: .03, pitch: .06 },
+  'combat.cavalry': { files: takes('hitCavalry', 3), bus: 'sfx', volume: .5, maxVoices: 4, minGap: .04, pitch: .06 },
+  'combat.scout': { files: takes('hitScout', 3), bus: 'sfx', volume: .35, maxVoices: 3, minGap: .04, pitch: .08 },
+  'combat.flag': { files: takes('flagShot', 2), bus: 'sfx', volume: .5, maxVoices: 3, minGap: .1, pitch: .05 },
   'combat.fall': { files: n('combat/fall', 3), bus: 'sfx', volume: .5, maxVoices: 3, minGap: .06, pitch: .1 },
   'build.place': { files: ['combat/build-place.ogg'], bus: 'sfx', volume: .6 },
   'economy.coins': { files: n('combat/coins', 2), bus: 'ui', volume: .45, minGap: .2 },
@@ -34,6 +40,12 @@ export const SOUNDS = {
   'event.trained': { files: synth('trained'), bus: 'event', volume: .45, minGap: .4 },
   'event.victory': { files: synth('victory'), bus: 'event', volume: .9 },
   'event.defeat': { files: synth('defeat'), bus: 'event', volume: .9 },
+  'order.formation': { files: synth('formation'), bus: 'ui', volume: .6, minGap: .3 },
+  'event.garrison': { files: synth('garrison'), bus: 'event', volume: .6, minGap: .5 },
+  'event.sortie': { files: synth('sortie'), bus: 'event', volume: .75, minGap: 3 },
+  'event.upgraded': { files: synth('upgraded'), bus: 'event', volume: .6, minGap: .5 },
+  'event.starving': { files: synth('starving'), bus: 'event', volume: .7, minGap: 10 },
+  'event.intruder': { files: synth('intruder'), bus: 'event', volume: .7, minGap: 25 },
 };
 // Positional sounds (battle): heard only inside the camera view plus AUDIO_VIEW_MARGIN of its size; quieter towards the
 // edges (down to AUDIO_EDGE_GAIN) and panned left/right by screen position (± AUDIO_PAN).

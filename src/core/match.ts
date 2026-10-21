@@ -18,7 +18,7 @@ import { setPauseButton, updateHUD, updateMatchClockHUD, updateTrainQueueHUD } f
 import { buildingDone, buildingVision, needsBuilder, updateBuildings } from '../sim/buildings';
 import { attackRange, hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
-import { aiLevel, aiUnitGoal, newAIPlan } from '../ai/attack';
+import { aiLevel, aiUnitGoal, exploreSpot, newAIPlan } from '../ai/attack';
 import { buildWorldDecor } from '../render/terrain';
 import { draw } from '../render/draw';
 import { clampToBounds, clearPath, separateUnits, steerTo, syncStructureObstacles } from '../sim/movement';
@@ -103,7 +103,9 @@ export function update(dt){
     // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell.
     const mineTargets=state.mines.filter(m=>m.owner!==1).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
     let candidate=mineTargets.length?{x:mineTargets[0].x,y:mineTargets[0].y}:null;
-    if(!candidate||Math.hypot(candidate.x-u.x,candidate.y-u.y)<70){candidate=null;for(let k=0;k<48;k++){const gx=Math.floor(Math.random()*cols),gy=Math.floor(Math.random()*rows),idx=gy*cols+gx;if(!state.enemyFogSeen[idx]){candidate={x:(gx+.5)*cw,y:(gy+.5)*ch};break;}}}
+    // Scouts sweep the edge of what the AI knows, moving outward from home (no knowledge of where the enemy lives).
+    if(u.type==='scout')candidate=exploreSpot(u)||candidate;
+    else if(!candidate||Math.hypot(candidate.x-u.x,candidate.y-u.y)<70){candidate=null;for(let k=0;k<48;k++){const gx=Math.floor(Math.random()*cols),gy=Math.floor(Math.random()*rows),idx=gy*cols+gx;if(!state.enemyFogSeen[idx]){candidate={x:(gx+.5)*cw,y:(gy+.5)*ch};break;}}}
     if(!candidate)candidate={x:Math.random()*W,y:45+Math.random()*(H-75)};
     u.dest=candidate;u.order='explore';
    }
@@ -174,7 +176,7 @@ export function update(dt){
  // The blue fortress is spotted when its centre is in sight or any red unit's sight reaches its walls.
  const blueBase=state.bases[0],spotted=aiCanSee(blueBase.x,blueBase.y)||aiSources.some(s=>Math.hypot(s.x-blueBase.x,s.y-blueBase.y)<=s.r+Math.max(blueBase.w,blueBase.h)/2);
  if(spotted)state.enemyMemory.base={x:blueBase.x,y:blueBase.y,age:0};
- for(const u of state.units){if(u.team===0&&aiCanSee(u.x,u.y)){const old=state.enemyMemory.targets.find(m=>m.id===u.id);if(old){old.x=u.x;old.y=u.y;old.age=0;}else state.enemyMemory.targets.push({id:u.id,x:u.x,y:u.y,age:0});}}
+ for(const u of state.units){if(u.team===0&&aiCanSee(u.x,u.y)){const old=state.enemyMemory.targets.find(m=>m.id===u.id);if(old){old.x=u.x;old.y=u.y;old.age=0;}else state.enemyMemory.targets.push({id:u.id,x:u.x,y:u.y,age:0,type:u.type});}}
  for(const m of state.enemyMemory.targets)m.age+=dt;state.enemyMemory.targets=state.enemyMemory.targets.filter(m=>m.age<90);
  if(state.enemyMemory.base)state.enemyMemory.base.age+=dt;
  for(const e of state.effects)e.life-=dt;state.effects=state.effects.filter(e=>e.life>0);

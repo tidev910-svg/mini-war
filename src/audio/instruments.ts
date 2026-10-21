@@ -73,3 +73,28 @@ export function makeReverb(ctx, seconds = 2.2, decay = 3) {
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** decay; }
   const conv = ctx.createConvolver(); conv.buffer = ir; return conv;
 }
+// Swing / swish: band-passed noise whose centre sweeps from `from` to `to` Hz.
+export function whoosh(ctx, dest, t, { dur = .14, gain = .25, from = 900, to = 3200 } = {}) {
+  const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  n.buffer = noise(ctx); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(from, t); f.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + dur * .6); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  n.connect(f).connect(g).connect(dest); n.start(t, Math.random()); n.stop(t + dur + .02);
+}
+// Metal on metal: a few inharmonic partials that die fast, over a bright click.
+export function clang(ctx, dest, t, { freq = 1100, gain = .2, dur = .35 } = {}) {
+  for (const [ratio, amp, life] of [[1, 1, 1], [1.47, .6, .7], [2.09, .45, .5], [2.83, .3, .35], [3.76, .2, .25]]) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = freq * ratio; ramp(g.gain, t, gain * amp, .001, dur * life);
+    o.connect(g).connect(dest); o.start(t); o.stop(t + dur * life + .03);
+  }
+  const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  n.buffer = noise(ctx); f.type = 'highpass'; f.frequency.value = 3500; ramp(g.gain, t, gain * .8, .001, .03);
+  n.connect(f).connect(g).connect(dest); n.start(t, Math.random()); n.stop(t + .05);
+}
+// Bow or crossbow string: a low pluck whose pitch drops at once.
+export function twang(ctx, dest, t, { freq = 180, gain = .3 } = {}) {
+  const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(freq * 1.6, t); o.frequency.exponentialRampToValueAtTime(freq, t + .03);
+  f.type = 'lowpass'; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(300, t + .2); ramp(g.gain, t, gain, .002, .22);
+  o.connect(f).connect(g).connect(dest); o.start(t); o.stop(t + .26);
+}

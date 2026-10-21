@@ -9,6 +9,7 @@
 // updateSoundscape() runs once per frame (from draw()) and turns changes in the match state into sounds — new hits,
 // shots and falls, captures and losses, finished buildings, new units, spending, selection, start and end. Because it
 // reads the state rather than hooking the simulation, the PvP guest hears the same battle from its snapshots.
+import { regionAt } from '../map/regions';
 import { AUDIO_EDGE_GAIN, AUDIO_MAX_VOICES, AUDIO_PAN, AUDIO_VIEW_MARGIN, COINS_MIN_SPEND, MUSIC_HEAT, SOUNDS } from '../config/audio';
 import { renderSynth } from './synth';
 import { addBattleHeat, updateMusic } from './music';
@@ -87,8 +88,13 @@ export function playSound(name, pos = null, queue = true) {
 // ---- soundscape: state changes → sounds ----
 let primed = false, wasStarted = false, wasEnded = false, lastTime = 0;
 let seenFx = new Set(), seenShots = new Set(), owners = [], buildings = new Map(), ownUnits = new Set(), selectedCount = 0, wealth = 0;
+// Later additions: formations (id → kind), garrison / sortie counts, upgrade level, supply state, intruders in sight.
+let formations = new Map(), inside = 0, sortie = 0, upgrades = 0, supply = 'ok', intruders = 0;
+// Melee hit sound by attacker type; ranged hits (archer, guns, flags) use the arrow hit.
+const HIT_SOUND = { infantry: 'combat.clash', spearman: 'combat.spear', cavalry: 'combat.cavalry', scout: 'combat.scout', guard: 'combat.clash' };
+const INTRUDER_RANGE = 700; // enemy seen this close to the fortress, or inside a region the side holds
 const total = r => r ? r.food + r.wood + r.stone + r.gold : 0;
-function reset() { primed = false; seenFx = new Set(); seenShots = new Set(); owners = []; buildings = new Map(); ownUnits = new Set(); selectedCount = 0; }
+function reset() { primed = false; seenFx = new Set(); seenShots = new Set(); owners = []; buildings = new Map(); ownUnits = new Set(); selectedCount = 0; formations = new Map(); inside = 0; sortie = 0; upgrades = 0; supply = 'ok'; intruders = 0; }
 export function updateSoundscape() {
   updateMusic(audioGraph());
   if (!state) return;
@@ -104,12 +110,12 @@ export function updateSoundscape() {
   for (const e of state.effects) {
     if (e.id == null) continue; fx.add(e.id);
     if (!primed || seenFx.has(e.id) || !seen(e.x, e.y)) continue;
-    if (playSound(e.kind === 'fall' ? 'combat.fall' : e.src === 'archer' || e.src === 'gun' ? 'combat.arrowHit' : 'combat.clash', e)) addBattleHeat(e.kind === 'fall' ? MUSIC_HEAT.fall : MUSIC_HEAT.clash);
+    if (playSound(e.kind === 'fall' ? 'combat.fall' : HIT_SOUND[e.src] || 'combat.arrowHit', e)) addBattleHeat(e.kind === 'fall' ? MUSIC_HEAT.fall : MUSIC_HEAT.clash);
   }
   for (const b of state.bullets) {
     if (b.id == null) continue; shots.add(b.id);
     if (!primed || seenShots.has(b.id) || !seen(b.x, b.y)) continue;
-    if (playSound(b.attackerType === 'archer' ? 'combat.bow' : 'combat.cannon', b) && b.attackerType !== 'archer') addBattleHeat(MUSIC_HEAT.cannon);
+    if (playSound(b.attackerType === 'archer' ? 'combat.bow' : b.attackerType === 'flag' ? 'combat.flag' : 'combat.cannon', b) && !b.attackerType) addBattleHeat(MUSIC_HEAT.cannon);
   }
   seenFx = fx; seenShots = shots;
   // Flags: captured by the local side, or lost by it.
@@ -139,5 +145,27 @@ export function updateSoundscape() {
   const w = total(state.resources?.[team]);
   if (primed && wealth - w >= COINS_MIN_SPEND) playSound('economy.coins');
   wealth = w;
+  // Formations: a new one, or a new shape for one, beats the drum (formations.md).
+  const nextFormations = new Map();
+  for (const f of state.formations || []) if (f.team === team) { nextFormations.set(f.id, f.kind); if (primed && formations.get(f.id) !== f.kind) playSound('order.formation'); }
+  formations = nextFormations;
+  // Flag defence (flag-defense.md): units going in, the garrison sortieing.
+  const insideNow = (state.garrisons || []).filter(u => u.team === team).length, sortieNow = state.units.filter(u => u.team === team && u.sortie != null).length;
+  if (primed && insideNow > inside) playSound('event.garrison');
+  if (primed && sortieNow > sortie) playSound('event.sortie');
+  inside = insideNow; sortie = sortieNow;
+  // Upgrades finished: farm levels and training lanes.
+  const upgradesNow = state.buildings.reduce((t, b) => t + (b.team === team && b.kind === 'farm' ? b.level - 1 : 0), 0) + (state.queueLanes?.[team] || 0);
+  if (primed && upgradesNow > upgrades) playSound('event.upgraded');
+  upgrades = upgradesNow;
+  // Food store empty: the supply warning starts.
+  const supplyNow = state.supply?.[team]?.status || 'ok';
+  if (primed && supply === 'ok' && supplyNow !== 'ok') playSound('event.starving');
+  supply = supplyNow;
+  // Enemy units come into sight near the fortress or inside a held region (first one after a quiet spell).
+  const home = state.bases.find(b => b.team === team);
+  const intrudersNow = state.units.filter(u => u.team !== team && u.hp > 0 && seen(u.x, u.y) && ((home && Math.hypot(u.x - home.x, u.y - home.y) < INTRUDER_RANGE) || regionAt(u.x, u.y)?.owner === team)).length;
+  if (primed && intrudersNow > 0 && intruders === 0) playSound('event.intruder');
+  intruders = intrudersNow;
   primed = true;
 }

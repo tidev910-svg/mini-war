@@ -1,6 +1,6 @@
 # Bản đồ, địa hình & đồ hoạ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-21
 
 ## Mô tả
 Bản đồ vuông lớn, nhìn từ trên xuống: đồng cỏ, rừng dày, một con sông và 9 hồ có bãi cát, vùng đá, ruộng tài nguyên, đường đất. Khoảng 2.900 vật thể trang trí (cây thông, cây lá rộng, bụi cây, cụm đá, đá nhỏ, cỏ lau ven nước, lá súng trên hồ) được vẽ như sprite đứng và sắp xếp theo chiều sâu cùng quân lính để quân có thể đi trước/sau cây. Vật thể trang trí không chặn đường đi.
@@ -74,7 +74,25 @@ Màu phe: `teamPalette(team)`, xanh lá-lam cho team 0 và đỏ đất cho team
   - Màu chữ là màu sáng của phe (`--text-main` khi trung lập), viền `--text-on-map-stroke`.
 - Tên công trình và sân tập kết ẩn khi `renderView.scale` < `MAP_LABEL_MIN_SCALE` = 0,28, để không phủ kín bản đồ khi thu nhỏ hết.
 
+**Hiệu ứng trận đánh** (`render/fx.ts`, 2026-10-21) — chỉ để hiển thị, không nằm trong `state`. `updateFx()` (mỗi frame trong `draw()`) so trạng thái giữa các frame như `updateSoundscape()`: hiệu ứng / đạn mới theo `id`, công trình mới / xong / mất, cờ đổi chủ, số quân đồn trú và xuất kích. Hạt chỉ sinh ở chỗ phe mình đang thấy; dừng khi tạm dừng; tối đa `FX_MAX_PARTICLES` = 450; chất lượng "Thấp" sinh một nửa. Màu trong `FX_COLORS` (`config/visuals.ts`).
+
+| Tình huống | Hiệu ứng |
+|---|---|
+| Tên của cung thủ và của cờ | Mũi tên: thân gỗ, đầu sắt, lông màu phe, quay theo hướng mục tiêu |
+| Đạn pháo đài, tháp, tiền đồn | Quả cầu lửa sáng có vệt đuôi (6 vị trí gần nhất); lúc bắn: chớp lửa + khói ở nòng |
+| Cận chiến trúng (lính, giáo, kỵ, trinh sát, quái) | Vệt chém trắng + chớp sáng nhỏ + tia lửa (kỵ 9, lính 6, giáo / quái 5, trinh sát 4) |
+| Tên trúng | Mảnh gỗ văng + chút bụi |
+| Đạn pháo / súng trúng | Chớp lửa, tia lửa, khói, đất văng |
+| Quân ngã | Bụi dưới chân |
+| Đặt công trình / xây xong | Bụi / bụi + tia vàng |
+| Công trình bị phá (chỗ đang thấy) | Chớp lửa, bụi lớn, cột khói, gạch đá văng (to theo cỡ công trình) |
+| Cờ đổi chủ (thấy được hoặc của mình) | Vòng sáng màu phe mới + tia vàng |
+| Quân vào cờ / xuất kích (chỉ cờ của mình) | Bụi / bụi lớn + vòng màu phe |
+
+Trước 2026-10-21: đạn là một gạch ngắn cùng màu, trúng đòn là một vòng tròn loé; đạn vẽ cả trong sương mù (nay chỉ vẽ chỗ phe mình thấy).
+
 ## Code liên quan
+- [src/render/fx.ts](../../src/render/fx.ts): `updateFx()`, `drawProjectiles(show)`, `drawFx(inView)`, `fxCount()`.
 - [src/map/terrain.ts](../../src/map/terrain.ts), [src/render/terrain.ts](../../src/render/terrain.ts), [src/render/buildings.ts](../../src/render/buildings.ts), [src/render/units.ts](../../src/render/units.ts), [src/render/draw.ts](../../src/render/draw.ts): `buildTerrain()`, `buildWorldDecor()`, `DECOR_PASSES`, `decorSprite()`, `drawDecor()`, `decorLayerCanvas()`, `DECOR_LAYER_SCALE`, `makePineSprite()`, `makeBroadleafSprite()`, `makeBushSprite()`, `makeStoneSprite()`, `makeReedSprite()`, `makeLilySprite()`, `drawRockClusterSprite()`; danh sách `treeDecor`, `rockDecor`, `shoreDecor`, `waterDecor`; `drawGrassPatch()`, `drawTerrainDetail()`, `drawBase()`, `drawMusterYard()`, `drawUnit()`, `drawUnitHealthBar()`, `drawUnitSelection()`, `drawFarm()`, `drawBuilding()`, `drawBuildingOverlay()`, `draw()`.
 - Tiện ích: `drawUprightAt()`, `roundRect()`, `bar()`, `healthBar()`, `mapText()`, `mapBanner()`, `mapFontPx()`, `queueMapLabel()`, `flushMapLabels()`, `pill()`, `teamPalette()`, `unitTargetHeight()`, `zoomLerp()`, `decorRandom()`.
 - Toạ độ & camera: xem [architecture.md](../architecture.md).
@@ -113,4 +131,5 @@ Các cách đã áp dụng:
 - **Sương mù**: xem [fog-of-war.md](fog-of-war.md).
 
 ## Giới hạn / việc tồn đọng
+- Hiệu ứng là hình vẽ đơn giản bằng canvas (chưa có sprite cháy nổ); chưa có tiếng nổ riêng cho công trình bị phá.
 - `worldToScreenPlane()` là hàm đồng nhất: chưa phải isometric thật dù có thư mục backup "isometric-renderer".
