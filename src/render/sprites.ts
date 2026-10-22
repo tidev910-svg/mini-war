@@ -34,7 +34,12 @@ export const SPEARMAN_DIRECTIONS=['down','left','up','right'],SPEARMAN_ROWS=16;
 export const spearmanClips={idle:{frames:4,fps:1.25},walk:{frames:4,fps:7}};// The authored motion sheet includes four attack poses for each direction. Build this cached atlas once at image load;
 // simulation, movement, selection and the idle/walk atlas remain untouched.
 export const spearmanAttackSpriteSheet=document.createElement('canvas');
-export const spearmanAttackClip={frames:4,directions:4};
+// The generated atlas has 4 frame columns and 8 rows: 4 facings for each of 2 teams.
+export const spearmanAttackClip={frames:4,directions:4,rows:8};
+export function spearmanAttackFrameRect(sheetWidth,sheetHeight,frame,team,direction){
+ const sw=sheetWidth/spearmanAttackClip.frames,sh=sheetHeight/spearmanAttackClip.rows,row=team*spearmanAttackClip.directions+direction;
+ return {sx:frame*sw,sy:row*sh,sw,sh};
+}
 const spearmanMotionSource=new Image();
 spearmanMotionSource.onload=()=>buildSpearmanAttackAtlas();
 spearmanMotionSource.src=import.meta.env.BASE_URL+'assets/units/spearman/spearman-motion-source.png';

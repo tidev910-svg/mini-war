@@ -1,6 +1,7 @@
 // Combat presentation events are render-only: changing the display option must not change simulation results.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadGame, quietMatch } from './helpers/game';
+import { spearmanAttackClip, spearmanAttackFrameRect } from '../src/render/sprites';
 
 let g;
 beforeAll(async () => { g = await loadGame(); });
@@ -14,6 +15,14 @@ function pair(attackerType) {
 }
 
 describe('Combat VFX isolation', () => {
+  it('draws each Spearman attack direction from one square atlas cell for both teams', () => {
+    const width = 4 * 256, height = spearmanAttackClip.rows * 256;
+    for (let team = 0; team < 2; team++) for (let direction = 0; direction < 4; direction++) for (let frame = 0; frame < 4; frame++) {
+      const rect = spearmanAttackFrameRect(width, height, frame, team, direction);
+      expect(rect).toEqual({ sx: frame * 256, sy: (team * 4 + direction) * 256, sw: 256, sh: 256 });
+    }
+  });
+
   it('emits one render event with the real melee hit and preserves damage', () => {
     for (const type of ['scout', 'infantry', 'spearman', 'archer', 'cavalry']) {
       const { state, attacker, target } = pair(type);

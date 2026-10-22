@@ -6,7 +6,7 @@ import { TILE_SIZE } from '../config/map';
 import { normalizeUnitType } from '../core/game';
 import { specs } from '../config/balance';
 import { unitCombatVisual } from './fx';
-import { SPEARMAN_DIRECTIONS, SPEARMAN_ROWS, archerAttackClip, archerAttackSpriteSheets, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryAttackClip, infantryAttackSheets, infantryClips, infantrySpriteSheet, scoutClips, scoutFootAnchors, scoutSpriteSheet, spearmanAttackClip, spearmanAttackSpriteSheet, spearmanClips, spearmanSpriteSheet } from './sprites';
+import { SPEARMAN_DIRECTIONS, SPEARMAN_ROWS, archerAttackClip, archerAttackSpriteSheets, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryAttackClip, infantryAttackSheets, infantryClips, infantrySpriteSheet, scoutClips, scoutFootAnchors, scoutSpriteSheet, spearmanAttackClip, spearmanAttackFrameRect, spearmanAttackSpriteSheet, spearmanClips, spearmanSpriteSheet } from './sprites';
 import { archerAttackDirection, spearmanAttackDirection } from '../config/visuals';
 
 export function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
@@ -100,12 +100,11 @@ function drawUnitBody(u,action=null){
   const height=unitTargetHeight('spearman')*.96,cellW=spearmanSpriteSheet.naturalWidth/4,cellH=spearmanSpriteSheet.naturalHeight/SPEARMAN_ROWS,width=height*cellW/cellH;
   const attackSheet=spearmanAttackSpriteSheet;
   if(action?.phase&&attackSheet.width&&attackSheet.height){
-   const attackW=attackSheet.width/spearmanAttackClip.frames,attackH=attackSheet.height/spearmanAttackClip.directions;
    const progress=1-Math.max(0,action.left/Math.max(.001,action.duration));
    const frame=action.phase==='windup'?(progress<.5?0:1):action.phase==='impact'?2:3;
    const direction=Math.max(0,SPEARMAN_DIRECTIONS.indexOf(spearmanAttackDirection(action.angle)));
-   const row=(blue?0:4)+direction;
-   ctx.drawImage(attackSheet,frame*attackW,row*attackH,attackW,attackH,u.x-width/2,u.y-height*.90,width,height);
+   const clip=spearmanAttackFrameRect(attackSheet.width,attackSheet.height,frame,blue?0:1,direction);
+   ctx.drawImage(attackSheet,clip.sx,clip.sy,clip.sw,clip.sh,u.x-width/2,u.y-height*.90,width,height);
    return;
   }
   const clip=spearmanClips[u.moving?'walk':'idle'];
