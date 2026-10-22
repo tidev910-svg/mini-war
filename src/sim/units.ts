@@ -1,5 +1,7 @@
 // @ts-nocheck
 // Unit purchase, training queue and deployment in the muster yard (docs/features/units.md).
+import { teamCanSee } from './fog';
+import { nearestKnownTarget } from './knowledge';
 import { recordTrained, recordUnitDeath } from './stats';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { terrainType } from '../map/terrain';
@@ -118,7 +120,14 @@ export function updateTraining(dt){
 }
 // Unit buttons: the guest checks locally first so it sees the reason; the host re-validates every purchase.
 export function requestBuy(type){if(mode==='pvp'&&netRole==='guest'){const problem=buyProblem(type,localTeam());if(problem){addLog(problem);if(Object.hasOwn(specs,type))notifyShortfall(localTeam(),specs[type].cost);return;}}requestAction('buy',{unit:type});}
-export function commandAttack(team=localTeam(),ids=null){if(ended||paused)return;const wanted=ids?new Set(ids):new Set(state.units.filter(u=>u.team===team&&u.selected).map(u=>u.id));const chosen=state.units.filter(u=>u.team===team&&wanted.has(u.id));for(const u of chosen){u.order='attack';u.dest=null;u.target=null;u.path=null;u.goal=null;}if(team===localTeam())addLog(chosen.length?`${chosen.length} đơn vị được chọn nhận lệnh tấn công!`:'Chưa chọn quân. Hãy chọn lính trước.');}
+export function commandAttack(team=localTeam(),ids=null){if(ended||paused)return;const wanted=ids?new Set(ids):new Set(state.units.filter(u=>u.team===team&&u.selected).map(u=>u.id));const chosen=state.units.filter(u=>u.team===team&&wanted.has(u.id));for(const u of chosen){u.order='attack';u.dest=null;u.target=null;u.path=null;u.goal=null;u.attackGoal=null;}
+ if(team!==localTeam())return;
+ if(!chosen.length){addLog('Chưa chọn quân. Hãy chọn lính trước.');return;}
+ // With no enemy in sight the units march on the nearest enemy target the side has found (sim/knowledge.ts); with none, they wait.
+ const c={x:chosen.reduce((t,u)=>t+u.x,0)/chosen.length,y:chosen.reduce((t,u)=>t+u.y,0)/chosen.length};
+ const seen=state.units.some(v=>v.team!==team&&v.hp>0&&teamCanSee(team,v.x,v.y))||state.buildings.some(b=>b.team!==team&&b.hp>0&&teamCanSee(team,b.x,b.y))||state.bases.some(b=>b.team!==team&&b.hp>0&&teamCanSee(team,b.x,b.y));
+ const known=nearestKnownTarget(team,c.x,c.y),names={base:'pháo đài địch',flag:'cờ địch',farm:'nông trại địch',tower:'tháp địch',outpost:'tiền đồn địch'};
+ addLog(seen?`${chosen.length} quân tấn công!`:known?`${chosen.length} quân tấn công: chưa thấy địch, tiến tới ${names[known.kind]||'mục tiêu'} đã phát hiện.`:`${chosen.length} quân sẵn sàng tấn công nhưng chưa phát hiện địch nào — hãy cho trinh sát đi trước.`,seen||known?'':'danger');}
 // Stop (S): the chosen units drop their order and path and hold where they are.
 export function stopUnits(team,ids){if(ended||paused)return;const want=new Set(ids||[]);for(const u of state.units)if(u.team===team&&want.has(u.id)){u.order='hold';u.dest=null;u.target=null;u.path=null;u.goal=null;u.moveGroup=null;}}
 // Delete: the chosen units are removed from the battlefield (no refund), like deleting units in Age of Empires.

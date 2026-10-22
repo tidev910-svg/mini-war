@@ -1,6 +1,6 @@
 # Sương mù chiến tranh & tầm nhìn
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20 · Theo đặc tả "MINI WAR V3.1 — Hệ thống sương mù chiến tranh và tầm nhìn"
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22 · Theo đặc tả "MINI WAR V3.1 — Hệ thống sương mù chiến tranh và tầm nhìn"
 
 ## Mô tả
 Ba trạng thái cho mỗi ô và mỗi phe:
@@ -58,6 +58,7 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
 - `serializeSnapshot()` bỏ `fogSeen`, `enemyFogSeen` khỏi gói gửi.
 
 ## Tương tác
+- [combat.md](combat.md): mọi phe chỉ nhắm thứ đang thấy (từ 2026-10-22, cả quân xanh ở chế độ AI); lệnh tấn công khi chưa thấy địch đi tới mục tiêu đã phát hiện (`sim/knowledge.ts`).
 - [combat.md](combat.md): lọc mục tiêu theo tầm nhìn.
 - [buildings.md](buildings.md): mọi công trình chỉ đặt được trên vùng đã khám phá; công trình là nguồn tầm nhìn.
 - [territory.md](territory.md): ranh giới vùng chỉ vẽ ở cạnh mà một ô kề đã khám phá; điểm chiếm hiện khi đã khám phá.
@@ -78,7 +79,6 @@ Fog là dữ liệu cục bộ của từng trình duyệt, không đồng bộ.
 - Đã chạy thử 2026-10-20: ảnh chụp trinh sát thấy nông trại đỏ rồi đi khỏi — nông trại vẫn hiện trong vùng mờ; toàn bộ smoke đạt; `draw()` 2,8 ms/frame; AI 8 phút × 3 bản đồ không lỗi.
 
 ## Giới hạn / việc tồn đọng
-- Ở chế độ AI, quân xanh vẫn nhắm được mục tiêu trong sương mù ([combat.md](combat.md)).
 - Khoảng 2 ô ở mép vùng đã khám phá bị phủ mờ một phần (đổi lấy việc ô chưa khám phá không lộ chút nào).
 - Cờ, mỏ và công trình của mình ở chỗ không đang nhìn thấy nằm dưới lớp sương mờ (hơi tối đi).
 - Ký ức vùng mờ tính ở máy mỗi người từ `state`; đặt công trình, chọn cờ để chiếm vẫn kiểm tra theo bản đồ đã khám phá như trước.

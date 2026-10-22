@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Match lifecycle: fresh() map and state, the simulation step update(), finish() and the frame loop (docs/features/match-flow.md).
+import { attackGoal, updateKnowledge } from '../sim/knowledge';
 import { enterGarrison, sortieGoal, sortieMayChase, updateFlagDefense } from '../sim/garrison';
 import { newStats, recordGathered, sampleStats, updateStats } from '../sim/stats';
 import { showMatchStats } from '../ui/results';
@@ -79,7 +80,7 @@ export function update(dt){
   updateSupply(0);updateSupply(1);
  }
  if(mode==='ai'&&aiTimer>=aiLevel().tick){aiTimer=0;runEnemyAI();}
- updateBuildings(dt);syncStructureObstacles();updateFormations(dt);updateFlagDefense(dt);
+ updateBuildings(dt);syncStructureObstacles();updateFormations(dt);updateFlagDefense(dt);updateKnowledge();
  // unit movement and combat
  for(const u of [...state.units]){
   if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
@@ -131,6 +132,9 @@ export function update(dt){
    else if(u.garrisonTarget!=null&&state.regions[u.garrisonTarget]?.cp&&Math.hypot(u.x-state.regions[u.garrisonTarget].cp.x,u.y-state.regions[u.garrisonTarget].cp.y)<=FLAG_DEFENSE.enterRadius){enterGarrison(u);continue;}
    clampToBounds(u);
   }
+  // Attack order with no enemy in sight (player units): march on the nearest known enemy target (sim/knowledge.ts);
+  // reaching an enemy flag captures it, reaching a structure brings it into sight and into the fight.
+  else if(u.order==='attack'&&!engaged&&!target&&(mode==='pvp'||u.team===0)){const g=attackGoal(u);if(g&&Math.hypot(g.x-u.x,g.y-u.y)>30){steerTo(u,g.x,g.y,speed,dt);clampToBounds(u);}}
   // Flag defenders (sim/garrison.ts): hold while the flag is threatened, walk back in once it has been calm.
   else if(u.order==='sortie'&&!engaged){const p=sortieGoal(u);if(p){if(Math.hypot(p.x-u.x,p.y-u.y)<=FLAG_DEFENSE.enterRadius){enterGarrison(u);continue;}steerTo(u,p.x,p.y,speed,dt);clampToBounds(u);}}
   // Formation members walk to their slot (or column place) when not fighting (sim/formation.ts). A slot that slid less
@@ -152,7 +156,7 @@ export function update(dt){
  // Integrated fortress cannons preserve the former tower firing stats.
  for(const base of state.bases)for(let index=0;index<(base.guns||[]).length;index++){
   const gun=base.guns[index];if(!gun.active)continue;gun.cool-=dt;const source=fortressGunPosition(base,index);let target=null,bd=190;
-  for(const u of state.units){if(u.team===base.team)continue;if((mode==='pvp'&&!teamCanSee(base.team,u.x,u.y))||(mode==='ai'&&base.team===1&&!aiCanSee(u.x,u.y)))continue;const d=Math.hypot(source.x-u.x,source.y-u.y);if(d<bd){bd=d;target=u;}}
+  for(const u of state.units){if(u.team===base.team)continue;if(!teamCanSee(base.team,u.x,u.y))continue;const d=Math.hypot(source.x-u.x,source.y-u.y);if(d<bd){bd=d;target=u;}}
   if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({id:nextFxId(),x:source.x,y:source.y-8,target,damage:FORTRESS_GUN_DAMAGE[index]??FORTRESS_GUN_DAMAGE[0],team:base.team,speed:320,life:1.2});}
  }
  // Neutral monsters guarding the gold mines attack nearby player units.

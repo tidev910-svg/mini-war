@@ -127,7 +127,7 @@ export function updateBuildings(dt){
   const gun=buildingGun(b);if(!gun)continue;
   b.cool-=dt;if(b.cool>0)continue;
   let target=null,bd=gun.range;
-  for(const u of state.units){if(u.team===b.team||u.hp<=0)continue;if((mode==='pvp'||b.team===1)&&!teamCanSee(b.team,u.x,u.y))continue;const d=Math.hypot(u.x-b.x,u.y-b.y);if(d<bd){bd=d;target=u;}}
+  for(const u of state.units){if(u.team===b.team||u.hp<=0)continue;if(!teamCanSee(b.team,u.x,u.y))continue;const d=Math.hypot(u.x-b.x,u.y-b.y);if(d<bd){bd=d;target=u;}}
   if(target){b.cool=gun.cooldown;state.bullets.push({id:nextFxId(),x:b.x,y:b.y-24,target,damage:gun.damage,team:b.team,speed:320,life:1.2});}
  }
 }

@@ -49,4 +49,3 @@
 | 8.1 | Mỏ cạn dần hay vô hạn? | Vô hạn | |
 | 8.2 | Có điều kiện thắng theo số vùng? | Không, chỉ thắng khi phá pháo đài | |
 | 8.3 | Có thưởng lãnh thổ +10%? | Không | |
-| 8.4 | Nút "Tấn công" làm gì khi chưa thấy địch? | Ở chế độ AI, quân xanh vẫn nhắm được địch trong sương (không đối xứng với AI) | |

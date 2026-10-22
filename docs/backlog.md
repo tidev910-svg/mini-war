@@ -9,7 +9,6 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 
 ## Lối chơi
 - [ ] **Lỗi thỉnh thoảng:** smoke `path` hỏng 1 lần (2026-10-21): 6 quân lập lại đường 82 lần, không tới đích trong 300 giây (chạy lại 5/5 đạt). Nghi liên quan công trình chặn đường / tách quân (2026-10-19). → [pathfinding.md](features/pathfinding.md)
-- [ ] Chế độ AI: quân xanh nhắm được địch trong sương mù (không đối xứng). Cần quyết nút "Tấn công" làm gì khi chưa thấy địch. → [combat.md](features/combat.md), [fog-of-war.md](features/fog-of-war.md)
 - [ ] AI mở rộng chậm nếu trinh sát chết sớm; nhóm chiếm cờ và thợ xây bị rút khỏi đội hình. → [ai-opponent.md](features/ai-opponent.md)
 - [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3). → [territory.md](features/territory.md)
 - [ ] Tốc độ giảm tiến độ khi bỏ trống cờ (60 giây cho cả thanh) là số tạm. → [territory.md](features/territory.md)
@@ -43,6 +42,8 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-22 (công bằng sương mù khi tấn công):** mọi phe, mọi chế độ chỉ nhắm thứ đang thấy (hết chuyện quân xanh nhắm địch trong sương ở chế độ AI); bấm Tấn công khi chưa thấy địch thì quân tiến tới mục tiêu địch đã phát hiện gần nhất, chưa phát hiện gì thì đứng chờ và báo cần trinh sát.
+
 **2026-10-21 (hiệu ứng trận đánh):** mũi tên có hình, đạn súng là cầu lửa có vệt + chớp lửa và khói ở nòng; trúng đòn có vệt chém, tia lửa, mảnh gỗ, nổ nhỏ; quân ngã có bụi; công trình bị phá có khói và gạch đá; xây xong, chiếm cờ, vào cờ, xuất kích đều có hiệu ứng; đạn không còn lộ trong sương mù.
 
 **2026-10-21 (AI mạnh hơn theo độ khó):** Thường / Khó xây thêm nông trại theo thời gian, mua thêm hàng đợi, chọn quân khắc chế loại quân đã thấy và dùng tài nguyên thừa, tiếp viện theo nhóm; Khó ưu tiên phá nông trại; trinh sát dò có hệ thống. Bài thử cố định: Khó thắng 4/4, nhanh hơn trước ≈ 17%; Thường chưa khá hơn.

@@ -1,6 +1,6 @@
 # Chiến đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung thủ và pháo bắn đạn bay đuổi theo mục tiêu; các loại khác gây sát thương ngay. Lính giáo khắc chế kỵ binh.
@@ -19,13 +19,20 @@ Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung th�
 | Thiếu tiếp tế | tốc độ × 0,85; hồi chiêu ÷ 0,9 | `supplyFactor()`, xem [economy.md](economy.md) |
 
 Chọn mục tiêu (`nearestEnemy(u)`), chạy mỗi frame cho từng quân:
-1. Quân địch gần nhất. Lọc theo tầm nhìn: ở **PvP** mọi phe chỉ nhắm quân mình đang thấy; ở **AI** chỉ quân đỏ bị lọc (`aiCanSee()`), quân xanh nhắm được cả quân trong sương mù.
-2. Pháo đài địch thay thế nếu gần hơn quân tốt nhất ít nhất 20 (hoặc chưa có mục tiêu). Ở AI, quân xanh luôn "biết" pháo đài đỏ; các trường hợp khác phải đang nhìn thấy.
-3. Công trình địch (`state.buildings`) đang thấy — cả hai phe (ở chế độ AI, quân xanh thấy hết) — nếu gần hơn ít nhất 15.
+**Mọi phe, ở mọi chế độ, chỉ nhắm thứ phe mình đang nhìn thấy** (`teamCanSee()`; quyết định 8.4, 2026-10-22 — trước đó ở chế độ AI quân xanh nhắm được cả quân, công trình và pháo đài đỏ trong sương mù). Súng pháo đài và súng công trình theo cùng luật.
+1. Quân địch gần nhất đang thấy (bỏ qua quân đang đồn trú trong cờ).
+2. Pháo đài địch (còn đứng, đang thấy) thay thế nếu gần hơn quân tốt nhất ít nhất 20 (hoặc chưa có mục tiêu).
+3. Công trình địch đang thấy, nếu gần hơn ít nhất 15.
 
 Công trình bị đánh về 0 máu → `destroyBuilding()` (xoá hẳn; phá tiền đồn địch thì cờ vùng đó chiếm được). Cột cờ không phải công trình, không bị đánh; chiếm bằng cách đứng trong vòng cờ ([territory.md](territory.md)). Tháp và tiền đồn bắn quân địch: xem [buildings.md](buildings.md).
 
 Trong vòng quân của `update()`, tốc độ và hồi chiêu dùng biến cục bộ `speed`, `cooldown` (đã nhân hệ số thiếu tiếp tế), không dùng thẳng `s.speed`, `s.cooldown`.
+
+**Lệnh tấn công** (phím A / nút khiên đỏ, `commandAttack()`): quân nhận `order='attack'`.
+- Có địch đang thấy: đuổi mục tiêu gần nhất như dưới đây.
+- **Không thấy địch nào:** quân của người chơi tiến tới **mục tiêu địch gần nhất mà phe mình đã phát hiện** (`attackGoal()`, `sim/knowledge.ts`): công trình, cờ do địch giữ, pháo đài — như lần cuối nhìn thấy. Tới nơi thì thấy và đánh (công trình), hoặc đứng trong vòng cờ để chiếm (cờ). Mục tiêu đã mất (nhìn lại thấy trống, cờ đổi chủ) thì chuyển sang mục tiêu đã biết kế tiếp.
+- Chưa phát hiện gì: quân đứng chờ, thông báo đỏ "chưa phát hiện địch nào — hãy cho trinh sát đi trước".
+- Ký ức mỗi phe (`updateKnowledge()` mỗi frame ở chủ phòng / chế độ AI; không nằm trong `state`): công trình địch và pháo đài đã thấy, cờ do địch giữ đã thấy; công trình chỉ bị quên khi phe đó nhìn lại chỗ cũ thấy trống. AI vẫn dùng trí nhớ riêng (`state.enemyMemory`).
 
 Di chuyển khi có mục tiêu ngoài tầm: chỉ đuổi nếu `order==='attack'` (hoặc là quân AI); không còn khoá xuất quân đầu trận. Đuổi theo đường đi vòng vật cản (`steerTo()`, tính lại tối đa 1 lần/giây khi mục tiêu dịch quá 1,5 ô; [pathfinding.md](pathfinding.md)).
 
@@ -58,7 +65,7 @@ Chết: `hurt()` xoá quân khỏi `state.units` khi HP ≤ 0; pháo đài HP �
 Súng: pháo đài 18 (trước 17), pháo thứ hai 45 (trước 17), tháp 30 (trước 17), tiền đồn 12 (trước 10). Cột cờ có chủ (từ 2026-10-20): 10 mỗi 2 giây, tầm 180, hệ số ×1 ([flag-defense.md](flag-defense.md)).
 
 ## Code liên quan
-- [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `attackRange()`, `structureReach()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.
+- [src/sim/combat.ts](../../src/sim/combat.ts), [src/core/game.ts](../../src/core/game.ts), [src/core/match.ts](../../src/core/match.ts): `nearestEnemy()`, `commandAttack()`, `attackGoal()`, `nearestKnownTarget()`, `updateKnowledge()` ([src/sim/knowledge.ts](../../src/sim/knowledge.ts)), `attackRange()`, `structureReach()`, `unitTargetValid()`, `hurt()`, `dist()`, khối "unit movement and combat" và "bullets track moving target" trong `update()`.
 - `commandAttack(team, ids)` đặt `order='attack'` cho các quân được chọn.
 - Dữ liệu: `state.bullets[] = {x, y, target, damage, team, speed, life, attackerType?}`, `state.effects[] = {x, y, life, max, color}`.
 
@@ -80,6 +87,5 @@ Chỉ host tính chiến đấu. `serializeSnapshot()` gửi `target:null` cho q
 - [ ] Quân tấn công tới gần công trình địch → đánh tới khi công trình biến mất.
 
 ## Giới hạn / việc tồn đọng
-- Ở chế độ AI, quân xanh nhắm được quân đỏ trong sương mù (không đối xứng với AI).
 - `nearestEnemy()` duyệt toàn bộ quân cho mỗi quân mỗi frame (O(n²)) và gọi `teamCanSee()` lặp lại.
 - Đạn chỉ ăn sát thương khi mục tiêu còn sống; đạn bay hết `life` thì mất.

@@ -1,6 +1,6 @@
 # Điều khiển, chọn quân & camera
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Điều khiển bằng chuột (có hỗ trợ cảm ứng để kéo bản đồ) và phím. Người chơi chọn một hoặc nhiều quân, ra lệnh di chuyển theo đội hình hoặc tấn công; kéo/zoom bản đồ.
@@ -38,7 +38,7 @@
 | , (dấu phẩy) | Chọn lần lượt quân đang rảnh (không lệnh đi/tấn công, đứng yên) và đưa camera tới |
 | Ctrl + A | Chọn tất cả quân của mình |
 | Nhấp đúp vào quân | Chọn mọi quân cùng loại đang trên màn hình |
-| A | Nhóm đang chọn tấn công (action `attack`; cả đội hình được chọn: giữ đội hình, đuổi mọi địch đang thấy rồi tập hợp lại) |
+| A | Nhóm đang chọn tấn công (action `attack`): đuổi địch đang thấy; chưa thấy địch thì tiến tới mục tiêu địch đã phát hiện gần nhất, chưa phát hiện gì thì đứng chờ và báo cần trinh sát ([combat.md](combat.md)). Cả đội hình được chọn: giữ đội hình, đuổi mọi địch đang thấy rồi tập hợp lại |
 | S | Nhóm đang chọn dừng lại (action `stop`: lệnh `hold`, xoá đích và đường đi; cả đội hình được chọn: đội hình đứng lại; chỉ một phần: phần đó tách khỏi đội hình) |
 | G | Mở/đóng bảng Đội hình cho quân đang chọn (`toggleFormationMenu()`, [formations.md](formations.md)); Esc đóng bảng |
 | Delete | Loại bỏ quân đang chọn, không hoàn tiền (action `delete`) |

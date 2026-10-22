@@ -13,14 +13,15 @@ export function nearestEnemy(u){
  let best=null,bd=Infinity;
  for(const v of state.units){
   if(v.team===u.team)continue;
-  // AI may only acquire a new target if its own vision currently reveals it.
-  if((mode==='pvp'&&!teamCanSee(u.team,v.x,v.y))||(mode==='ai'&&u.team===1&&!aiCanSee(v.x,v.y)))continue;
+  // Every side, in every mode, only targets what it sees right now (fog-of-war.md; before 2026-10-22 the player's
+  // units in the AI mode also locked on to enemies in the fog).
+  if(v.garrison!=null||!teamCanSee(u.team,v.x,v.y))continue;
   let d=dist(u,v);if(d<bd){bd=d;best=v;}
  }
  const base=state.bases[1-u.team];
- if((mode==='ai'&&u.team===0)||teamCanSee(u.team,base.x,base.y)){let db=Math.hypot(base.x-u.x,base.y-u.y);if(!best||db<bd-20){best=base;bd=db;}}
+ if(base.hp>0&&teamCanSee(u.team,base.x,base.y)){let db=Math.hypot(base.x-u.x,base.y-u.y);if(!best||db<bd-20){best=base;bd=db;}}
  // Enemy buildings (farms, outposts, towers) are targets for both sides when seen.
- for(const b of state.buildings){if(b.team===u.team||b.hp<=0)continue;if(!((mode==='ai'&&u.team===0)||teamCanSee(u.team,b.x,b.y)))continue;let d=dist(u,b);if(d<bd-15){best=b;bd=d;}}
+ for(const b of state.buildings){if(b.team===u.team||b.hp<=0)continue;if(!teamCanSee(u.team,b.x,b.y))continue;let d=dist(u,b);if(d<bd-15){best=b;bd=d;}}
  return best;
 }
 // Distance (centre to centre) from which `u` can hit `target`. Units: own range + target body radius. Structures: own

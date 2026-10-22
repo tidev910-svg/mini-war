@@ -12,7 +12,7 @@ export const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Every module under src/, so game() can see all exports. Keep in sync with the folders in docs/architecture.md.
 const MODULES = ['config/map', 'config/balance', 'config/theme', 'config/visuals', 'config/formation', 'ui/theme', 'core/game', 'core/view', 'core/match', 'core/actions',
-  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat', 'sim/stats', 'sim/formation', 'sim/garrison',
+  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat', 'sim/stats', 'sim/formation', 'sim/garrison', 'sim/knowledge',
   'ai/attack', 'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
   'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/intel', 'render/fx', 'render/paths', 'render/draw', 'ui/panels', 'ui/selection', 'ui/results', 'ui/info', 'ui/formation', 'ui/hotkeys', 'ui/settings', 'core/settings', 'config/audio', 'audio/instruments', 'audio/synth', 'audio/music', 'audio/sound'];
 
