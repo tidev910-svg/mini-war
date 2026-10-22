@@ -12,6 +12,7 @@ export const SETTINGS_SCHEMA = [
   { id: 'graphics', title: 'Đồ hoạ', rows: [
     { key: 'quality', label: 'Chất lượng hình', hint: 'Độ phân giải của bản đồ. "Thấp" bỏ chi tiết mặt đất để chạy mượt trên máy yếu.', options: [['low', 'Thấp'], ['medium', 'Vừa'], ['high', 'Cao']] },
     { key: 'reduceMotion', label: 'Hiệu ứng chuyển động', hint: 'Hoạt ảnh khi mở menu, bảng, hộp thoại và sảnh.', options: [[false, 'Đầy đủ'], [true, 'Giảm']] },
+    { key: 'combatVfxEnabled', label: 'Hiệu ứng chiến đấu', hint: 'Tư thế ra đòn, lóe sáng khi trúng đòn và bụi chân ngựa; chỉ ảnh hưởng hình ảnh.', toggle: true },
   ] },
   { id: 'display', title: 'Hiển thị', rows: [
     { key: 'hpBars', label: 'Thanh máu quân', hint: 'Thanh máu của pháo đài và công trình luôn hiện khi bị hư.', options: [['always', 'Luôn hiện'], ['damaged', 'Khi bị thương'], ['selected', 'Khi chọn']] },

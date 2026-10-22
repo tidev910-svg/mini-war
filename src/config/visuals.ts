@@ -26,7 +26,21 @@ export const FOG_RGB=hexRgb(THEME['ui-fog']),FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,F
 
 
 // A unit that dies leaves a falling sprite (effect kind 'fall', render/units.ts drawFallenUnit) for fallSeconds.
-export const UNIT_ANIM={fallSeconds:1.4};
+export const UNIT_ANIM={fallSeconds:.42};
+// Archer pose-only timing and arrow-head coordinates inside the draw-frame cell (render/sprites.ts).
+// These are presentation timings; attackTimer, projectile speed and damage stay simulation-owned.
+export const ARCHER_ATTACK_ANIM={windupSeconds:.36,aimFraction:.30,releaseSeconds:.06,recoverySeconds:.18,
+ // Pixel coordinates normalized within the nocked-arrow frame, measured from the authored 4×4 sheets.
+ arrowTipInCell:{up:{x:.504,y:.061},down:{x:.60,y:.887},left:{x:.05,y:.48},right:{x:.91,y:.242}}};
+export const SPEARMAN_ATTACK_ANIM={windupSeconds:.24,impactSeconds:.07,recoverySeconds:.12};
+export function spearmanAttackDirection(angle){
+ const a=Number.isFinite(angle)?angle:Math.PI/2,dx=Math.cos(a),dy=Math.sin(a);
+ return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
+}
+export function archerAttackDirection(angle){
+ const a=Number.isFinite(angle)?angle:Math.PI/2,dx=Math.cos(a),dy=Math.sin(a);
+ return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
+}
 // Visual effects (render/fx.ts, docs/features/rendering.md): particle colours and how many particles at most.
 export const FX_COLORS={spark:'#ffe9a8',sparkHot:'#ffb347',slash:'#f4f1ea',dust:'#a08a6a',smoke:'#5d5650',debris:'#6b5640',wood:'#9c7a4c',fire:'#ff9a3c',glow:'#ffd27a',gold:'#ffd75e',curse:'#b07cff',arrowShaft:'#6e4f2c',arrowHead:'#cfd5dc'};
 export const FX_MAX_PARTICLES=450;

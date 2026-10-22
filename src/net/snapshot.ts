@@ -23,7 +23,7 @@ export function applySnapshot(packet){
  const oldFog=state?.fogSeen instanceof Uint8Array&&state.fogSeen.length===MAP_TILES*MAP_TILES?state.fogSeen:new Uint8Array(MAP_TILES*MAP_TILES);
  const oldEnemyFog=state?.enemyFogSeen instanceof Uint8Array&&state.enemyFogSeen.length===MAP_TILES*MAP_TILES?state.enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES);
  const picked=new Set(localSelectedIds),hadFortressSelected=!!selectedFortress,selectedBuildingId=selectedBuilding?.id;
- setState(packet.state);ensureRegionMap();state.units=(state.units||[]).map(u=>({...u,type:normalizeUnitType(u.type)}));state.pendingSpawns=(state.pendingSpawns||[]).map(p=>({...p,type:normalizeUnitType(p.type)}));setSelectedFortress(hadFortressSelected?state.bases.find(b=>b.team===localTeam())||null:null);state.pendingSpawns??=[];state.fogSeen=oldFog;state.enemyFogSeen=oldEnemyFog;
+ setState(packet.state);ensureRegionMap();state.units=(state.units||[]).map(u=>({...u,type:normalizeUnitType(u.type)}));state.pendingSpawns=(state.pendingSpawns||[]).map(p=>({...p,type:normalizeUnitType(p.type)}));state.visualEvents??=[];setSelectedFortress(hadFortressSelected?state.bases.find(b=>b.team===localTeam())||null:null);state.pendingSpawns??=[];state.fogSeen=oldFog;state.enemyFogSeen=oldEnemyFog;
  setGameTime(Number(packet.gameTime)||0);setPaused(!!packet.paused);setEnded(!!packet.ended);
  const hostWon=String(packet.resultTitle||'').includes('CHIẾN THẮNG!');
  const localWon=localTeam()===0?hostWon:!hostWon;

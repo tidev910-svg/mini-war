@@ -5,7 +5,9 @@ import { MAP_UI, TEAM_COLORS, THEME, hexA, healthColor } from '../config/theme';
 import { TILE_SIZE } from '../config/map';
 import { normalizeUnitType } from '../core/game';
 import { specs } from '../config/balance';
-import { SPEARMAN_DIRECTIONS, SPEARMAN_ROWS, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryClips, infantrySpriteSheet, scoutClips, scoutFootAnchors, scoutSpriteSheet, spearmanClips, spearmanSpriteSheet } from './sprites';
+import { unitCombatVisual } from './fx';
+import { SPEARMAN_DIRECTIONS, SPEARMAN_ROWS, archerAttackClip, archerAttackSpriteSheets, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryAttackClip, infantryAttackSheets, infantryClips, infantrySpriteSheet, scoutClips, scoutFootAnchors, scoutSpriteSheet, spearmanAttackClip, spearmanAttackSpriteSheet, spearmanClips, spearmanSpriteSheet } from './sprites';
+import { archerAttackDirection, spearmanAttackDirection } from '../config/visuals';
 
 export function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
 // Unit health bar in the side's light colour (who is who matters more than how hurt in a melee).
@@ -50,11 +52,31 @@ export function unitTargetHeight(type){
  return TILE_SIZE*tileHeight;
 }
 export function unitHitRadius(u){return Math.max((specs[u.type]?.r||8)*2+9,unitTargetHeight(u.type)*.65);}
+// A death sprite can outlive its unit for a few frames. Hide it when a living teammate occupies the same body space,
+// so that teammate's health bar cannot read as belonging to the fallen sprite.
+export function showFallenBody(e,units){
+ const radius=unitHitRadius({type:e.type})*.75;
+ return !units.some(u=>u.hp>0&&u.team===e.team&&Math.hypot(u.x-e.x,u.y-e.y)<radius);
+}
 // Painted sprite sheets (render/sprites.ts). Only the spearman sheet has four directions; the eight-way u.facing maps
 // to its nearest one (diagonals → left / right). The other sheets have a single facing.
 const SPEARMAN_FACING={down:'down',up:'up',left:'left',right:'right','down-left':'left','up-left':'left','down-right':'right','up-right':'right'};
-export function drawUnit(u){return drawUprightAt(u.x,u.y,()=>drawUnitBody(u));}
-function drawUnitBody(u){
+function infantryAttackRow(angle){
+ const a=((Number.isFinite(angle)?angle:Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+ if(a>=Math.PI*.25&&a<Math.PI*.75)return 0; // down
+ if(a>=Math.PI*.75&&a<Math.PI*1.25)return 1; // left
+ if(a>=Math.PI*1.25&&a<Math.PI*1.75)return 2; // up
+ return 3; // right
+}
+export function drawUnit(u){return drawUprightAt(u.x,u.y,()=>{
+ const visual=unitCombatVisual(u)||{},action=visual.action,flash=visual.flash||0;
+ ctx.save();
+ if(action?.pulse>0&&u.type!=='infantry'&&u.type!=='archer'){const reach=(u.type==='cavalry'||u.type==='spearman'?5:3)/Math.max(.15,renderView.scale||1);ctx.translate(Math.cos(action.angle)*reach*action.pulse,Math.sin(action.angle)*reach*action.pulse);}
+ drawUnitBody(u,action);
+ if(flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=.24*flash;drawUnitBody(u,action);}
+ ctx.restore();
+});}
+function drawUnitBody(u,action=null){
  const s=specs[u.type],blue=u.team===0,p=teamPalette(u.team),r=s.r*2;
  const angle=blue?0:Math.PI;
  if(u.type==='scout'&&scoutSpriteSheet.complete&&scoutSpriteSheet.naturalWidth){
@@ -75,17 +97,36 @@ function drawUnitBody(u){
   return;
  }
  if(u.type==='spearman'&&spearmanSpriteSheet.complete&&spearmanSpriteSheet.naturalWidth){
+  const height=unitTargetHeight('spearman')*.96,cellW=spearmanSpriteSheet.naturalWidth/4,cellH=spearmanSpriteSheet.naturalHeight/SPEARMAN_ROWS,width=height*cellW/cellH;
+  const attackSheet=spearmanAttackSpriteSheet;
+  if(action?.phase&&attackSheet.width&&attackSheet.height){
+   const attackW=attackSheet.width/spearmanAttackClip.frames,attackH=attackSheet.height/spearmanAttackClip.directions;
+   const progress=1-Math.max(0,action.left/Math.max(.001,action.duration));
+   const frame=action.phase==='windup'?(progress<.5?0:1):action.phase==='impact'?2:3;
+   const direction=Math.max(0,SPEARMAN_DIRECTIONS.indexOf(spearmanAttackDirection(action.angle)));
+   const row=(blue?0:4)+direction;
+   ctx.drawImage(attackSheet,frame*attackW,row*attackH,attackW,attackH,u.x-width/2,u.y-height*.90,width,height);
+   return;
+  }
   const clip=spearmanClips[u.moving?'walk':'idle'];
   const direction=Math.max(0,SPEARMAN_DIRECTIONS.indexOf(SPEARMAN_FACING[u.facing]||'down'));
   const row=(blue?0:8)+direction*2+(u.moving?1:0);
-  const cellW=spearmanSpriteSheet.naturalWidth/4,cellH=spearmanSpriteSheet.naturalHeight/SPEARMAN_ROWS;
-  const frame=Math.floor(u.walk*clip.fps)%clip.frames;
-  const height=unitTargetHeight('spearman')*.96,width=height*cellW/cellH;
+  const frame=u.moving?Math.floor((u.walkDistance||0)/(Math.max(1,s.speed)/clip.fps))%clip.frames:Math.floor(u.walk*clip.fps)%clip.frames;
   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+2,width*.30,height*.10,0,0,Math.PI*2);ctx.fill();
   ctx.drawImage(spearmanSpriteSheet,frame*cellW,row*cellH,cellW,cellH,u.x-width/2,u.y-height*.90,width,height);
   return;
  }
  if(u.type==='infantry'&&infantrySpriteSheet.complete&&infantrySpriteSheet.naturalWidth){
+  const attackSheet=infantryAttackSheets[blue?'blue':'red'];
+  if(action?.phase&&attackSheet?.complete&&attackSheet.naturalWidth){
+   const cellW=attackSheet.naturalWidth/infantryAttackClip.frames,cellH=attackSheet.naturalHeight/infantryAttackClip.directions,size=unitTargetHeight('infantry')/.875,width=size*cellW/cellH;
+   const progress=1-Math.max(0,action.left/Math.max(.001,action.duration));
+   const frame=action.phase==='windup'?(progress<.52?0:1):action.phase==='impact'?2:3;
+   // Pick a naturally drawn direction row; never rotate the entire pose into a horizontal, fallen-looking silhouette.
+   const row=infantryAttackRow(action.angle);
+   ctx.drawImage(attackSheet,frame*cellW,row*cellH,cellW,cellH,u.x-width/2,u.y-size*.88,width,size);
+   return;
+  }
   const clip=infantryClips[blue?'blue':'red'][u.moving?'walk':'idle'];
   const cellW=infantrySpriteSheet.naturalWidth/4,cellH=infantrySpriteSheet.naturalHeight/4;
   const frame=Math.floor(u.walk*clip.fps)%clip.frames,size=unitTargetHeight('infantry')/.875;
@@ -95,12 +136,24 @@ function drawUnitBody(u){
   return;
  }
  if(u.type==='archer'&&archerSpriteSheet.complete&&archerSpriteSheet.naturalWidth){
+  const attackSheet=archerAttackSpriteSheets[blue?'blue':'red'];
+  if(action?.phase&&['aim','draw','release','recovery'].includes(action.phase)&&attackSheet.complete&&attackSheet.naturalWidth){
+   const cellW=attackSheet.naturalWidth/archerAttackClip.frames,cellH=attackSheet.naturalHeight/archerAttackClip.directions;
+   const direction=archerAttackDirection(action.angle),row={up:0,down:1,left:2,right:3}[direction],frame={aim:0,draw:1,release:2,recovery:3}[action.phase];
+   const height=unitTargetHeight('archer')/.95,width=height*cellW/cellH;
+   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+2,width*.31,height*.10,0,0,Math.PI*2);ctx.fill();
+   ctx.save();ctx.imageSmoothingEnabled=false;
+   ctx.drawImage(attackSheet,frame*cellW,row*cellH,cellW,cellH,u.x-width/2,u.y-height*.88,width,height);
+   ctx.restore();return;
+  }
   const clip=archerClips[blue?'blue':'red'][u.moving?'walk':'idle'];
   const cellW=archerSpriteSheet.naturalWidth/4,cellH=archerSpriteSheet.naturalHeight/4;
   const frame=Math.floor(u.walk*clip.fps)%clip.frames;
   const height=unitTargetHeight('archer')/.95,width=height*cellW/cellH;
   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+2,width*.31,height*.10,0,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.imageSmoothingEnabled=false;
   ctx.drawImage(archerSpriteSheet,frame*cellW,clip.row*cellH,cellW,cellH,u.x-width/2,u.y-height*.88,width,height);
+  ctx.restore();
   return;
  }
  const spriteScale=unitTargetHeight(u.type)/Math.max(1,s.r*4.6);

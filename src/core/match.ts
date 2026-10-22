@@ -19,7 +19,8 @@ import { baseSiteClear, fortressGunPosition, musterYard } from '../map/bases';
 import { buildRegionMap, generateRegions } from '../map/regions';
 import { setPauseButton, updateHUD, updateMatchClockHUD, updateTrainQueueHUD } from '../ui/hud';
 import { buildingDone, buildingVision, needsBuilder, updateBuildings } from '../sim/buildings';
-import { attackRange, hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
+import { archerReleaseAnchor, attackRange, hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
+import { ARCHER_ATTACK_ANIM, SPEARMAN_ATTACK_ANIM } from '../config/visuals';
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
 import { aiLevel, aiUnitGoal, exploreSpot, newAIPlan } from '../ai/attack';
 import { buildWorldDecor } from '../render/terrain';
@@ -60,7 +61,7 @@ export function fresh(){
  buildRegionMap(regions);
  // Neutral camps in mirrored pairs (map/camps.ts, neutral-camps.md); their monsters spawn below, once ids restart.
  const camps=placeCamps(blueBase,redBase,regions,mines);
- setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,camps,creeps:[],buffs:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[],garrisons:[]});
+ setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],visualEvents:[],buildings:[],regions,camps,creeps:[],buffs:[],guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[],garrisons:[]});
  syncStructureObstacles();
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
@@ -124,12 +125,32 @@ export function update(dt){
    // Walk the path; an errand whose spot cannot be reached is dropped so a new one is picked next frame.
    if(Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>5&&steerTo(u,u.dest.x,u.dest.y,speed,dt)&&Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>35&&u.captureTarget==null&&!u.buildTarget&&!goal){u.dest=null;clearPath(u);}
   }
+  if((u.type==='infantry'||u.type==='archer'||u.type==='spearman')&&u.attackVisualActionId!=null&&(!target||dist(u,target)>attackRange(u,target)||target.id!==u.attackVisualTargetId)){
+   state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackCancel',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,actionId:u.attackVisualActionId,life:.25,max:.25});
+   u.attackVisualActionId=null;u.attackVisualTargetId=null;
+  }
   if(target){
    const d=dist(u,target),range=attackRange(u,target);
    if(d<=range){engaged=true;
+    if(u.type==='archer'&&u.attackTimer>0&&u.attackTimer<=ARCHER_ATTACK_ANIM.windupSeconds&&u.attackVisualActionId==null){
+      u.attackVisualActionId=nextFxId();u.attackVisualTargetId=target.id;
+      state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackWindup',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId:u.attackVisualActionId,angle:Math.atan2(target.y-u.y,target.x-u.x),duration:u.attackTimer,life:ARCHER_ATTACK_ANIM.windupSeconds,max:ARCHER_ATTACK_ANIM.windupSeconds});
+    }
+    if(u.type==='spearman'&&u.attackTimer>0&&u.attackTimer<=SPEARMAN_ATTACK_ANIM.windupSeconds&&u.attackVisualActionId==null){
+      u.attackVisualActionId=nextFxId();u.attackVisualTargetId=target.id;
+      state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackWindup',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId:u.attackVisualActionId,angle:Math.atan2(target.y-u.y,target.x-u.x),duration:u.attackTimer,life:SPEARMAN_ATTACK_ANIM.windupSeconds,max:SPEARMAN_ATTACK_ANIM.windupSeconds});
+    }
+    if(u.type==='infantry'&&u.attackTimer>0&&u.attackTimer<=.22&&u.attackVisualActionId==null){
+      u.attackVisualActionId=nextFxId();u.attackVisualTargetId=target.id;
+      state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackWindup',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId:u.attackVisualActionId,angle:Math.atan2(target.y-u.y,target.x-u.x),life:.25,max:.25});
+    }
     if(u.attackTimer<=0){u.attackTimer=cooldown;
-      if(u.type==='archer'){state.bullets.push({id:nextFxId(),x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
-      else hurt(target,s.damage,u.team,u.type);
+      const hasAttackPose=u.type==='infantry'||u.type==='archer'||u.type==='spearman';
+      const actionId=hasAttackPose?(u.attackVisualActionId??nextFxId()):null;
+      state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attack',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId,angle:Math.atan2(target.y-u.y,target.x-u.x),life:.20,max:.20});
+      if(hasAttackPose){u.attackVisualActionId=null;u.attackVisualTargetId=null;}
+      if(u.type==='archer'){const anchor=archerReleaseAnchor(u,Math.atan2(target.y-u.y,target.x-u.x));state.bullets.push({id:nextFxId(),x:anchor.x,y:anchor.y,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type,unitId:u.id});}
+      else hurt(target,s.damage,u.team,u.type,u.id,u.x,u.y);
     }
    }else if((u.order==='attack'||u.order==='camp'||(mode==='ai'&&u.team===1)||(fm&&u.order==='formation'&&formationMayChase(fm,u,target))||(u.order==='sortie'&&sortieMayChase(u,target)))){
     engaged=true;
@@ -155,6 +176,7 @@ export function update(dt){
   else if(fm&&u.order==='formation'&&!engaged){const p=formationTarget(fm,u);if(Math.hypot(p.x-u.x,p.y-u.y)>4){if(steerTo(u,p.x,p.y,speed,dt)&&Math.hypot(p.x-u.x,p.y-u.y)>8)clearPath(u);clampToBounds(u);}else if(u.path)clearPath(u);}
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
+  if(u.type==='spearman'&&movedX*movedX+movedY*movedY>1e-4)u.walkDistance=(u.walkDistance||0)+Math.hypot(movedX,movedY);
   if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY,u.facing);
   else if(target&&dist(u,target)<=attackRange(u,target))u.facing=facingFrom(target.x-u.x,target.y-u.y);
  }
@@ -163,7 +185,7 @@ export function update(dt){
  for(const b of [...state.bullets]){
   if(!b.target||b.target.hp<=0||b.target.garrison!=null){state.bullets=state.bullets.filter(q=>q!==b);continue;}
   const d=dist(b,b.target),step=b.speed*dt;
-  if(d<=step+7){hurt(b.target,b.damage,b.team,b.attackerType);state.bullets=state.bullets.filter(q=>q!==b);}
+  if(d<=step+7){hurt(b.target,b.damage,b.team,b.attackerType,b.unitId,b.x,b.y);state.bullets=state.bullets.filter(q=>q!==b);}
   else{b.x+=(b.target.x-b.x)/d*step;b.y+=(b.target.y-b.y)/d*step;b.life-=dt;if(b.life<=0)state.bullets=state.bullets.filter(q=>q!==b);}
  }
  // Integrated fortress cannons preserve the former tower firing stats.
@@ -172,6 +194,20 @@ export function update(dt){
   for(const u of state.units){if(u.team===base.team)continue;if(!teamCanSee(base.team,u.x,u.y))continue;const d=Math.hypot(source.x-u.x,source.y-u.y);if(d<bd){bd=d;target=u;}}
   if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({id:nextFxId(),x:source.x,y:source.y-8,target,damage:FORTRESS_GUN_DAMAGE[index]??FORTRESS_GUN_DAMAGE[0],team:base.team,speed:320,life:1.2});}
  }
+ // Neutral monsters guarding the gold mines attack nearby player units.
+ for(const g of state.guards){
+  if(g.hp<=0)continue;g.timer-=dt;
+  let target=state.units.filter(u=>u.team===0&&u.hp>0&&Math.hypot(u.x-g.x,u.y-g.y)<g.aggro).sort((a,b)=>Math.hypot(a.x-g.x,a.y-g.y)-Math.hypot(b.x-g.x,b.y-g.y))[0];
+  if(target){
+   const d=Math.hypot(target.x-g.x,target.y-g.y);
+   if(d>g.range){g.x+=(target.x-g.x)/d*g.speed*dt;g.y+=(target.y-g.y)/d*g.speed*dt;}
+   else if(g.timer<=0){target.hp-=g.damage;g.timer=g.cooldown;state.effects.push({id:nextFxId(),src:'guard',x:target.x,y:target.y,targetUnitId:target.id,team:target.team,life:.18,max:.18,color:'#ff9f43'});}
+  }else{
+   const d=Math.hypot(g.homeX-g.x,g.homeY-g.y);
+   if(d>3){g.x+=(g.homeX-g.x)/d*g.speed*dt;g.y+=(g.homeY-g.y)/d*g.speed*dt;}
+  }
+ }
+ state.guards=state.guards.filter(g=>g.hp>0);
  // Fog of war: what each side sees now becomes explored (sim/fog.ts); explored tiles never go dark again.
  revealTeamVision(0);revealTeamVision(1);
  // AI has its own independent vision map and stale memory of sightings.
@@ -183,6 +219,7 @@ export function update(dt){
  for(const m of state.enemyMemory.targets)m.age+=dt;state.enemyMemory.targets=state.enemyMemory.targets.filter(m=>m.age<90);
  if(state.enemyMemory.base)state.enemyMemory.base.age+=dt;
  for(const e of state.effects)e.life-=dt;state.effects=state.effects.filter(e=>e.life>0);
+ for(const e of state.visualEvents||[])e.life-=dt;state.visualEvents=(state.visualEvents||[]).filter(e=>e.life>0);
  // The HUD refreshes at most every HUD_REFRESH_MS from the frame loop (actions still call updateHUD() at once).
  const now=performance.now();if(now-hudRefreshedAt>=HUD_REFRESH_MS){hudRefreshedAt=now;updateHUD();}
 }

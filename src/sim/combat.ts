@@ -6,7 +6,7 @@ import { recordDamage, recordUnitDeath } from './stats';
 import { dist, mode, nextFxId, selected, setSelected, state } from '../core/game';
 import { BUILDING_TYPES, COUNTER_MULTIPLIERS, STRUCTURE_DAMAGE_MULTIPLIERS, specs } from '../config/balance';
 import { TILE_SIZE } from '../config/map';
-import { UNIT_ANIM } from '../config/visuals';
+import { ARCHER_ATTACK_ANIM, UNIT_ANIM, archerAttackDirection } from '../config/visuals';
 import { finish } from '../core/match';
 import { aiCanSee, teamCanSee } from './fog';
 import { destroyBuilding } from './buildings';
@@ -36,6 +36,11 @@ export function attackRange(u,target){
  const base=s.range+(target.w?35:10);return s.range<MELEE_RANGE_MAX?Math.max(base,structureReach(target)):base;
 }
 export function unitTargetValid(t,u){return t&&t.hp>0&&((t.team!==undefined&&t.team!==u.team)||t.team===undefined);}
+// The arrow tip in each authored draw-frame cell, transformed through the same render box and foot anchor.
+export function archerReleaseAnchor(u,angle){
+ const size=TILE_SIZE*1.3/.95,cell=ARCHER_ATTACK_ANIM.arrowTipInCell[archerAttackDirection(angle)];
+ return {x:u.x-size/2+cell.x*size,y:u.y-size*.88+cell.y*size};
+}
 export function damageMultiplier(attackerType,target){
  if(!attackerType||!target)return 1;
  const structure=!!target.kind||state.bases.includes(target);
@@ -43,14 +48,16 @@ export function damageMultiplier(attackerType,target){
  // Monsters use the row of the unit type they count as (CREEP_TYPES[…].counterAs).
  return COUNTER_MULTIPLIERS[attackerType]?.[target.creep?CREEP_TYPES[target.creep].counterAs:target.type]??1;
 }
-export function hurt(target,damage,team,attackerType=null,src=null){
- // Combat V3.1: base damage × counter multiplier (unit targets) or × structure multiplier (buildings and fortresses).
- // A side's units hit harder while it has the tomb's buff (sim/creeps.ts). `src` names the hit effect when it is not the attacker type (monsters).
+export function hurt(target,damage,team,attackerType=null,attackerIdOrSrc=null,sourceX=null,sourceY=null){
+ // Combat V3.1: counters and structures, plus the damage buff and camp reward tracking.
  let finalDamage=damage*damageMultiplier(attackerType,target);
  if((team===0||team===1)&&specs[attackerType])finalDamage*=buffFactor(team,'damage');
- // Damage to monsters counts toward their camp's reward, not toward the match stats.
- if(target.creep)noteCreepHit(target,finalDamage,team);else recordDamage(team,Math.min(finalDamage,Math.max(0,target.hp)));
- target.hp-=finalDamage;state.effects.push({id:nextFxId(),src:src||attackerType||'gun',x:target.x,y:target.y,life:.18,max:.18,color:team===0?'#73c8ff':team===1?'#ff747a':'#ffb347'});
+ if(target.creep)noteCreepHit(target,finalDamage,team);
+ else recordDamage(team,Math.min(finalDamage,Math.max(0,target.hp)));
+ const src=typeof attackerIdOrSrc==='string'?attackerIdOrSrc:null;
+ const attackerId=typeof attackerIdOrSrc==='number'?attackerIdOrSrc:null;
+ target.hp-=finalDamage;
+ state.effects.push({id:nextFxId(),src:src||attackerType||'gun',x:target.x,y:target.y,targetUnitId:target.type?target.id:null,attackerId,angle:sourceX==null||sourceY==null?null:Math.atan2(target.y-sourceY,target.x-sourceX),team:target.type?target.team:team,life:.18,max:.18,color:team===0?'#73c8ff':team===1?'#ff747a':'#ffb347'});
  // Display only: a dying unit leaves a falling body (travels in the snapshot to the guest).
  if(target.hp<=0){
   if(target===state.bases[0])finish(false);

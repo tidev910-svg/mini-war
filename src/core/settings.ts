@@ -5,6 +5,7 @@
 export const DEFAULT_SETTINGS = {
   quality: 'medium',      // 'low' | 'medium' | 'high' — canvas resolution cap; 'low' also skips the ground speckles
   reduceMotion: false,    // UI animations (menus, dialogs, lobby) off
+  combatVfxEnabled: true, // render-only combat poses, hit flash and cavalry dust
   hpBars: 'always',       // 'always' | 'damaged' | 'selected' — which unit health bars are drawn
   mapLabels: true,        // mine, building and muster-yard names on the map
   unitPaths: true,        // route lines of the selected units

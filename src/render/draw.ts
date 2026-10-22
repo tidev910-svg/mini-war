@@ -3,7 +3,7 @@
 import { CAMP_TYPES, CREEP_TYPES } from '../config/creeps';
 import { campKnownState } from '../sim/creeps';
 import { drawBuffAuras, drawCampSite, drawCreep, drawCreepBar, drawCreepFall, updateCampNotices } from './creeps';
-import { drawFx, drawProjectiles, updateFx } from './fx';
+import { drawFx, drawGroundFx, drawProjectiles, updateFx } from './fx';
 import { ghostBases, ghostBuildings, knownFlag, knownMine, updateIntel } from './intel';
 import { TEAM_COLORS, THEME } from '../config/theme';
 import { settings } from '../core/settings';
@@ -17,7 +17,7 @@ import { BUILDING_TYPES, MINE_TYPES } from '../config/balance';
 import { isTeamAreaExplored, teamCanSee } from '../sim/fog';
 import { fortressGunPosition } from '../map/bases';
 import { drawTerritory } from './territory';
-import { drawFallenUnit, drawUnit, drawUnitHealthBar, drawUnitSelection, flushMapLabels, mapText, queueMapLabel, teamPalette, unitTargetHeight } from './units';
+import { drawFallenUnit, drawUnit, drawUnitHealthBar, drawUnitSelection, flushMapLabels, mapText, queueMapLabel, showFallenBody, teamPalette, unitTargetHeight } from './units';
 import { MAP_LABEL_MIN_SCALE, drawBase, drawBuilding, drawMusterYard } from './buildings';
 import { DECOR_LAYER_SCALE, decorLayerCanvas, drawDecor, drawTerrainDetail, rockDecor, shoreDecor, treeDecor, waterDecor } from './terrain';
 import { drawFlag } from './flags';
@@ -60,6 +60,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Everything below is culled to the camera (plus a margin that grows when zoomed out, where flags and labels get larger).
  const cullPad=Math.max(260,130/viewScale),leftWorld=camX-cullPad,topWorld=camY-cullPad,rightWorld=camX+VIEW_W/viewScale+cullPad,bottomWorld=camY+VIEW_H/viewScale+cullPad;
  const inView=o=>o.x>=leftWorld&&o.x<=rightWorld&&o.y>=topWorld&&o.y<=bottomWorld;
+  updateFx(inView);
  for(let mi=0;mi<state.mines.length;mi++){const m=knownMine(state.mines[mi],mi);
   if(!inView(m)||(!currentlyVisible(m.x,m.y)&&!isTeamAreaExplored(localTeam(),m.x,m.y)))continue;
   drawUprightAt(m.x,m.y,()=>{
@@ -102,9 +103,10 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const c of state.creeps||[]){if(!inView(c)||!currentlyVisible(c.x,c.y))continue;enqueue(c.y+CREEP_TYPES[c.creep].r,()=>drawCreep(c));}
  for(const e of state.effects)if(e.kind==='creepFall'&&inView(e)&&currentlyVisible(e.x,e.y))enqueue(e.y,()=>drawCreepFall(e));
  // Fallen units lie in the depth-sorted scene (enemy ones only where the local side sees).
- for(const e of state.effects)if(e.kind==='fall'&&inView(e)&&(e.team===localTeam()||currentlyVisible(e.x,e.y)))enqueue(e.y,()=>drawFallenUnit(e));
+ for(const e of state.effects)if(e.kind==='fall'&&inView(e)&&(e.team===localTeam()||currentlyVisible(e.x,e.y))&&showFallenBody(e,state.units))enqueue(e.y,()=>drawFallenUnit(e));
  for(const u of state.units){if(!inView(u)||(u.team!==localTeam()&&!currentlyVisible(u.x,u.y)))continue;enqueue(u.y+unitTargetHeight(u.type)*.48,()=>drawUnit(u));}
  drawBuffAuras(inView);
+ drawGroundFx(inView); // Ground effects stay under actors, selection rings and status UI.
  sceneActors.sort((a,b)=>a.y-b.y);for(const actor of sceneActors)actor.draw();
  // Labels and building health bars queued during the scene, above every sprite.
  flushMapLabels();
@@ -117,7 +119,6 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const u of state.units)if((selected===u||u.selected)&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
  // Projectiles and effects stay on their own foreground layer.
  // Arrows, gun shots and particles (render/fx.ts); shots and particles in the fog are hidden by the veil drawn next.
- updateFx();
  drawProjectiles(b=>inView(b)&&(b.team===localTeam()||currentlyVisible(b.x,b.y)));
  drawFx(inView);
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.

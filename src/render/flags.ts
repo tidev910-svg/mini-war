@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Region flags with control ring and capture bar (docs/features/territory.md).
-import { localTeam } from '../core/game';
+import { localTeam, state } from '../core/game';
 import { garrisonOf } from '../sim/garrison';
 import { ctx, drawUprightAt, zoom } from '../core/view';
 import { TILE_SIZE } from '../config/map';
@@ -10,6 +10,9 @@ import { FLAG_COLORS, FLAG_LABEL_MIN_PX, FLAG_MIN_SCREEN_ZOOM, FLAG_SHORT_LABEL_
 import { regionLabel } from '../map/regions';
 import { TEAM_COLORS, THEME } from '../config/theme';
 import { captureStage } from '../sim/territory';
+import { flagBallistaSprite, flagPlatformFor } from './sprites';
+import { FLAG_GUN } from '../config/balance';
+import { teamCanSee } from '../sim/fog';
 
 export function flagScale(){return Math.max(1,FLAG_MIN_SCREEN_ZOOM/zoom);}
 export function flagHit(r,x,y){const s=flagScale();return Math.abs(x-r.cp.x)<=60*s&&y>=r.cp.y-190*s&&y<=r.cp.y+30*s;}
@@ -28,19 +31,34 @@ export function drawFlag(r){
    ctx.strokeStyle=ring;ctx.lineWidth=(selectedHere?3:2)/zoom;ctx.setLineDash([10/zoom,7/zoom]);ctx.stroke();ctx.setLineDash([]);
   }
   ctx.translate(x,y);ctx.scale(s,s);
-  // Stone plinth.
-  ctx.fillStyle='#1d2b2140';ctx.beginPath();ctx.ellipse(4,8,62,22,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#8f8672';ctx.beginPath();ctx.ellipse(0,2,48,18,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#bdb39b';ctx.beginPath();ctx.ellipse(0,-5,40,14,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#6d6553';ctx.lineWidth=2;ctx.stroke();
-  // Pole and finial.
-  ctx.fillStyle='#6b4f33';ctx.fillRect(-4,-178,8,174);ctx.strokeStyle='#3f2e1f';ctx.lineWidth=1.5;ctx.strokeRect(-4,-178,8,174);
-  ctx.fillStyle='#f1cf6a';ctx.beginPath();ctx.arc(0,-182,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#8a6a22';ctx.stroke();
-  // Waving banner in the owner's colour; the capturing side's colour fills it from the pole as progress grows.
-  const banner=()=>{ctx.beginPath();ctx.moveTo(4,-174);ctx.bezierCurveTo(36,-186,62,-160,100,-170);ctx.lineTo(100,-114);ctx.bezierCurveTo(62,-104,36,-130,4,-118);ctx.closePath();};
+  // Low stone-and-wood tower platform; old plinth remains as a load-time fallback.
+  const platform=flagPlatformFor(r.owner);
+  if(platform&&(platform.naturalWidth||platform.width)){
+   ctx.drawImage(platform,-67,-54,134,112);
+   ctx.strokeStyle=c.main;ctx.globalAlpha=.62;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,17,49,17,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+  }else{
+   ctx.fillStyle='#1d2b2140';ctx.beginPath();ctx.ellipse(4,8,62,22,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#8f8672';ctx.beginPath();ctx.ellipse(0,2,48,18,0,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#bdb39b';ctx.beginPath();ctx.ellipse(0,-5,40,14,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#6d6553';ctx.lineWidth=2;ctx.stroke();
+  }
+  // The mounted ballista turns only when an existing flag projectile has a visible target.
+  // Rendering never selects a target or creates projectiles/damage of its own.
+  const shot=(state?.bullets||[]).find(b=>b.attackerType==='flag'&&b.team===r.owner&&b.target&&Math.hypot(b.target.x-x,b.target.y-y)<=FLAG_GUN.range+24&&teamCanSee(localTeam(),b.target.x,b.target.y));
+  if(flagBallistaSprite.complete&&flagBallistaSprite.naturalWidth){
+   const tx=shot?.target?.x??x,ty=shot?.target?.y??(y-100),angle=Math.atan2(ty-(y-29),tx-(x+18))+Math.PI/2;
+   ctx.save();ctx.translate(18,-29);ctx.rotate(angle);ctx.drawImage(flagBallistaSprite,-24,-24,48,48);ctx.restore();
+  }
+  // Flag cloth changes faction colour while keeping the territory's resource glyph on top.
+  const px=-31;
+  ctx.fillStyle='#6b4f33';ctx.fillRect(px-3,-161,6,118);ctx.strokeStyle='#3f2e1f';ctx.lineWidth=1.3;ctx.strokeRect(px-3,-161,6,118);
+  ctx.fillStyle='#f1cf6a';ctx.beginPath();ctx.arc(px,-164,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#8a6a22';ctx.stroke();
+  const banner=()=>{ctx.beginPath();ctx.moveTo(px+3,-157);ctx.bezierCurveTo(px+25,-165,px+42,-150,px+57,-156);ctx.lineTo(px+57,-126);ctx.bezierCurveTo(px+39,-120,px+23,-132,px+3,-126);ctx.closePath();};
   banner();ctx.fillStyle=c.main;ctx.fill();
-  if(r.cap>0&&r.capTeam>=0){ctx.save();banner();ctx.clip();ctx.fillStyle=FLAG_COLORS[r.capTeam].main;ctx.globalAlpha=.85;ctx.fillRect(4,-190,96*r.cap,90);ctx.restore();}
-  banner();ctx.strokeStyle=c.trim;ctx.lineWidth=3;ctx.stroke();
-  ctx.font='26px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(RESOURCE_ICONS[r.resource]||'',52,-144);
+  if(r.cap>0&&r.capTeam>=0){ctx.save();banner();ctx.clip();ctx.fillStyle=FLAG_COLORS[r.capTeam].main;ctx.globalAlpha=.85;ctx.fillRect(px+3,-170,54*r.cap,60);ctx.restore();}
+  banner();ctx.strokeStyle=c.trim;ctx.lineWidth=2;ctx.stroke();
+  ctx.font='18px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff8df';ctx.strokeStyle='#47391f';ctx.lineWidth=3;ctx.strokeText(RESOURCE_ICONS[r.resource]||'',px+30,-141);ctx.fillText(RESOURCE_ICONS[r.resource]||'',px+30,-141);
+  // Small warning glint reads the existing alarm state; it does not affect the sortie trigger.
+  if(r.defense?.alarm){const pulse=.65+.35*Math.sin(performance.now()/110);ctx.globalAlpha=pulse;ctx.fillStyle='#ff9b43';ctx.beginPath();ctx.arc(45,-54,5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
   // Progress bar and label.
   // Two-stage bar for enemy flags: left half = stage 1 (lower), right half = stage 2 (capture), with a divider.
   const stage=captureStage(r),overall=stage===1?r.cap/2:stage===2?.5+r.cap/2:r.cap;
