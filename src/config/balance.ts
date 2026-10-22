@@ -1,12 +1,14 @@
 // @ts-nocheck
 // Balance tables: units, buildings, farms, mines, incomes, capture and AI tuning (docs/features/economy.md, units.md, territory.md). Data only.
 
+// Plan D (2026-10-22, from equal-budget fights, units.md): infantry 40 → 55 lúa; archer 55 lúa 25 gỗ 10 vàng → 45 lúa
+// 25 gỗ 5 vàng and damage 16 → 18; cavalry 80 lúa 35 vàng → 75 lúa 25 vàng and hp 210 → 230.
 export const specs={
  scout:{name:'Trinh sát',hp:60,damage:7,range:18,speed:72,cooldown:1.1,cost:{food:25},upkeep:.3,train:4,r:8,color:'#8ce6a0'},
- infantry:{name:'Lính',hp:100,damage:14,range:22,speed:45,cooldown:.8,cost:{food:40},upkeep:.8,train:5,r:10,color:'#58b5ff'},
- archer:{name:'Cung thủ',hp:65,damage:16,range:125,speed:34,cooldown:1.05,cost:{food:55,wood:25,gold:10},upkeep:1.2,train:8,r:9,color:'#78d6ff'},
+ infantry:{name:'Lính',hp:100,damage:14,range:22,speed:45,cooldown:.8,cost:{food:55},upkeep:.8,train:5,r:10,color:'#58b5ff'},
+ archer:{name:'Cung thủ',hp:65,damage:18,range:125,speed:34,cooldown:1.05,cost:{food:45,wood:25,gold:5},upkeep:1.2,train:8,r:9,color:'#78d6ff'},
  spearman:{name:'Lính giáo',hp:145,damage:12,range:26,speed:38,cooldown:.82,cost:{food:45,wood:15},upkeep:.8,train:6,r:11,color:'#d7d6a4'},
- cavalry:{name:'Lính kỵ binh',hp:210,damage:24,range:27,speed:58,cooldown:.9,cost:{food:80,gold:35},upkeep:2.5,train:12,r:13,color:'#f2d5a0'}
+ cavalry:{name:'Lính kỵ binh',hp:230,damage:24,range:27,speed:58,cooldown:.9,cost:{food:75,gold:25},upkeep:2.5,train:12,r:13,color:'#f2d5a0'}
 };
 // Fog of war V3.1 (2026-10-20, fog-of-war.md): sight radius in world units, the same for the player and the AI.
 // Units by type; the side's fortress and every building it owns; each held region, around its flag.

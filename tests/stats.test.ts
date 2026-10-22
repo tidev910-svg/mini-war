@@ -17,7 +17,7 @@ describe('match statistics', () => {
     expect(s0.gathered.food).toBeCloseTo(40, 0); expect(s0.gathered.wood).toBeCloseTo(30, 0);
     expect(s0.gathered.stone).toBeCloseTo(10, 0); expect(s0.gathered.gold).toBeCloseTo(10, 0);
     g.buy('infantry', 0); g.buy('spearman', 0);
-    expect(s0.spent).toMatchObject({ food: 85, wood: 15 });
+    expect(s0.spent).toMatchObject({ food: 100, wood: 15 });
     step(6.1);
     expect(s0.trained).toBe(2);
     expect(state.stats.timeline.length).toBeGreaterThanOrEqual(7); // one sample at the start, then every 10 s

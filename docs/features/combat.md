@@ -70,6 +70,7 @@ Súng: pháo đài 18 (trước 17), pháo thứ hai 45 (trước 17), tháp 30 
 - Dữ liệu: `state.bullets[] = {x, y, target, damage, team, speed, life, attackerType?}`, `state.effects[] = {x, y, life, max, color}`.
 
 ## Tương tác
+- [units.md](units.md): phương án D (2026-10-22) đổi sát thương cung thủ 16 → 18 và máu kỵ binh 210 → 230 (cùng giá lính, cung, kỵ).
 - [neutral-camps.md](neutral-camps.md): quân đánh quái của hang đang thức trong tầm (+40) hoặc của hang được lệnh dọn (`creepTargetFor()`, chen vào mục tiêu khi địch còn ngoài tầm); `hurt(target, damage, team, attackerType, src)` nhân `buffFactor()` của Lăng cổ cho đòn của quân; sát thương vào quái không tính vào thống kê; `attackRange()` và `damageMultiplier()` hiểu quái (`counterAs`). Chuỗi đuổi mục tiêu gồm cả `order==='camp'`.
 - [units.md](units.md): chỉ số trong `specs`.
 - [fog-of-war.md](fog-of-war.md): tầm nhìn quyết định có được nhắm hay không.

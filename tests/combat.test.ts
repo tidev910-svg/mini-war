@@ -11,7 +11,7 @@ const loss = (target, attacker) => { const before = target.hp; g.hurt(target, g.
 
 describe('Combat V3.1 damage', () => {
   it('uses the V3.1 base damage per hit', () => {
-    expect(Object.fromEntries(Object.entries(g.specs).map(([k, s]) => [k, s.damage]))).toEqual({ scout: 7, infantry: 14, archer: 16, spearman: 12, cavalry: 24 });
+    expect(Object.fromEntries(Object.entries(g.specs).map(([k, s]) => [k, s.damage]))).toEqual({ scout: 7, infantry: 14, archer: 18, spearman: 12, cavalry: 24 });
     expect(g.BUILDING_TYPES.tower.gun.damage).toBe(30);
     expect(g.BUILDING_TYPES.outpost.gun.damage).toBe(12);
     expect(g.FORTRESS_GUN_DAMAGE).toEqual([18, 45]);
@@ -21,10 +21,10 @@ describe('Combat V3.1 damage', () => {
     quietMatch(g);
     expect(loss(dummy('cavalry'), 'spearman')).toBeCloseTo(12 * 2.2);
     expect(loss(dummy('archer'), 'cavalry')).toBeCloseTo(24 * 1.5);
-    expect(loss(dummy('spearman'), 'archer')).toBeCloseTo(16 * 1.3);
+    expect(loss(dummy('spearman'), 'archer')).toBeCloseTo(18 * 1.3);
     expect(loss(dummy('spearman'), 'infantry')).toBeCloseTo(14 * 1.2);
     expect(loss(dummy('infantry'), 'cavalry')).toBeCloseTo(24);
-    expect(loss(dummy('cavalry'), 'archer')).toBeCloseTo(16);
+    expect(loss(dummy('cavalry'), 'archer')).toBeCloseTo(18);
     expect(loss(dummy('scout'), 'scout')).toBeCloseTo(7);
   });
 

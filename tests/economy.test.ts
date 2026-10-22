@@ -89,7 +89,7 @@ describe('training lanes (V2)', () => {
     state.resources[0] = { food: 2000, wood: 2000, stone: 0, gold: 2000 };
     const count = () => state.units.filter(u => u.team === 0).length;
     for (let i = 0; i < 4; i++) g.buy('infantry', 0);
-    expect(state.resources[0].food).toBe(2000 - 4 * 40);
+    expect(state.resources[0].food).toBe(2000 - 4 * 55);
     step(4.9); expect(count()).toBe(0);
     step(0.15); expect(count()).toBe(4);
   });

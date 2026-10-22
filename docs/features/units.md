@@ -1,6 +1,6 @@
 # Quân lính & xuất quân
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Người chơi dùng lúa (và gỗ/vàng tuỳ loại) để mua 5 loại quân tại pháo đài. Quân đã trả tiền vào **hàng đợi huấn luyện**: mỗi phe có **4 hàng đợi chạy song song** từ đầu trận (mỗi hàng luyện một quân, 4–12 giây), mua thêm được từ hàng đợi thứ 5, xong thì xuất hiện ở **sân tập kết** cạnh pháo đài. Nếu sân đã kín, quân vào hàng chờ xuất quân và tự ra khi có chỗ.
@@ -13,10 +13,12 @@ Bảng `specs` (đơn vị: HP, sát thương/đòn, tầm & tốc độ theo đ
 | Khoá | Tên | HP | ST | Tầm | Tốc độ | Cooldown | Giá (`cost`) | Huấn luyện (`train`, giây) | Nuôi (`upkeep`, lúa/phút) | Bán kính `r` | Tầm nhìn |
 |---|---|---:|---:|---:|---:|---:|---|---:|---:|---:|---:|
 | `scout` | Trinh sát | 60 | 7 | 18 | 72 | 1.1 | 25 lúa | 4 | 0,3 | 8 | 260 |
-| `infantry` | Lính | 100 | 14 | 22 | 45 | 0.8 | 40 lúa | 5 | 0,8 | 10 | 105 |
-| `archer` | Cung thủ | 65 | 16 | 125 | 34 | 1.05 | 55 lúa, 25 gỗ, 10 vàng | 8 | 1,2 | 9 | 130 |
+| `infantry` | Lính | 100 | 14 | 22 | 45 | 0.8 | 55 lúa | 5 | 0,8 | 10 | 105 |
+| `archer` | Cung thủ | 65 | 18 | 125 | 34 | 1.05 | 45 lúa, 25 gỗ, 5 vàng | 8 | 1,2 | 9 | 130 |
 | `spearman` | Lính giáo | 145 | 12 | 26 | 38 | 0.82 | 45 lúa, 15 gỗ | 6 | 0,8 | 11 | 150 |
-| `cavalry` | Lính kỵ binh | 210 | 24 | 27 | 58 | 0.9 | 80 lúa, 35 vàng | 12 | 2,5 | 13 | 105 |
+| `cavalry` | Lính kỵ binh | 230 | 24 | 27 | 58 | 0.9 | 75 lúa, 25 vàng | 12 | 2,5 | 13 | 105 |
+
+**Phương án D (2026-10-22, người phát triển duyệt):** lính 40 → 55 lúa; cung thủ 55 lúa 25 gỗ 10 vàng → 45 lúa 25 gỗ 5 vàng, sát thương 16 → 18; kỵ binh 80 lúa 35 vàng → 75 lúa 25 vàng, máu 210 → 230. Lý do: mô phỏng hai phe cùng ngân sách (900 điểm; 1 lúa = 1 gỗ = 1, đá 1,3, vàng 1,5) cho thấy lính thắng mọi loại (còn 68–72% quân) và cung thủ thua lính giáo dù có hệ số khắc chế. Sau khi đổi (phần quân còn lại, dương = bên trái thắng): lính–giáo +30, lính–cung +20, lính–kỵ −1, giáo–cung −29, giáo–kỵ +67, cung–kỵ −59 (trước: +68, +72, +71, +49, +76, −66). Số đo trên đất trống, một loại quân mỗi bên. Ảnh hưởng tới AI (mô phỏng người chơi thủ nhà bằng 8 lính giáo, 6 cung, 2 tháp, 18 phút, 5 trận mỗi mức): Khó thắng 0/5 (trước D: 2/5), Thường 3/5 (trước D: 3/5); thủ nhà mạnh lên vì cung thủ +2 sát thương, còn AI tuyển ít quân hơn vì lính đắt hơn.
 
 Sát thương (cột ST) đổi ngày 2026-10-19 theo Combat V3.1, hệ số khắc chế xem [combat.md](combat.md). Giá và lúa nuôi đổi ngày 2026-10-19 theo cân bằng V3.1 (trinh sát 30 → 25 lúa, nuôi 0,5 → 0,3; lính 45 → 40 lúa, nuôi 1 → 0,8; lính giáo nuôi 1 → 0,8; cung thủ nuôi 1,5 → 1,2; kỵ binh 40 → 35 vàng, nuôi 3 → 2,5). Trước đó, ngày 2026-10-17 theo đề xuất v1: lính bỏ 10 vàng (40 → 45 lúa) để luôn tuyển được quân cơ bản khi thiếu vàng; lính giáo 20 → 15 gỗ; cung thủ 30 → 25 gỗ; kỵ binh 50 → 40 vàng. Chỉ số chiến đấu giữ nguyên.
 
@@ -32,7 +34,7 @@ Quy tắc mua: mọi điều kiện nằm trong `buyProblem(type, team)` (trả 
 - Không đủ tài nguyên (`canAfford()`) → log "thiếu …" (`missingText()`), không trừ.
 - Trừ tiền **lúc xếp hàng**, rồi `queueTraining()` thêm `{id, team, type, order, left, total}` vào `state.trainQueue`. Không có nút huỷ, không hoàn tiền.
 - `updateTraining(dt)` (trong `update()`, chỉ host): mỗi phe, `lanesOf(team)` phần tử đầu hàng cùng giảm `left` (chạy song song); về 0 thì `spawn()` (giữ `order`, AI dùng `'explore'` cho trinh sát). Nếu sân kín, quân vào `state.pendingSpawns`. Tạm dừng thì hàng đợi cũng dừng.
-- Thời gian chạy thử 2026-10-18 (V2): lính (40 lúa) ra ở giây 5,0 (giây 4,9 chưa có); xếp 4 lính cùng lúc → cả 4 ra ở giây 5; xếp lính giáo + cung thủ cùng lúc → ra ở giây 6 và 8 (song song).
+- Thời gian chạy thử 2026-10-18 (V2, khi lính còn giá 40 lúa): lính ra ở giây 5,0 (giây 4,9 chưa có); xếp 4 lính cùng lúc → cả 4 ra ở giây 5; xếp lính giáo + cung thủ cùng lúc → ra ở giây 6 và 8 (song song).
 
 **Mua thêm hàng đợi** (kinh tế & hàng đợi V2; nút "Mở hàng đợi thứ N" trong bảng Huấn luyện, `requestBuyLane()` → action `'buyLane'` → `buyQueueLane(team)`):
 - `nextLaneOffer(team)` lấy giá và thời gian từ `QUEUE_LANE_UPGRADES` (`config/balance.ts`). Đây là **giá tạm, chưa chốt**; danh sách sửa hoặc kéo dài được, không cố định dừng ở 8:

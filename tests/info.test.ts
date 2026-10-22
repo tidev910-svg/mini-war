@@ -19,7 +19,7 @@ describe('selection info panel', () => {
     expect(panel()).toContain('Cung thủ ×1,3');     // weak to archers
     cv.selected = true;
     expect(panel()).toContain('2 quân');
-    expect(panel()).toContain('355 / 355');
+    expect(panel()).toContain('375 / 375');
     expect(panel()).not.toContain('Mạnh với'); // mixed group: no counter rows
   });
 

@@ -307,7 +307,7 @@ if (solo.length) {
         state.trainQueue=[];state.resources[0]={food:0,wood:100,stone:100,gold:0};const poor=buyQueueLane(0),poorRes={...state.resources[0]};
         state.resources[0]={food:0,wood:500,stone:500,gold:0};const ok=buyQueueLane(0),paid={...state.resources[0]};step(14.9);const lanesBefore=lanesOf(0);step(.2);
         return {cost,at49,at50,times,full,msg,scoutMsg,poor,poorRes,ok,paid,lanesBefore,lanesAfter:lanesOf(0)};`);
-      t.ok(r.cost.food === 40 && r.cost.gold === 0, 'lính giá 40 lúa, không vàng', r.cost);
+      t.ok(r.cost.food === 55 && r.cost.gold === 0, 'lính giá 55 lúa, không vàng', r.cost);
       t.ok(r.at49 === 0 && r.at50 === 1, 'lính ra quân đúng giây 5', r);
       t.ok(r.times[0] === 6 && r.times[1] === 8, 'lính giáo + cung thủ luyện song song, ra ở giây 6 và 8', r.times);
       t.ok(r.full === 8 && /đầy/.test(r.msg), '4 hàng đợi + 4 chỗ chờ = tối đa 8', r);
