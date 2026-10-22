@@ -6,7 +6,7 @@ import { gameTime, state } from '../core/game';
 
 export const STATS_SAMPLE_SECONDS = 10;
 const zero = () => ({ food: 0, wood: 0, stone: 0, gold: 0 });
-const side = () => ({ trained: 0, lost: 0, killed: 0, damage: 0, built: 0, buildingsLost: 0, peakArmy: 0, gathered: zero(), spent: zero() });
+const side = () => ({ trained: 0, lost: 0, killed: 0, damage: 0, built: 0, buildingsLost: 0, peakArmy: 0, camps: 0, gathered: zero(), spent: zero() });
 export function newStats() { return { sides: [side(), side()], timeline: [], clock: 0 }; }
 const sideOf = team => state?.stats?.sides?.[team];
 
@@ -14,6 +14,7 @@ export function recordGathered(team, resource, amount) { const s = sideOf(team);
 export function recordTrained(team) { const s = sideOf(team); if (s) s.trained++; }
 export function recordDamage(team, amount) { const s = sideOf(team); if (s) s.damage += Math.max(0, amount); }
 export function recordUnitDeath(victimTeam, killerTeam) { const v = sideOf(victimTeam), k = sideOf(killerTeam); if (v) v.lost++; if (k && killerTeam !== victimTeam) k.killed++; }
+export function recordCamp(team) { const s = sideOf(team); if (s) s.camps = (s.camps || 0) + 1; }
 export function recordBuilt(team) { const s = sideOf(team); if (s) s.built++; }
 export function recordBuildingLost(team) { const s = sideOf(team); if (s) s.buildingsLost++; }
 

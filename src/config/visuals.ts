@@ -28,5 +28,13 @@ export const FOG_RGB=hexRgb(THEME['ui-fog']),FOG_EDGE_TILES=2,FOG_BLUR_SCALE=4,F
 // A unit that dies leaves a falling sprite (effect kind 'fall', render/units.ts drawFallenUnit) for fallSeconds.
 export const UNIT_ANIM={fallSeconds:1.4};
 // Visual effects (render/fx.ts, docs/features/rendering.md): particle colours and how many particles at most.
-export const FX_COLORS={spark:'#ffe9a8',sparkHot:'#ffb347',slash:'#f4f1ea',dust:'#a08a6a',smoke:'#5d5650',debris:'#6b5640',wood:'#9c7a4c',fire:'#ff9a3c',glow:'#ffd27a',gold:'#ffd75e',arrowShaft:'#6e4f2c',arrowHead:'#cfd5dc'};
+export const FX_COLORS={spark:'#ffe9a8',sparkHot:'#ffb347',slash:'#f4f1ea',dust:'#a08a6a',smoke:'#5d5650',debris:'#6b5640',wood:'#9c7a4c',fire:'#ff9a3c',glow:'#ffd27a',gold:'#ffd75e',curse:'#b07cff',arrowShaft:'#6e4f2c',arrowHead:'#cfd5dc'};
 export const FX_MAX_PARTICLES=450;
+// Neutral camps and monsters (render/creeps.ts, neutral-camps.md): drawn in code. Neutral amber for their health bars and
+// labels so they never read as either side; the tomb's curse and the buff glow are violet.
+export const CREEP_COLORS={outline:'#2b2118',shadow:'#1e2a1c55',groundShadow:'#29472d33',dirt:'#b49a6c',stoneFloor:'#a7a397',dark:'#1d1712',
+ rock:'#7f8580',stone:'#9d978a',stoneLight:'#c9c2b0',moss:'#6f8f4e',bone:'#e9e1cc',boneDark:'#a69c86',wood:'#7a5532',ash:'#5a524a',
+ flame:'#ffb347',ember:'#ff6a2a',tentA:'#9b6b43',tentB:'#7d5a3a',banner:'#5b1f24',wolf:'#8d8a86',wolfDark:'#5f5b57',eyeGlow:'#ffd34d',
+ skin:'#d9a77e',leather:'#5a4030',banditCloth:'#6c4a3a',banditCloth2:'#57603f',banditHood:'#3b2d26',steel:'#cfd5dc',rust:'#9a5b35',
+ troll:'#7d8a78',trollDark:'#59645a',robe:'#3a2550',robeTrim:'#6a3f8f',crown:'#e8c45a',curse:'#b07cff',curseGlow:'#e6d2ff',curseShadow:'#2a183f66',rune:'#b07cff',
+ bar:'#ffb347',barBack:'#1a1410',label:'#ffe2b0',labelDim:'#c9bca6',reward:'#ffd75e',buff:'#c99bff',minimap:'#ffb347',minimapDim:'#8b8172'};

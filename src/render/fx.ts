@@ -39,9 +39,11 @@ function debris(x, y, n, color = C.debris, speed = 90) {
 function splinters(x, y, n) { for (let i = 0; i < amount(n); i++) { const a = rnd(0, Math.PI * 2); add({ kind: 'splinter', x, y: y - 10, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70 - 20, life: rnd(.25, .4), a, spin: rnd(-14, 14) }); } }
 
 // Hits by attacker (effect.src, sim/combat.ts): melee swings, arrows, gun shots.
-const MELEE = { infantry: 4, spearman: 3, cavalry: 7, scout: 2, guard: 3 };
+// Monsters (sim/creeps.ts) name their own hits: the troll and the boss smash the ground.
+const MELEE = { infantry: 4, spearman: 3, cavalry: 7, scout: 2, wolf: 3, bandit: 4, skeleton: 3 };
 function hit(e) {
-  if (MELEE[e.src]) { slash(e.x, e.y); flash(e.x, e.y - 12, 14, C.spark, .1); sparks(e.x, e.y, MELEE[e.src] + 2); }
+  if (e.src === 'troll' || e.src === 'boss') { flash(e.x, e.y, 30, e.src === 'boss' ? C.curse : C.glow, .18); dust(e.x, e.y + 6, 6, 14); debris(e.x, e.y, 5, C.dust, 80); ring(e.x, e.y, e.src === 'boss' ? C.curse : C.dust, 40, .4); }
+  else if (MELEE[e.src]) { slash(e.x, e.y); flash(e.x, e.y - 12, 14, C.spark, .1); sparks(e.x, e.y, MELEE[e.src] + 2); }
   else if (e.src === 'archer' || e.src === 'flag') { splinters(e.x, e.y, 3); dust(e.x, e.y + 6, 1, 6); }
   else { flash(e.x, e.y - 8, 26, C.fire); sparks(e.x, e.y, 6, C.sparkHot, 150); smoke(e.x, e.y, 2, 12); debris(e.x, e.y, 3, C.dust, 60); }
 }
@@ -64,7 +66,7 @@ export function updateFx() {
   for (const e of state.effects) {
     if (e.id == null) continue; fx.add(e.id);
     if (!primed || seenFx.has(e.id) || !(e.team === team || see(e.x, e.y))) continue;
-    if (e.kind === 'fall') dust(e.x, e.y + 6, 4, 9); else hit(e);
+    if (e.kind === 'fall' || e.kind === 'creepFall') dust(e.x, e.y + 6, 4, 9); else hit(e);
   }
   seenFx = fx;
   // Shots: a muzzle flash and smoke where a gun fires (arrows have none); trails are drawn from the kept positions.

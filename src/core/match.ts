@@ -1,5 +1,7 @@
 // @ts-nocheck
 // Match lifecycle: fresh() map and state, the simulation step update(), finish() and the frame loop (docs/features/match-flow.md).
+import { placeCamps } from '../map/camps';
+import { buffFactor, campById, campGuarding, creepTargetFor, initCamps, nearKnownCamp, updateCreeps } from '../sim/creeps';
 import { attackGoal, updateKnowledge } from '../sim/knowledge';
 import { enterGarrison, sortieGoal, sortieMayChase, updateFlagDefense } from '../sim/garrison';
 import { newStats, recordGathered, sampleStats, updateStats } from '../sim/stats';
@@ -56,10 +58,13 @@ export function fresh(){
  }
  const {regions,mines,blueBase,redBase}=best;
  buildRegionMap(regions);
- setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[],garrisons:[]});
+ // Neutral camps in mirrored pairs (map/camps.ts, neutral-camps.md); their monsters spawn below, once ids restart.
+ const camps=placeCamps(blueBase,redBase,regions,mines);
+ setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],buildings:[],regions,camps,creeps:[],buffs:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[],garrisons:[]});
  syncStructureObstacles();
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
+ initCamps();
  centerCameraOnHome();
  $('overlay').classList.remove('show');setPauseButton();
  addLog('Trận đấu bắt đầu. Vị trí căn cứ được chọn ngẫu nhiên trong mỗi trận!');
@@ -80,12 +85,18 @@ export function update(dt){
   updateSupply(0);updateSupply(1);
  }
  if(mode==='ai'&&aiTimer>=aiLevel().tick){aiTimer=0;runEnemyAI();}
- updateBuildings(dt);syncStructureObstacles();updateFormations(dt);updateFlagDefense(dt);updateKnowledge();
+ updateBuildings(dt);syncStructureObstacles();updateFormations(dt);updateFlagDefense(dt);updateKnowledge();updateCreeps(dt);
  // unit movement and combat
  for(const u of [...state.units]){
   if(u.hp<=0)continue;const s=specs[u.type];u.walk+=dt;u.moving=false;u.attackTimer-=dt;const startX=u.x,startY=u.y;
-  const speed=s.speed*supplyFactor(u.team,'speed'),cooldown=s.cooldown/supplyFactor(u.team,'attack');
+  const speed=s.speed*supplyFactor(u.team,'speed')*buffFactor(u.team,'speed'),cooldown=s.cooldown/supplyFactor(u.team,'attack');
   let target=nearestEnemy(u);if(!unitTargetValid(target,u))target=null;
+  // Monsters (sim/creeps.ts): one the unit was ordered to clear, or one of an awake camp within reach; an enemy still out
+  // of range does not stop the unit from fighting the monster biting it.
+  // AI units on their way somewhere (farther than 60) walk on past a camp, unless they were told to fight it
+  // (u.campTarget: its camp squads, or enough AI units around a woken camp, ai/camps.ts); standing ones fight back.
+  const passing=mode==='ai'&&u.team===1&&u.campTarget==null&&u.dest&&Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>60;
+  const monster=passing?null:creepTargetFor(u);if(monster&&(!target||(dist(u,target)>attackRange(u,target)&&(u.campTarget===monster.camp||dist(u,monster)<=attackRange(u,monster)))))target=monster;
   const fm=u.formation!=null?formationOf(u):null;let engaged=false;
   if(mode==='ai'&&u.team===1&&!target){
    // Assigned builders stay at their flag until it no longer needs them.
@@ -101,12 +112,12 @@ export function update(dt){
    else if(u.captureTarget!=null){if(!u.dest||Math.hypot(u.dest.x-flag.cp.x,u.dest.y-flag.cp.y)>FLAG_CAPTURE_RADIUS_TILES*TILE_SIZE*.6)u.dest=flagStandSpot(flag);}
    else if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
     const cols=MAP_TILES,rows=MAP_TILES,cw=W/cols,ch=H/rows;
-    // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell.
-    const mineTargets=state.mines.filter(m=>m.owner!==1).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
+    // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell. Both keep away from camps it knows are full.
+    const mineTargets=state.mines.filter(m=>m.owner!==1&&!campGuarding(m.regionId)&&!nearKnownCamp(1,m.x,m.y)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
     let candidate=mineTargets.length?{x:mineTargets[0].x,y:mineTargets[0].y}:null;
     // Scouts sweep the edge of what the AI knows, moving outward from home (no knowledge of where the enemy lives).
     if(u.type==='scout')candidate=exploreSpot(u)||candidate;
-    else if(!candidate||Math.hypot(candidate.x-u.x,candidate.y-u.y)<70){candidate=null;for(let k=0;k<48;k++){const gx=Math.floor(Math.random()*cols),gy=Math.floor(Math.random()*rows),idx=gy*cols+gx;if(!state.enemyFogSeen[idx]){candidate={x:(gx+.5)*cw,y:(gy+.5)*ch};break;}}}
+    else if(!candidate||Math.hypot(candidate.x-u.x,candidate.y-u.y)<70){candidate=null;for(let k=0;k<48;k++){const gx=Math.floor(Math.random()*cols),gy=Math.floor(Math.random()*rows),idx=gy*cols+gx;if(!state.enemyFogSeen[idx]&&!nearKnownCamp(1,(gx+.5)*cw,(gy+.5)*ch)){candidate={x:(gx+.5)*cw,y:(gy+.5)*ch};break;}}}
     if(!candidate)candidate={x:Math.random()*W,y:45+Math.random()*(H-75)};
     u.dest=candidate;u.order='explore';
    }
@@ -120,7 +131,7 @@ export function update(dt){
       if(u.type==='archer'){state.bullets.push({id:nextFxId(),x:u.x,y:u.y-3,target,damage:s.damage,team:u.team,speed:280,life:2,attackerType:u.type});}
       else hurt(target,s.damage,u.team,u.type);
     }
-   }else if((u.order==='attack'||(mode==='ai'&&u.team===1)||(fm&&u.order==='formation'&&formationMayChase(fm,u,target))||(u.order==='sortie'&&sortieMayChase(u,target)))){
+   }else if((u.order==='attack'||u.order==='camp'||(mode==='ai'&&u.team===1)||(fm&&u.order==='formation'&&formationMayChase(fm,u,target))||(u.order==='sortie'&&sortieMayChase(u,target)))){
     engaged=true;
     steerTo(u,target.x,target.y,speed,dt);
     clampToBounds(u);
@@ -135,6 +146,8 @@ export function update(dt){
   // Attack order with no enemy in sight (player units): march on the nearest known enemy target (sim/knowledge.ts);
   // reaching an enemy flag captures it, reaching a structure brings it into sight and into the fight.
   else if(u.order==='attack'&&!engaged&&!target&&(mode==='pvp'||u.team===0)){const g=attackGoal(u);if(g&&Math.hypot(g.x-u.x,g.y-u.y)>30){steerTo(u,g.x,g.y,speed,dt);clampToBounds(u);}}
+  // Order to clear a camp (sim/creeps.ts): walk to it; the fight starts once its monsters are in sight.
+  else if(u.order==='camp'&&!engaged&&!target&&(mode==='pvp'||u.team===0)){const c=campById(u.campTarget);if(!c||c.state!=='alive'){u.order='hold';u.campTarget=null;clearPath(u);}else if(Math.hypot(c.x-u.x,c.y-u.y)>60){steerTo(u,c.x,c.y,speed,dt);clampToBounds(u);}}
   // Flag defenders (sim/garrison.ts): hold while the flag is threatened, walk back in once it has been calm.
   else if(u.order==='sortie'&&!engaged){const p=sortieGoal(u);if(p){if(Math.hypot(p.x-u.x,p.y-u.y)<=FLAG_DEFENSE.enterRadius){enterGarrison(u);continue;}steerTo(u,p.x,p.y,speed,dt);clampToBounds(u);}}
   // Formation members walk to their slot (or column place) when not fighting (sim/formation.ts). A slot that slid less
@@ -159,20 +172,6 @@ export function update(dt){
   for(const u of state.units){if(u.team===base.team)continue;if(!teamCanSee(base.team,u.x,u.y))continue;const d=Math.hypot(source.x-u.x,source.y-u.y);if(d<bd){bd=d;target=u;}}
   if(target&&gun.cool<=0){gun.cool=1.0;state.bullets.push({id:nextFxId(),x:source.x,y:source.y-8,target,damage:FORTRESS_GUN_DAMAGE[index]??FORTRESS_GUN_DAMAGE[0],team:base.team,speed:320,life:1.2});}
  }
- // Neutral monsters guarding the gold mines attack nearby player units.
- for(const g of state.guards){
-  if(g.hp<=0)continue;g.timer-=dt;
-  let target=state.units.filter(u=>u.team===0&&u.hp>0&&Math.hypot(u.x-g.x,u.y-g.y)<g.aggro).sort((a,b)=>Math.hypot(a.x-g.x,a.y-g.y)-Math.hypot(b.x-g.x,b.y-g.y))[0];
-  if(target){
-   const d=Math.hypot(target.x-g.x,target.y-g.y);
-   if(d>g.range){g.x+=(target.x-g.x)/d*g.speed*dt;g.y+=(target.y-g.y)/d*g.speed*dt;}
-   else if(g.timer<=0){target.hp-=g.damage;g.timer=g.cooldown;state.effects.push({id:nextFxId(),src:'guard',x:target.x,y:target.y,life:.18,max:.18,color:'#ff9f43'});}
-  }else{
-   const d=Math.hypot(g.homeX-g.x,g.homeY-g.y);
-   if(d>3){g.x+=(g.homeX-g.x)/d*g.speed*dt;g.y+=(g.homeY-g.y)/d*g.speed*dt;}
-  }
- }
- state.guards=state.guards.filter(g=>g.hp>0);
  // Fog of war: what each side sees now becomes explored (sim/fog.ts); explored tiles never go dark again.
  revealTeamVision(0);revealTeamVision(1);
  // AI has its own independent vision map and stale memory of sightings.

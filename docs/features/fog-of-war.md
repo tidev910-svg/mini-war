@@ -58,6 +58,7 @@ Hiển thị: `refreshFog()` (gọi trong `draw()` trước `drawTerritory()`) d
 - `serializeSnapshot()` bỏ `fogSeen`, `enemyFogSeen` khỏi gói gửi.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): hang hiện như lần cuối phe mình thấy (`camp.seen`, `campKnownState()`), quái chỉ hiện khi đang thấy và không cho tầm nhìn; Lăng cổ mở thì được đánh dấu đã khám phá cho cả hai phe (`revealOpenedCamps()`).
 - [combat.md](combat.md): mọi phe chỉ nhắm thứ đang thấy (từ 2026-10-22, cả quân xanh ở chế độ AI); lệnh tấn công khi chưa thấy địch đi tới mục tiêu đã phát hiện (`sim/knowledge.ts`).
 - [combat.md](combat.md): lọc mục tiêu theo tầm nhìn.
 - [buildings.md](buildings.md): mọi công trình chỉ đặt được trên vùng đã khám phá; công trình là nguồn tầm nhìn.

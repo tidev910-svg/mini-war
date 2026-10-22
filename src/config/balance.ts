@@ -67,11 +67,12 @@ export const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTER
 // 0 = only when food runs short); lanesMax: training lanes it buys up to; smartMix: picks units that counter the enemy
 // types it has seen and spends the resources it has piled up (off = the old fixed random order); reinforce: units made
 // during an attack join the wave, homeGuard of them stay home; harass: enemy farms count as nearer targets.
+// camps (2026-10-22, neutral-camps.md): the neutral camp kinds it clears between waves (ai/camps.ts).
 // None of these give the AI resources, sight or knowledge the player does not have.
 export const AI_DIFFICULTY={
- easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520,farmsMax:2,farmEvery:0,  lanesMax:4,smartMix:false,reinforce:false,homeGuard:0,harass:false},
- normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false},
- hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true},
+ easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520,farmsMax:2,farmEvery:0,  lanesMax:4,smartMix:false,reinforce:false,homeGuard:0,harass:false,camps:[]},
+ normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false,camps:['guard','wolves']},
+ hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true,camps:['guard','wolves','bandits','troll','tomb']},
 };
 export const FORTRESS_GUN_COST={stone:150};
 // Combat V3.1 (2026-10-19, damage only): damage per shot of the fortress's built-in guns — [0] the main gun, [1] the
@@ -79,7 +80,7 @@ export const FORTRESS_GUN_COST={stone:150};
 export const FORTRESS_GUN_DAMAGE=[18,45];
 // Damage multipliers (Combat V3.1). Unit against unit: COUNTER_MULTIPLIERS[attacker][target type], default ×1.
 // Against a structure (fortress, farm, outpost, tower) only STRUCTURE_DAMAGE_MULTIPLIERS[attacker] applies (no stacking).
-// Gun shots (fortress, tower, outpost) and guards have no multiplier.
+// Gun shots (fortress, tower, outpost) have no multiplier; monsters use the row of their counterAs type (config/creeps.ts).
 export const COUNTER_MULTIPLIERS={spearman:{cavalry:2.2},cavalry:{archer:1.5},archer:{spearman:1.3},infantry:{spearman:1.2}};
 export const STRUCTURE_DAMAGE_MULTIPLIERS={scout:.5,infantry:1.1,spearman:1,archer:.6,cavalry:.8};
 // Food regions: the mine gives 45 lúa/phút (V3.1) and farms standing in a food region their owner holds produce FOOD_REGION_FARM_BONUS more.

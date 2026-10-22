@@ -1,6 +1,6 @@
 # Chọn chế độ & chơi với bạn bè (P2P)
 
-> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Sảnh chính (`#modeScreen`, xem [hud-ui.md](hud-ui.md)) có 2 chế độ chơi:
@@ -43,6 +43,7 @@ Ngắt kết nối:
 - Biến: `mode`, `netRole`, `peer`, `conn`, `roomCode`, `snapshotClock`, `connectionIntent` (gán nhưng chưa dùng).
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): action `camp` `{ids, campId}`; `state.camps`, `state.creeps`, `state.buffs` đi qua snapshot; khách gọi `revealOpenedCamps()` sau mỗi snapshot.
 Mọi tính năng thay đổi `state` đều phải đi qua action để chạy được ở PvP. Fog và lựa chọn quân là cục bộ ([fog-of-war.md](fog-of-war.md), [controls.md](controls.md)).
 
 ## Kiểm thử thủ công

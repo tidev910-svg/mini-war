@@ -1,6 +1,6 @@
 # Đối thủ AI
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-21
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển, với 3 độ khó **Dễ / Thường / Khó** chọn ở sảnh (dưới nút "Chơi với AI") hoặc Cài đặt → Điều khiển; đổi giữa trận có hiệu lực ngay. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; mọi loại quân tuyển tại pháo đài. AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
@@ -46,6 +46,7 @@
    - **Tiếp viện:** quân mới ra trong lúc đang tấn công nhập vào đợt quân **theo nhóm ≥ 4** (`REINFORCE_GROUP`; đi lẻ từng quân thì chết dần ở tuyến phòng thủ), giữ lại `homeGuard` quân ở nhà.
    - **Trinh sát** dò điểm chưa khám phá bằng `exploreSpot()` (xa pháo đài đỏ, gần trinh sát): quét dần ra ngoài thay vì đi ngẫu nhiên. Không biết trước nhà người chơi.
 
+   Hang quái (`camps`, [neutral-camps.md](neutral-camps.md)): Dễ không chủ động dọn; Thường dọn đồn canh cờ và ổ sói; Khó dọn mọi loại, cả Lăng cổ. `runCampPlan()` gửi đội (`AI_CAMP_SQUAD` + 1) từ quân rảnh hoặc đang tập hợp, chừa `homeGuard`, chỉ tới hang AI đã thấy (hoặc lăng đã mở); đội tập hợp ở điểm ngoài tầm đánh thức rồi cùng vào; rút khi dọn xong hoặc còn dưới một nửa. Quân đang đi đường đi tiếp qua hang; đủ quân quanh một hang bị đánh thức thì cùng dọn (`fightWokenCamps()`, mọi độ khó, trừ Lăng cổ). Đội chiếm cờ bỏ qua cờ còn đồn canh hoặc nằm cạnh hang biết còn quái; khi đi lang thang AI tránh hang biết còn quái (`nearKnownCamp()`).
    Nguồn: `AI_DIFFICULTY` trong `config/balance.ts`. Độ khó không cho AI thêm tài nguyên, tầm nhìn hay thông tin.
 
 AI không qua `buy()`/`applyAction()` nên không có log.
@@ -68,9 +69,11 @@ AI không qua `buy()`/`applyAction()` nên không có log.
 - [src/ai/attack.ts](../../src/ai/attack.ts): `aiLevel()`, `newAIPlan()`, `runAttackPlan()`, `aiUnitGoal()`, các hàm cục bộ `pickTarget()`, `targetDone()`, `rallyPoint()`, `retreat()`, `spot()`; hằng số `AI_DIFFICULTY`, `settings.aiDifficulty`; bộ chọn `#aiDifficulty` ở sảnh (`ui/modeScreen.ts`).
 - [src/ai/enemy.ts](../../src/ai/enemy.ts), [src/core/match.ts](../../src/core/match.ts), [src/config/balance.ts](../../src/config/balance.ts): `runEnemyAI()` (gọi trong `update()` khi `mode==='ai'&&aiTimer>=aiLevel().tick`), các hàm cục bộ `build()`, `regionHas()`, `squad()`, `aiBuy()`; `flagStandSpot()`; hằng số `AI_CAPTURE_SQUAD`, `AI_MAX_CAPTURE_TARGETS`, `AI_CAPTURE_TARGET_INTERVAL`; nhánh `mode==='ai'&&u.team===1&&!target` trong vòng quân; khối "AI has its own independent vision map".
 - Dùng lại: `findBuildSpot()`, `placeBuilding()`, `startUpgrade()`, `startOutpost()`, `outpostRegions()`, `hasBuilding()`, `foodPerMinute()`, `upkeepPerMinute()`, `queueTraining()`, `trainQueueOf()`, `buildTurret()`, `aiCanSee()`, `nearestEnemy()`.
-- Dữ liệu: `state.aiPlan` (`phase`, `target`, `rally`, `wave`, `launched`, `since`, `nextWaveAt`, `defend`), `u.aiRole` (`rally` / `wave` / `defend` / `retreat`), `u.aiSpot`, `state.enemyMemory`, `state.enemyFogSeen`, `state.aiExploreTarget` (khai báo nhưng chưa dùng).
+- [src/ai/camps.ts](../../src/ai/camps.ts): `runCampPlan()` — đội dọn hang quái (gọi trong `runEnemyAI()` trước `runAttackPlan()`).
+- Dữ liệu: `state.aiPlan` (`phase`, `target`, `rally`, `wave`, `launched`, `since`, `nextWaveAt`, `defend`, `camp`, `campSent`, `campStage`, `campGo`), `u.aiRole` (`rally` / `wave` / `defend` / `retreat` / `camp`), `u.campTarget`, `u.aiSpot`, `state.enemyMemory`, `state.enemyFogSeen`, `state.aiExploreTarget` (khai báo nhưng chưa dùng).
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): AI dọn hang theo độ khó (`runCampPlan()`); phần thưởng hang nuôi thêm quân (thử 10 phút mức Khó không đối thủ: tuyển 30–61 quân so với 17–25 khi không có hang).
 - [buildings.md](buildings.md), [territory.md](territory.md), [economy.md](economy.md), [units.md](units.md), [fortress.md](fortress.md), [fog-of-war.md](fog-of-war.md), [combat.md](combat.md).
 
 ## Multiplayer
@@ -100,3 +103,5 @@ Không áp dụng: mọi logic AI chỉ chạy khi `mode==='ai'`.
 - Độ khó chỉ đổi nhịp độ (tiền và tầm nhìn như nhau); "Dễ" vẫn tích quân nhiều nếu người chơi không gây áp lực.
 - AI chỉ nhắm cờ ở chỗ đã khám phá; nếu trinh sát chết sớm, AI mở rộng chậm. Nhóm chiếm cờ và thợ xây là quân chiến đấu bị rút khỏi đội hình. AI không tự xoá tiến độ dở của địch ở cờ mình nếu không có quân đứng đó.
 - `aiExploreTarget` chưa dùng.
+- Đội dọn hang không tính sức mạnh hang; Lăng cổ cần 13 quân rảnh (sau `homeGuard`) nên AI Khó hiếm khi kịp tranh lăng trước người chơi.
+- Có hang quái, AI yếu đi: Khó thắng 2/5 thay vì 4/5, Thường 3/5 thay vì 4/5 trong mô phỏng thủ nhà 18 phút ([neutral-camps.md](neutral-camps.md)).

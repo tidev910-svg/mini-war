@@ -7,7 +7,7 @@ Game RTS 1 đấu 1 chạy trên trình duyệt: Vite + TypeScript + Canvas 2D. 
 - `pnpm dev` — chạy server dev (http://localhost:5173).
 - `pnpm build` — `tsc --noEmit && vite build`. Vì có `@ts-nocheck`, build qua **không** chứng minh logic đúng; phải chạy test.
 - `pnpm test` — unit test (vitest + jsdom) trong `tests/`, chạy chính các module game.
-- `pnpm smoke` — smoke test trên Chrome headless trong `scripts/smoke/` (cần `pnpm dev` đang chạy); chạy riêng nhóm: `pnpm smoke maps pvp`. Nhóm: boot, ui, hotkeys, maps, path, capture, vision, economy, training, ai, pvp.
+- `pnpm smoke` — smoke test trên Chrome headless trong `scripts/smoke/` (cần `pnpm dev` đang chạy); chạy riêng nhóm: `pnpm smoke maps pvp`. Nhóm: boot, ui, hotkeys, maps, path, capture, vision, camps, economy, training, ai, pvp.
 - Sửa luật/cân bằng thì cập nhật test tương ứng (số trong test là số đã chốt).
 
 ## Tài liệu cơ chế game — đọc trước khi sửa

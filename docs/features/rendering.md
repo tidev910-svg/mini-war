@@ -1,6 +1,6 @@
 # Bản đồ, địa hình & đồ hoạ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-21
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Bản đồ vuông lớn, nhìn từ trên xuống: đồng cỏ, rừng dày, một con sông và 9 hồ có bãi cát, vùng đá, ruộng tài nguyên, đường đất. Khoảng 2.900 vật thể trang trí (cây thông, cây lá rộng, bụi cây, cụm đá, đá nhỏ, cỏ lau ven nước, lá súng trên hồ) được vẽ như sprite đứng và sắp xếp theo chiều sâu cùng quân lính để quân có thể đi trước/sau cây. Vật thể trang trí không chặn đường đi.
@@ -21,7 +21,7 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions`, `goldR
 1. Nền `--ui-fog` (`THEME['ui-fog']`), rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
 2. `drawTerrainDetail(viewLeft, viewTop, viewRight, viewBottom)` (đốm cỏ/đá dựng sẵn, chỉ vẽ trong camera; xem mục Hiệu năng), đường chính (bezier ngang ~y=0.55H, cắt theo khung bản đồ để không thò ra ngoài) và đường phụ phía trên.
 3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô dày theo pixel màn hình; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
-4. Lá súng (phẳng, dưới mọi vật đứng), rồi danh sách `sceneActors` sắp theo Y: cây/bụi, đá, cỏ lau, pháo đài (+ sân tập kết), cột cờ (`drawFlag()`, chỗ đã khám phá), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), quái canh mỏ, quân. Khi zoom < `DECOR_LAYER_SCALE` (0,2) mọi vật trang trí lấy từ một ảnh lớp vẽ sẵn (`decorLayerCanvas()`) thay vì vẽ từng cái.
+4. Lá súng (phẳng, dưới mọi vật đứng), rồi danh sách `sceneActors` sắp theo Y: cây/bụi, đá, cỏ lau, pháo đài (+ sân tập kết), cột cờ (`drawFlag()`, chỗ đã khám phá), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), hang quái và quái (`render/creeps.ts`), quân. Khi zoom < `DECOR_LAYER_SCALE` (0,2) mọi vật trang trí lấy từ một ảnh lớp vẽ sẵn (`decorLayerCanvas()`) thay vì vẽ từng cái.
 5. Thanh máu quân, vòng chọn, đạn, hiệu ứng.
 6. Sương mù `drawFog()` (một ảnh phủ toàn bản đồ do `refreshFog()` dựng: đục hoàn toàn ở vùng chưa khám phá, mờ ở chỗ đã khám phá nhưng không đang nhìn thấy, mép mềm), rồi lượt viền `drawTerritory(…, 'over')`, bản xem trước công trình đang đặt.
 7. Lớp màn hình: khung chọn, thanh trạng thái đặt công trình (ở 14% chiều cao từ trên xuống, tránh bảng nhật ký).
@@ -98,6 +98,7 @@ Trước 2026-10-21: đạn là một gạch ngắn cùng màu, trúng đòn là
 - Toạ độ & camera: xem [architecture.md](../architecture.md).
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): lớp hang quái và quái vẽ bằng code (`render/creeps.ts`: `drawCampSite()`, `drawCreep()`, `drawCreepBar()`, `drawCreepFall()`, `drawBuffAuras()`), sắp theo Y cùng quân; màu `CREEP_COLORS`; hiệu ứng đòn quỷ đá / Vua Xương (chớp, bụi, vòng) và xác quái ngã (`creepFall`) trong `render/fx.ts`; cây trang trí không mọc trong 150 quanh hang (`buildWorldDecor()`).
 - [fog-of-war.md](fog-of-war.md): lớp sương mù và việc ẩn địch.
 - [units.md](units.md): thêm quân mới cần spritesheet + nhánh trong `drawUnit()`.
 - Quy tắc: thay đổi phần vẽ không được làm đổi logic ([conventions.md](../conventions.md)).

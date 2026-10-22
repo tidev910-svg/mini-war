@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Flag capture rules (docs/features/territory.md).
+import { campGuarding } from './creeps';
 import { TILE_SIZE } from '../config/map';
 import { addLog, localTeam, state } from '../core/game';
 import { FLAG_CAPTURE_BASE_SECONDS, FLAG_CAPTURE_EXPONENT, FLAG_CAPTURE_MAX_UNITS, FLAG_CAPTURE_RADIUS_TILES, FLAG_DECAY_DELAY_SECONDS, FLAG_DECAY_SECONDS, FLAG_SCOUTS_CAPTURE, RESOURCE_NAMES } from '../config/balance';
@@ -31,6 +32,8 @@ export function updateCaptures(dt){
   }
   r.idle=0;
   if(contested||team<0)continue;
+  // A guard camp at the flag must be cleared first (neutral-camps.md).
+  if(campGuarding(r.id)){if(team===me&&!r.guardNoticed){r.guardNoticed=true;addLog(`Cờ ${regionLabel(r)} có đồn cướp canh giữ: phải dọn đồn trước khi chiếm.`,'danger');}continue;}
   // A garrison inside the flag must be killed or leave before anyone else can capture it (flag-defense.md).
   if(team!==r.owner&&r.owner>=0&&(state.garrisons||[]).some(u=>u.garrison===r.id))continue;
   const step=dt/captureSeconds(n[team]);

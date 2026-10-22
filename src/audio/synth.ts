@@ -2,7 +2,7 @@
 // Event sounds made in code (docs/features/audio.md): each recipe is rendered once, when the page loads, with an
 // OfflineAudioContext into an AudioBuffer, then played by playSound() like a file. SOUNDS entries name them as
 // 'synth:<recipe>' (config/audio.ts). War drums, tù và horns and bells instead of the old jingles.
-import { bell, clang, cymbal, drum, horn, knock, makeReverb, midi, pluck, twang, whoosh } from './instruments';
+import { bell, clang, cymbal, drum, horn, knock, makeReverb, midi, noise, pluck, twang, whoosh } from './instruments';
 
 const D3 = midi(50), F3 = midi(53), A3 = midi(57), A2 = midi(45), D4 = midi(62), Fs4 = midi(66), G4 = midi(67), A4 = midi(69), D5 = midi(74);
 // seconds: length; gain: overall level; wet: reverb share; build(ctx, out, k) schedules the instruments from time 0.
@@ -98,7 +98,52 @@ export const SYNTH_RECIPES = {
   intruder: { seconds: 1.4, gain: .9, wet: .3, build: (c, o) => {
     horn(c, o, 0, { freq: midi(50), dur: .6, gain: .3, bright: 900, scoop: .88 }); drum(c, o, 0, { freq: 70, gain: .4, decay: .3 });
   } },
+  // Neutral camps (neutral-camps.md). Wolf den waking: a howl gliding up and falling away, a second wolf answering.
+  howl: { seconds: 2.6, gain: .8, wet: .5, build: (c, o, k) => {
+    for (const [t0, f0, g0] of [[0, 380, .22], [.55, 450, .13]]) glide(c, o, t0, { freq: f0 * k, rise: 1.6, fall: .75, dur: 1.7, gain: g0 });
+  } },
+  // Troll / tomb waking: a low growl (noise through a moving lowpass, a rough saw underneath).
+  roar: { seconds: 1.8, gain: 1, wet: .3, build: (c, o, k) => growl(c, o, 0, { freq: 62 * k, dur: 1.3, gain: .5 }) },
+  // Bandit camp waking: a short cracked horn call.
+  banditHorn: { seconds: 1.6, gain: .85, wet: .3, build: (c, o) => {
+    horn(c, o, 0, { freq: midi(55), dur: .25, gain: .26, bright: 1400, scoop: .8 }); horn(c, o, .3, { freq: midi(58), dur: .7, gain: .26, bright: 1300, scoop: .85 });
+  } },
+  // Wolf bite: a snap and a dull knock.
+  bite: { seconds: .4, gain: .9, wet: .08, build: (c, o, k) => { whoosh(c, o, 0, { dur: .06, gain: .3, from: 2600 * k, to: 700 }); knock(c, o, .02, { gain: .45 }); } },
+  // Troll / boss smash: a heavy thud with gravel.
+  smash: { seconds: .9, gain: 1, wet: .15, build: (c, o, k) => { drum(c, o, 0, { freq: 44 * k, gain: 1, decay: .55, skin: .7 }); cymbal(c, o, .01, { gain: .12, decay: .35, cutoff: 1400 }); knock(c, o, .03, { gain: .4 }); } },
+  // Camp cleared: drum, rising horn and a bright bell.
+  campCleared: { seconds: 2.2, gain: .85, wet: .3, build: (c, o) => {
+    drum(c, o, 0, { freq: 60, gain: .7, decay: .4 }); horn(c, o, .1, { freq: A3, dur: .2, gain: .22, bright: 1600 }); horn(c, o, .32, { freq: D4, dur: .8, gain: .25, bright: 1800 });
+    bell(c, o, .32, { freq: D5, dur: 1.6, gain: .08 });
+  } },
+  // Tomb opens: a deep tolling bell, a minor horn and a cymbal swell.
+  tombOpen: { seconds: 5, gain: .95, wet: .5, build: (c, o) => {
+    bell(c, o, 0, { freq: midi(38), dur: 4.5, gain: .3 }); cymbal(c, o, 0, { gain: .14, rise: 1.4, decay: 2, cutoff: 4000 });
+    horn(c, o, 1.2, { freq: D3, dur: .6, gain: .26, bright: 800 }); horn(c, o, 1.85, { freq: F3, dur: 1.8, gain: .28, bright: 800 }); drum(c, o, 1.85, { freq: 48, gain: .9, decay: 1 });
+  } },
 };
+// A voice that glides up to freq·rise and down to freq·fall (howl).
+function glide(c, o, t, { freq, rise, fall, dur, gain }) {
+  const osc = c.createOscillator(), sub = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter(), vib = c.createOscillator(), vg = c.createGain();
+  osc.type = 'sawtooth'; sub.type = 'sine'; f.type = 'bandpass'; f.frequency.value = freq * 2; f.Q.value = 1.2;
+  for (const v of [osc, sub]) { v.frequency.setValueAtTime(freq, t); v.frequency.exponentialRampToValueAtTime(freq * rise, t + dur * .35); v.frequency.exponentialRampToValueAtTime(freq * fall, t + dur); }
+  vib.frequency.value = 5.5; vg.gain.value = freq * .02; vib.connect(vg); vg.connect(osc.frequency); vg.connect(sub.frequency);
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(gain, t + .25); g.gain.setTargetAtTime(gain * .7, t + .4, .3); g.gain.setTargetAtTime(.0001, t + dur - .3, .12);
+  const sg = c.createGain(); sg.gain.value = .25;
+  osc.connect(f).connect(g); sub.connect(sg).connect(g); g.connect(o);
+  for (const v of [osc, sub, vib]) { v.start(t); v.stop(t + dur + .1); }
+}
+// A growl: noise through a lowpass that opens and closes, with a rough saw and a fast tremolo.
+function growl(c, o, t, { freq, dur, gain }) {
+  const n = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), saw = c.createOscillator(), sf = c.createBiquadFilter(), trem = c.createOscillator(), tg = c.createGain();
+  n.buffer = noise(c); f.type = 'lowpass'; f.Q.value = 3; f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(900, t + dur * .3); f.frequency.linearRampToValueAtTime(250, t + dur);
+  saw.type = 'sawtooth'; saw.frequency.setValueAtTime(freq, t); saw.frequency.linearRampToValueAtTime(freq * .8, t + dur); sf.type = 'lowpass'; sf.frequency.value = 500;
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(gain, t + .12); g.gain.setTargetAtTime(.0001, t + dur - .3, .15);
+  trem.frequency.value = 17; tg.gain.value = gain * .4; trem.connect(tg); tg.connect(g.gain);
+  n.connect(f).connect(g); saw.connect(sf).connect(g); g.connect(o);
+  n.start(t, Math.random()); n.stop(t + dur + .1); for (const v of [saw, trem]) { v.start(t); v.stop(t + dur + .1); }
+}
 const VARIANT_PITCH = [1, .9, 1.11];
 
 // Renders one recipe to an AudioBuffer (a promise); rejects where OfflineAudioContext is missing (e.g. jsdom).

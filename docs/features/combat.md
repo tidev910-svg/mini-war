@@ -13,7 +13,7 @@ Quân tự đánh mục tiêu hợp lệ gần nhất khi tới tầm. Cung th�
 | Đạn pháo pháo đài | ST 18 (khẩu chính) / 45 (khẩu thứ hai), tốc độ 320, sống 1.2 giây | `FORTRESS_GUN_DAMAGE`, `update()` |
 | Súng tháp / tiền đồn | ST 30 / 12 | `BUILDING_TYPES.tower.gun`, `.outpost.gun` |
 | Trúng đạn | khi khoảng cách ≤ bước di chuyển + 7 | `update()` |
-| Sát thương thực tế | ST cơ bản × hệ số khắc chế (mục tiêu là quân) hoặc × hệ số công trình (mục tiêu là công trình hay pháo đài; không nhân chồng). Súng và quái canh mỏ không có hệ số | `damageMultiplier()`, `hurt()` |
+| Sát thương thực tế | ST cơ bản × hệ số khắc chế (mục tiêu là quân) hoặc × hệ số công trình (mục tiêu là công trình hay pháo đài; không nhân chồng). Súng không có hệ số; quái dùng hệ số của loại quân trong `counterAs` ([neutral-camps.md](neutral-camps.md)) | `damageMultiplier()`, `hurt()` |
 | Hiệu ứng trúng đòn | vòng tròn 0.18 giây (xanh `#73c8ff` / đỏ `#ff747a`) | `hurt()` |
 | Hồi chiêu ban đầu ngẫu nhiên | 0–0.35 giây | `spawn()` |
 | Thiếu tiếp tế | tốc độ × 0,85; hồi chiêu ÷ 0,9 | `supplyFactor()`, xem [economy.md](economy.md) |
@@ -70,6 +70,7 @@ Súng: pháo đài 18 (trước 17), pháo thứ hai 45 (trước 17), tháp 30 
 - Dữ liệu: `state.bullets[] = {x, y, target, damage, team, speed, life, attackerType?}`, `state.effects[] = {x, y, life, max, color}`.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): quân đánh quái của hang đang thức trong tầm (+40) hoặc của hang được lệnh dọn (`creepTargetFor()`, chen vào mục tiêu khi địch còn ngoài tầm); `hurt(target, damage, team, attackerType, src)` nhân `buffFactor()` của Lăng cổ cho đòn của quân; sát thương vào quái không tính vào thống kê; `attackRange()` và `damageMultiplier()` hiểu quái (`counterAs`). Chuỗi đuổi mục tiêu gồm cả `order==='camp'`.
 - [units.md](units.md): chỉ số trong `specs`.
 - [fog-of-war.md](fog-of-war.md): tầm nhìn quyết định có được nhắm hay không.
 - [fortress.md](fortress.md): pháo tích hợp.

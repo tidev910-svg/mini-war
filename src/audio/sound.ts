@@ -91,7 +91,7 @@ let seenFx = new Set(), seenShots = new Set(), owners = [], buildings = new Map(
 // Later additions: formations (id → kind), garrison / sortie counts, upgrade level, supply state, intruders in sight.
 let formations = new Map(), inside = 0, sortie = 0, upgrades = 0, supply = 'ok', intruders = 0;
 // Melee hit sound by attacker type; ranged hits (archer, guns, flags) use the arrow hit.
-const HIT_SOUND = { infantry: 'combat.clash', spearman: 'combat.spear', cavalry: 'combat.cavalry', scout: 'combat.scout', guard: 'combat.clash' };
+const HIT_SOUND = { infantry: 'combat.clash', spearman: 'combat.spear', cavalry: 'combat.cavalry', scout: 'combat.scout', wolf: 'creep.bite', bandit: 'combat.clash', skeleton: 'combat.clash', troll: 'creep.smash', boss: 'creep.smash' };
 const INTRUDER_RANGE = 700; // enemy seen this close to the fortress, or inside a region the side holds
 const total = r => r ? r.food + r.wood + r.stone + r.gold : 0;
 function reset() { primed = false; seenFx = new Set(); seenShots = new Set(); owners = []; buildings = new Map(); ownUnits = new Set(); selectedCount = 0; formations = new Map(); inside = 0; sortie = 0; upgrades = 0; supply = 'ok'; intruders = 0; }
@@ -110,7 +110,7 @@ export function updateSoundscape() {
   for (const e of state.effects) {
     if (e.id == null) continue; fx.add(e.id);
     if (!primed || seenFx.has(e.id) || !seen(e.x, e.y)) continue;
-    if (playSound(e.kind === 'fall' ? 'combat.fall' : HIT_SOUND[e.src] || 'combat.arrowHit', e)) addBattleHeat(e.kind === 'fall' ? MUSIC_HEAT.fall : MUSIC_HEAT.clash);
+    if (playSound((e.kind === 'fall' || e.kind === 'creepFall') ? 'combat.fall' : HIT_SOUND[e.src] || 'combat.arrowHit', e)) addBattleHeat((e.kind === 'fall' || e.kind === 'creepFall') ? MUSIC_HEAT.fall : MUSIC_HEAT.clash);
   }
   for (const b of state.bullets) {
     if (b.id == null) continue; shots.add(b.id);

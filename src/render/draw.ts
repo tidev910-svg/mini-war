@@ -1,5 +1,8 @@
 // @ts-nocheck
 // Frame composition: draw() calls every layer in order (docs/features/rendering.md).
+import { CAMP_TYPES, CREEP_TYPES } from '../config/creeps';
+import { campKnownState } from '../sim/creeps';
+import { drawBuffAuras, drawCampSite, drawCreep, drawCreepBar, drawCreepFall, updateCampNotices } from './creeps';
 import { drawFx, drawProjectiles, updateFx } from './fx';
 import { ghostBases, ghostBuildings, knownFlag, knownMine, updateIntel } from './intel';
 import { TEAM_COLORS, THEME } from '../config/theme';
@@ -94,10 +97,14 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  for(const b of ghostBuildings())if(inView(b))enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));
  for(const r of state.regions){if(!r.cp||!inView(r.cp)||!isTeamAreaExplored(localTeam(),r.cp.x,r.cp.y))continue;enqueue(r.cp.y+8,()=>drawFlag(knownFlag(r)));}
  for(const b of state.buildings){if(!inView(b)||(b.team!==localTeam()&&!currentlyVisible(b.x,b.y)))continue;enqueue(b.y+BUILDING_TYPES[b.kind].halfH*.7,()=>drawBuilding(b));}
- for(const g of state.guards){if(g.hp<=0||!currentlyVisible(g.x,g.y))continue;enqueue(g.y+9,()=>drawUprightAt(g.x,g.y,()=>{ctx.fillStyle='#24412f45';ctx.beginPath();ctx.ellipse(g.x+2,g.y+8,14,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d4ba9';ctx.beginPath();ctx.arc(g.x,g.y,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#eed8ff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#f9ecff';ctx.beginPath();ctx.arc(g.x-3,g.y-2,2.2,0,Math.PI*2);ctx.arc(g.x+3,g.y-2,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#26152f';ctx.fillRect(g.x-11,g.y-16,22,4);ctx.fillStyle='#ef5350';ctx.fillRect(g.x-10,g.y-15,20*Math.max(0,g.hp/g.max),2);}));}
+ // Neutral camps as the local side knows them; monsters only where it sees (render/creeps.ts).
+ for(const camp of state.camps||[]){if(!inView(camp))continue;const known=campKnownState(camp,localTeam());if(known==null||(!isTeamAreaExplored(localTeam(),camp.x,camp.y)&&!CAMP_TYPES[camp.kind].opensAt))continue;enqueue(camp.y-20,()=>drawCampSite(camp,known));}
+ for(const c of state.creeps||[]){if(!inView(c)||!currentlyVisible(c.x,c.y))continue;enqueue(c.y+CREEP_TYPES[c.creep].r,()=>drawCreep(c));}
+ for(const e of state.effects)if(e.kind==='creepFall'&&inView(e)&&currentlyVisible(e.x,e.y))enqueue(e.y,()=>drawCreepFall(e));
  // Fallen units lie in the depth-sorted scene (enemy ones only where the local side sees).
  for(const e of state.effects)if(e.kind==='fall'&&inView(e)&&(e.team===localTeam()||currentlyVisible(e.x,e.y)))enqueue(e.y,()=>drawFallenUnit(e));
  for(const u of state.units){if(!inView(u)||(u.team!==localTeam()&&!currentlyVisible(u.x,u.y)))continue;enqueue(u.y+unitTargetHeight(u.type)*.48,()=>drawUnit(u));}
+ drawBuffAuras(inView);
  sceneActors.sort((a,b)=>a.y-b.y);for(const actor of sceneActors)actor.draw();
  // Labels and building health bars queued during the scene, above every sprite.
  flushMapLabels();
@@ -105,6 +112,7 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  // Which bars show follows the hpBars setting: always, only for hurt units, or only for selected ones.
  const barShown=u=>settings.hpBars==='always'||(settings.hpBars==='damaged'?u.hp<u.max:(selected===u||u.selected));
  for(const u of state.units)if(u.hp>0&&inView(u)&&barShown(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitHealthBar(u);
+ for(const c of state.creeps||[])if(inView(c)&&(settings.hpBars==='always'||c.hp<c.max)&&currentlyVisible(c.x,c.y))drawCreepBar(c);
  // Selection rings remain legible above canopy sprites, while the actor itself still respects Y-depth.
  for(const u of state.units)if((selected===u||u.selected)&&inView(u)&&(u.team===localTeam()||currentlyVisible(u.x,u.y)))drawUnitSelection(u);
  // Projectiles and effects stay on their own foreground layer.
@@ -126,5 +134,6 @@ ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
  if(dragSelect){const x=Math.min(dragSelect.x,dragSelect.cx),y=Math.min(dragSelect.y,dragSelect.cy),w=Math.abs(dragSelect.cx-dragSelect.x),h=Math.abs(dragSelect.cy-dragSelect.y);ctx.fillStyle='#69b9ff22';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#8bd0ff';ctx.setLineDash([6,4]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);}
  if(placement){const valid=placement.valid,color=valid?'#47b96c':'#d84c58',name=BUILDING_TYPES[placement.kind].name.toUpperCase(),text=valid?name+' · VỊ TRÍ HỢP LỆ':name+' · '+(placement.problem||'VỊ TRÍ BỊ CHẶN');ctx.save();ctx.font='700 13px system-ui';const w=Math.min(VIEW_W-32,Math.max(280,ctx.measureText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy').width+28)),x=(VIEW_W-w)/2,y=Math.round(VIEW_H*.14);ctx.fillStyle='#101b25eF';ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x,y,w,30,8);ctx.fill();ctx.stroke();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(text+'  ·  Trái: đặt  |  Phải / Esc: hủy',VIEW_W/2,y+15,w-18);ctx.restore();}
  drawMinimap();
+ updateCampNotices();
  updateSoundscape();
 }

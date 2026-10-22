@@ -41,6 +41,10 @@ button{font:inherit;color:inherit}
 .mode-tag{font-size:var(--fs-xs);color:var(--text-sub);padding:0 var(--sp-2);border:var(--border-3) solid var(--gold-muted);border-radius:999px;white-space:nowrap}
 .commander-stats{display:flex;align-items:center;gap:var(--sp-3);font-size:var(--fs-sm);color:var(--text-sub)}
 .army-total{display:inline-flex;align-items:center;gap:var(--sp-1)}
+/* Tomb buff (neutral-camps.md): shown only while it lasts */
+.buff-chip{display:inline-flex;align-items:center;gap:var(--sp-1);color:var(--gold);font-weight:700}
+.buff-chip[hidden]{display:none}
+.buff-chip .ico{width:16px;height:16px}
 .army-total .ico{width:18px;height:18px;color:var(--faction-light)}
 .army-total b{color:var(--text-main);font-size:var(--fs-lg)}
 .commander-army{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);font-size:var(--fs-sm);color:var(--text-sub)}

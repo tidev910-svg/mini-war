@@ -1,6 +1,6 @@
 # Kinh tế & tài nguyên
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Bốn tài nguyên: **lúa, gỗ, đá, vàng**. Ba nguồn thu cộng dồn:
@@ -63,7 +63,7 @@ Chỉ thoát khi **nông trại đủ nuôi quân** (lúa ròng ≥ 0), không p
 - Sinh mỏ theo vùng trong `fresh()` — xem [territory.md](territory.md).
 - Dữ liệu: `state.resources = [{food, wood, stone, gold}, {…}]` (chỉ số = team); `state.mines[] = {x, y, resource, regionId, income (mỗi giây), owner(-1|0|1)}`.
 - Vẽ mỏ: trong `draw()`; màu tinh thể theo `MINE_TYPES[resource].crystal`; mỏ chỉ hiện khi đã khám phá hoặc đang nhìn thấy.
-- `state.guards` (quái canh mỏ) luôn rỗng — xem Giới hạn.
+- Hang quái trung lập thưởng tài nguyên thẳng vào kho ([neutral-camps.md](neutral-camps.md)).
 
 ## Tương tác
 - [resource-system.md](resource-system.md): thiết kế đầy đủ và các giai đoạn tiếp theo.
@@ -99,5 +99,4 @@ Chỉ host tính thu nhập, lúa duy trì và thiếu tiếp tế; `state.resou
 ## Giới hạn / việc tồn đọng
 - Bộ số V3.1 là đề xuất để chơi thử (mục tiêu trận 15–20 phút): cần 10–20 trận giữa người chơi cùng trình độ, ghi thời lượng, số quân, tài nguyên dư, tỉ lệ thắng của từng chiến thuật. Máu, sát thương, tốc độ huấn luyện và sức mạnh pháo chưa cân bằng lại.
 - Nông trại lệch với công thức của tài liệu 18/10 ("20 × số nông trại"): còn nâng cấp cấp 2/3 và thưởng +25% trong vùng lúa. Đã quyết định giữ nguyên ngày 2026-10-18.
-- `state.guards` và khối "Neutral monsters guarding the gold mines" trong `update()` là code chết: không nơi nào thêm quái canh mỏ.
 - Không có giới hạn trần tài nguyên.

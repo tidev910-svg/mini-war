@@ -16,7 +16,7 @@ import { selectedOwnUnits } from './selection';
 import { formationOf } from '../sim/formation';
 import { FORMATION_KINDS, FORMATION_MODES } from '../config/formation';
 
-const ORDER_NAMES = { hold: 'Đứng giữ vị trí', move: 'Đang di chuyển', attack: 'Tấn công', explore: 'Đi tự do', formation: 'Theo đội hình', sortie: 'Xuất kích bảo vệ cờ' };
+const ORDER_NAMES = { hold: 'Đứng giữ vị trí', move: 'Đang di chuyển', attack: 'Tấn công', explore: 'Đi tự do', formation: 'Theo đội hình', sortie: 'Xuất kích bảo vệ cờ', camp: 'Đang dọn hang quái' };
 const num = n => formatAmount(n);
 const mult = m => '×' + String(Math.round(m * 100) / 100).replace('.', ',');
 const pct = p => `${Math.round(Math.max(0, Math.min(1, p)) * 100)}%`;
@@ -35,6 +35,7 @@ function orderOf(u) {
   if (u.buildTarget) return 'Đang xây tiền đồn';
   if (u.captureTarget != null) return 'Đang chiếm cờ';
   if (u.garrisonTarget != null) return 'Đang về đồn trú';
+  if (u.campTarget != null) return ORDER_NAMES.camp;
   return ORDER_NAMES[u.order] || ORDER_NAMES.hold;
 }
 

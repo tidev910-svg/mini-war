@@ -1,5 +1,5 @@
 // Browser smoke tests for Mini War. Needs the dev server running (pnpm dev), then: pnpm smoke [name…]
-// Names: boot ui hotkeys maps path capture vision economy training ai pvp (default: all). Screenshots go to scripts/smoke/out/.
+// Names: boot ui hotkeys maps path capture vision camps economy training ai pvp (default: all). Screenshots go to scripts/smoke/out/.
 import { URL, launch, startAI, checker, sleep } from './lib.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -10,7 +10,7 @@ const want = name => !only.length || only.includes(name);
 const results = [];
 
 // Single-player checks share one browser.
-const solo = ['boot', 'ui', 'hotkeys', 'maps', 'path', 'capture', 'vision', 'economy', 'training', 'ai'].filter(want);
+const solo = ['boot', 'ui', 'hotkeys', 'maps', 'path', 'capture', 'vision', 'camps', 'economy', 'training', 'ai'].filter(want);
 if (solo.length) {
   const c = await launch({ port: 9401, outDir: OUT });
   try {
@@ -258,6 +258,27 @@ if (solo.length) {
       t.ok(r.explored && !r.lost && r.redNow && r.stillExplored, 'đổi chủ → tầm nhìn sang phe mới, phe cũ vẫn nhớ địa hình', r);
       t.ok(r.radii.every(Boolean), 'bán kính 5 loại quân đúng bảng V3.1', r.radii);
       t.ok(r.shownOwner === 1 && r.real === 1, 'cờ của mình bị chiếm ngoài tầm nhìn: phe mình vẫn biết đã mất', r);
+      results.push(t.report());
+    }
+
+    if (want('camps')) {
+      const t = checker('camps: hang quái trung lập — sinh theo cặp, dọn hang, lăng cổ và buff');
+      const r = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];
+        const kinds={};for(const k of state.camps)kinds[k.kind]=(kinds[k.kind]||0)+1;
+        const home=state.bases[0],den=state.camps.filter(k=>k.kind==='wolves').sort((a,b)=>Math.hypot(a.x-home.x,a.y-home.y)-Math.hypot(b.x-home.x,b.y-home.y))[0];
+        const ids=[];for(let i=0;i<6;i++){const u=spawn(0,'spearman');u.x=den.x-420;u.y=den.y-60+i*24;ids.push(u.id);}
+        requestAction('camp',{ids,campId:den.id});const ordered=state.units.filter(u=>u.order==='camp').length;
+        setZoom(1);centerCameraAt(den.x,den.y);let saw=false;for(let i=0;i<70*20&&den.state==='alive';i++){update(.05);if(i%40===0){draw();saw=saw||den.awake>0;}}
+        const known=campKnownState(den,0),food=state.stats.sides[0].camps;
+        const tomb=state.camps.find(k=>k.kind==='tomb');setGameTime(CAMP_TYPES.tomb.opensAt-.2);update(.5);
+        const boss=state.creeps.some(m=>m.camp===tomb.id&&m.creep==='boss');
+        const s=spawn(0,'scout');s.x=tomb.x-260;s.y=tomb.y;update(.05);centerCameraAt(tomb.x,tomb.y);
+        return {kinds,ordered,cleared:den.state,winner:den.winner,known,camps:food,saw,boss,tombOpen:tomb.state,explored:isTeamAreaExplored(0,tomb.x,tomb.y)};`);
+      await sleep(500); await c.shot(OUT, 'camps-tomb');
+      t.ok(r.kinds.wolves === 4 && r.kinds.bandits === 2 && r.kinds.troll === 2 && r.kinds.tomb === 1, 'bản đồ có 4 ổ sói, 2 trại cướp, 2 hang quỷ đá, 1 lăng cổ', r.kinds);
+      t.ok(r.ordered === 6 && r.saw && r.cleared === 'cleared' && r.winner === 0 && r.camps === 1 && r.known === 'cleared', 'lệnh dọn hang: 6 lính giáo tới, đánh thức và dọn sạch ổ sói, phe xanh nhận thưởng', r);
+      t.ok(r.boss && r.tombOpen === 'alive' && r.explored, 'lăng cổ mở đúng giờ, có Vua Xương, cả hai phe biết vị trí', r);
+      t.ok(!c.errors.length, 'không lỗi JavaScript', c.errors);
       results.push(t.report());
     }
 

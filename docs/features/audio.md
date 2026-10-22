@@ -1,6 +1,6 @@
 # Âm thanh
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-21
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh và các sự kiện lớn, cùng nhạc nền và tiếng môi trường.
@@ -23,7 +23,7 @@ Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh v�
 | Chọn quân (số quân chọn tăng) | `order.select` | `order/select-1..3` | RPG `cloth2..4` |
 | Ra lệnh đi | `order.move` | `order/move-1..3` | Impact `footstep_grass_001..003` |
 | Ra lệnh tấn công (phím A / nút) | `order.attack` | `order/attack-1..3` | RPG `drawKnife1..3` |
-| Đòn cận chiến trúng của lính bộ (và quái canh mỏ) | `combat.clash` | `combat/clash-1..5` | Impact `impactMetal_medium_000..004` |
+| Đòn cận chiến trúng của lính bộ (và cướp, lính xương) | `combat.clash` | `combat/clash-1..5` | Impact `impactMetal_medium_000..004` |
 | Lính giáo đâm trúng | `combat.spear` | `synth:hitSpear#1..3` — tiếng vung, cán gỗ va, chút thép | Tự tạo |
 | Kỵ binh chém trúng | `combat.cavalry` | `synth:hitCavalry#1..3` — vó ngựa, đòn nặng, tiếng kiếm ngân | Tự tạo |
 | Trinh sát đánh trúng | `combat.scout` | `synth:hitScout#1..3` — vung dao nhẹ, đòn nhẹ | Tự tạo |
@@ -44,6 +44,9 @@ Game có hiệu ứng âm thanh cho giao diện, mệnh lệnh, trận đánh v�
 | Quân đồn trú xuất kích | `event.sortie` | `synth:sortie` — hai trống + tù và gọi đi lên | Tự tạo |
 | Nâng cấp xong (cấp nông trại, mở thêm hàng đợi) | `event.upgraded` | `synth:upgraded` — nhát búa + chuỗi đàn đi lên | Tự tạo |
 | Kho lúa cạn (bắt đầu cảnh báo thiếu tiếp tế) | `event.starving` | `synth:starving` — hai tiếng chuông trầm, nhỏ | Tự tạo |
+| Hang quái thức dậy khi phe mình thấy ([neutral-camps.md](neutral-camps.md)) | `creep.howl`, `creep.roar`, `creep.horn` | `synth:howl` — sói tru lượn lên xuống, con thứ hai đáp; `synth:roar` — tiếng gầm trầm (nhiễu lọc thấp + răng cưa rung); `synth:banditHorn` — tù và vỡ ngắn | Tự tạo |
+| Sói cắn; quỷ đá / Vua Xương đập | `creep.bite`, `creep.smash` | `synth:bite` (3 bản), `synth:smash` (2 bản) | Tự tạo |
+| Dọn xong một hang; Lăng cổ mở | `event.campCleared`, `event.tombOpen` | `synth:campCleared` — trống, kèn đi lên, chuông; `synth:tombOpen` — chuông trầm ngân, kèn thứ, chũm chọe dâng | Tự tạo |
 | Thấy quân địch gần pháo đài (< 700) hoặc trong vùng mình giữ, sau một lúc yên | `event.intruder` | `synth:intruder` — một hồi tù và ngắn (khác báo động pháo đài hai hồi dài); cách nhau ≥ 25 giây | Tự tạo |
 
 Tổng cộng 45 file, khoảng 610 KB.
@@ -83,6 +86,7 @@ Tổng cộng 45 file, khoảng 610 KB.
 - Cài đặt: `muted`, `masterVolume`, `sfxVolume`, `uiVolume`, `musicVolume`, `ambienceVolume` ([settings.md](settings.md)); thanh trượt `.volume` trong [src/style.css](../../src/style.css).
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): tiếng hang thức, đòn quái, dọn hang, lăng mở phát từ `updateCampNotices()` (render/creeps.ts) và `HIT_SOUND` theo `effect.src`.
 - [settings.md](settings.md): tab Âm thanh, phím M.
 - [combat.md](combat.md): hiệu ứng trúng đòn / quân ngã mang `id`, `src`.
 - [fog-of-war.md](fog-of-war.md): không nghe trận đánh trong sương mù (`teamCanSee()`).

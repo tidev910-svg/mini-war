@@ -1,6 +1,6 @@
 # Luồng trận đấu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Một trận bắt đầu khi người chơi chọn chế độ. Hai phe xuất phát ở hai đầu bản đồ, mỗi phe có một pháo đài. **Không có khoá đầu trận**: từ giây 0 có thể tuyển quân (nếu đủ tài nguyên và công trình) và đưa quân đi bất kỳ đâu. Phe nào mất pháo đài trước thì thua.
@@ -35,6 +35,7 @@ Tạm dừng: nút `#pause` hoặc phím Space. Ở guest PvP gửi action `paus
 - Lúc tải trang: `fresh(); gameStarted=false;` nên bản đồ đã có sẵn sau màn hình chọn chế độ.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): `fresh()` đặt hang (`placeCamps()`) ngay sau vùng và mỏ, sinh quái (`initCamps()`) sau khi đặt lại `nextId`; `update()` gọi `updateCreeps()` sau `updateKnowledge()`.
 - [territory.md](territory.md): sinh bản đồ và vùng trong `fresh()`.
 - [multiplayer.md](multiplayer.md): guest không chạy `update()`; kết quả trận đi qua snapshot.
 - [hud-ui.md](hud-ui.md): đồng hồ, overlay kết quả.

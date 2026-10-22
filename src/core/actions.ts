@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Player commands: requestAction() routes to the host, applyAction() changes state (docs/architecture.md, multiplayer.md).
+import { forgetCamp, orderCampAttack } from '../sim/creeps';
 import { orderGarrison, orderGarrisonExit, releaseFromFlag } from '../sim/garrison';
 import { H, W } from '../config/map';
 import { addLog, conn, ended, localTeam, mode, netRole, paused, setPaused, state } from './game';
@@ -19,7 +20,8 @@ export function requestAction(action,payload={}){
 }
 export function applyAction(team,action,payload={}){
  // A player's own order to units takes them out of the automatic flag defence (sim/garrison.ts).
- if(['move','stop','attack','formation','delete','garrison'].includes(action))releaseFromFlag(team,payload.ids);
+ if(['move','stop','attack','formation','delete','garrison','camp'].includes(action))releaseFromFlag(team,payload.ids);
+ if(['move','stop','attack','formation','garrison'].includes(action))forgetCamp(team,payload.ids);
  if(action==='buy')buy(payload.unit,team);
  else if(action==='build')placeBuilding(team,String(payload.kind),Number(payload.x),Number(payload.y));
  else if(action==='upgrade')startUpgrade(team,'farm',payload.id==null?null:Number(payload.id));
@@ -34,6 +36,8 @@ export function applyAction(team,action,payload={}){
  else if(action==='formationMode'){if(!ended&&!paused)setFormationMode(team,payload.ids,String(payload.mode));}
  else if(action==='formationCancel'){if(!ended&&!paused)cancelFormations(team,payload.ids);}
  else if(action==='garrison'){if(!ended&&!paused)orderGarrison(team,payload.ids,Number(payload.regionId));}
+ // Clear a neutral camp (sim/creeps.ts): units picked out of a formation leave it.
+ else if(action==='camp'){if(!ended&&!paused){detachUnits(team,payload.ids);const n=orderCampAttack(team,payload.ids,Number(payload.campId));if(n&&team===localTeam())addLog(`${n} quân đi dọn hang quái.`);}}
  else if(action==='garrisonExit'){if(!ended&&!paused)orderGarrisonExit(team,Number(payload.regionId));}
  else if(action==='move'){
   if(ended||paused)return;

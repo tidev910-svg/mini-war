@@ -1,6 +1,6 @@
 # HUD & giao diện
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Giao diện theo phong cách **huy hiệu & cờ hiệu**, tông màu "sắt & máu": bản đồ phủ toàn màn hình, các bảng nổi có hình khiên và dải cờ đuôi én. **Màu phe** là điểm nhấn chính. Vàng đồng chỉ dùng làm viền cho thành phần quan trọng. Hình khối vẽ bằng CSS/SVG (bộ icon đơn sắc nét viền trong `index.html`), không thêm ảnh bitmap. Toàn bộ chữ tiếng Việt.
@@ -119,6 +119,7 @@ Bảng màu **"sắt & máu"** (đổi ngày 2026-10-18, thay cho tông xanh nav
 - [src/core/game.ts](../../src/core/game.ts): `addLog()`, `notifyShortfall()`. [src/core/view.ts](../../src/core/view.ts): `syncWorldMetrics()`, `maxCanvasPixels()`, `hudInsets()`, `centerCameraOnHome()`.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): ô `#buffChip` trên huy hiệu chỉ huy (cạnh giai đoạn) chỉ hiện khi phe mình có buff Lăng cổ: "+15% sát thương · Ns", tooltip ghi cả tốc độ.
 - [minimap.md](minimap.md), [rendering.md](rendering.md) (nhãn, thanh máu, đường biên, sương mù), [controls.md](controls.md), [units.md](units.md), [buildings.md](buildings.md), [match-flow.md](match-flow.md), [multiplayer.md](multiplayer.md).
 
 ## Multiplayer

@@ -2,6 +2,9 @@
 // Minimap in the bottom-left frame: terrain, territory colours, fog, explored mines and bridges, flags, buildings,
 // units and the camera view (docs/features/minimap.md). Colours come from the design tokens (config/theme.ts):
 // the local side's things in its faction colour, enemies seen right now in --danger.
+import { CREEP_COLORS } from '../config/visuals';
+import { CAMP_TYPES } from '../config/creeps';
+import { campKnownState } from '../sim/creeps';
 import { ghostBuildings, knownRegionOwner } from './intel';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { FOG_RGB, FOG_MEMORY_ALPHA } from '../config/visuals';
@@ -89,6 +92,11 @@ export function drawMinimap() {
     if (b.team !== team && !explored(b.x, b.y)) continue;
     const x = b.x * sx, y = b.y * sy; mctx.fillStyle = b.team === team ? ownSolid : foe; mctx.strokeStyle = THEME.gold; mctx.lineWidth = 1.5;
     mctx.fillRect(x - 5, y - 5, 10, 10); mctx.strokeRect(x - 5, y - 5, 10, 10);
+  }
+  // Neutral camps the side knows of: an amber diamond, grey once cleared (neutral-camps.md).
+  for (const c of state.camps || []) {
+    const known = campKnownState(c, team); if (known == null || (!explored(c.x, c.y) && !CAMP_TYPES[c.kind].opensAt)) continue;
+    mark('diamond', c.x * sx, c.y * sy, c.kind === 'tomb' ? 4.5 : 3.2, known === 'alive' ? CREEP_COLORS.minimap : CREEP_COLORS.minimapDim);
   }
   for (const u of state.units) {
     if (u.hp <= 0) continue;

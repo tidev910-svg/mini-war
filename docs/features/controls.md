@@ -18,7 +18,7 @@
 | Trái vào công trình mình (không phải nông trại thì chỉ chọn) | Chọn công trình: vòng nét đứt, log thông tin; nút nâng cấp dùng công trình đang chọn |
 | Trái vào cột cờ (đã khám phá; khi **không** đang chọn một quân bằng nhấp) | Chọn cờ (`selectedFlag`, vùng nhấp `flagHit()`): hiện vòng phạm vi chiếm, log chủ cờ và thời gian chiếm; nút "Xây tiền đồn" dùng cờ này |
 | Bấm nút xây rồi trái trên bản đồ | Đặt công trình ([buildings.md](buildings.md)); phải hoặc Escape để huỷ |
-| Phải nhấp (không kéo) | Ra lệnh `move` cho cả nhóm đang chọn |
+| Phải nhấp (không kéo) | Ra lệnh `move` cho cả nhóm đang chọn; lên cờ của mình: đồn trú; lên hang quái còn quái: dọn hang (action `camp`, [neutral-camps.md](neutral-camps.md)) |
 | Giữ phải / giữa rồi kéo; kéo bằng cảm ứng | Di chuyển camera (ngưỡng 4 px mới tính là kéo) |
 | Lăn chuột | Zoom ×1.15 quanh con trỏ |
 | Nhấp / kéo trên minimap | Đưa tâm camera tới điểm đó ([minimap.md](minimap.md)) |
@@ -79,6 +79,7 @@ Bước cuộn của phím mũi tên nhân với cài đặt **Tốc độ cuộ
 - Vẽ: `drawUnitSelection()`, khung chọn trong `draw()`.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): chuột phải lên hang (`campAt()`) ra lệnh `camp`; nhấp trái lên hang (không chọn quân) ghi `campInfo()` vào nhật ký.
 - [territory.md](territory.md): nhấp chọn cờ, phạm vi chiếm.
 - [combat.md](combat.md): lệnh `attack`.
 - [buildings.md](buildings.md): chế độ đặt công trình chặn các thao tác khác.
@@ -90,7 +91,8 @@ Bước cuộn của phím mũi tên nhân với cài đặt **Tốc độ cuộ
 ## Kiểm thử thủ công
 - [ ] Kéo khung chọn 5 quân → log "5 lính được chọn"; nhấp phải → quân dàn đội hình, không chồng lên nhau.
 - [ ] Shift + nhấp thêm/bỏ quân.
-- [ ] Chuột phải lên cờ của mình với quân đang chọn → đồn trú ([flag-defense.md](flag-defense.md)); lên chỗ khác → lệnh đi.
+- [ ] Chuột phải lên cờ của mình với quân đang chọn → đồn trú ([flag-defense.md](flag-defense.md)); lên hang quái → đi dọn hang; lên chỗ khác → lệnh đi.
+- [ ] Nhấp trái lên hang quái khi chưa chọn quân → nhật ký ghi quái, phần thưởng, cách dọn.
 - [ ] Zoom bằng con lăn giữ đúng điểm dưới con trỏ; kéo camera bằng chuột phải.
 - [ ] Khoanh nhiều loại quân, bấm 5 chỉ còn kỵ binh (quân bị bỏ chọn giữ lệnh), bấm 1 khi không có trinh sát thì giữ nguyên và có thông báo; thanh quân: bấm biểu tượng chỉ chọn loại đó, Shift + bấm thêm/bỏ. Ctrl+1 lưu nhóm, Esc bỏ chọn, F1 gọi lại, bấm F1 hai lần camera tới nhóm; F5 không tải lại trang; H rồi Q/T huấn luyện; B rồi F đặt nông trại; S dừng; Delete loại bỏ; dấu phẩy chọn quân rảnh; F3 tạm dừng; F1 hướng dẫn.
 - Đã chạy thử 2026-10-18: `pnpm smoke hotkeys` đạt toàn bộ các phím trên.

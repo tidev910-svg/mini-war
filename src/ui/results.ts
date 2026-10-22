@@ -28,7 +28,7 @@ export function showMatchStats() {
   const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
   const rows = [
     ['Quân đã tuyển', A.trained, B.trained], ['Quân mất', A.lost, B.lost], ['Hạ gục', A.killed, B.killed],
-    ['Sát thương gây ra', A.damage, B.damage], ['Quân đông nhất', A.peakArmy, B.peakArmy],
+    ['Sát thương gây ra', A.damage, B.damage], ['Hang quái đã dọn', A.camps || 0, B.camps || 0], ['Quân đông nhất', A.peakArmy, B.peakArmy],
     ['Công trình xây / bị phá', `${A.built} / ${A.buildingsLost}`, `${B.built} / ${B.buildingsLost}`],
     ['Vùng giữ cuối trận', regionsNow(me), regionsNow(them)],
     ...Object.keys(RESOURCE_NAMES).map(k => [`Thu ${RESOURCE_NAMES[k]} / tiêu`, `${fmt(A.gathered[k])} / ${fmt(A.spent[k])}`, `${fmt(B.gathered[k])} / ${fmt(B.spent[k])}`]),

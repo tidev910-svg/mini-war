@@ -16,7 +16,9 @@ const RALLY_DISTANCE = 260, RALLY_RADIUS = 220, ARRIVE_RADIUS = 200;
 export const aiLevel = () => AI_DIFFICULTY[settings.aiDifficulty] || AI_DIFFICULTY.normal;
 // phase: 'build' (economy only) → 'gather' (free fighters walk to the rally point) → 'attack' (the wave walks to target)
 // → 'regroup' (survivors return home, wait lvl.regroup seconds) → 'build'. defend: centre of recent enemy sightings near home.
-export function newAIPlan() { return { phase: 'build', target: null, rally: null, wave: 0, launched: 0, since: 0, nextWaveAt: 0, defend: null }; }
+// camp / campSent / campStage / campGo: the neutral camp a squad is clearing, how many were sent, where it gathers
+// first and whether it has gone in (ai/camps.ts).
+export function newAIPlan() { return { phase: 'build', target: null, rally: null, wave: 0, launched: 0, since: 0, nextWaveAt: 0, defend: null, camp: null, campSent: 0, campStage: null, campGo: false }; }
 
 const hyp = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const centre = list => ({ x: list.reduce((t, p) => t + p.x, 0) / list.length, y: list.reduce((t, p) => t + p.y, 0) / list.length });
@@ -105,6 +107,7 @@ export function aiUnitGoal(u) {
   if (u.aiRole === 'defend') return plan.defend || (u.aiRole = null);
   if (u.aiRole === 'retreat') { if (hyp(u, home) < 200) { u.aiRole = null; return null; } return spot(u, home, 140); }
   if (u.aiRole === 'rally') return plan.rally ? spot(u, plan.rally, RALLY_RADIUS * .5) : (u.aiRole = null);
+  if (u.aiRole === 'camp') { const c = state.camps?.find(k => k.id === u.campTarget); if (!c || c.state !== 'alive') { u.aiRole = null; u.campTarget = null; return null; } const plan2 = state.aiPlan; return plan2.campGo || !plan2.campStage ? spot(u, c, 70) : spot(u, plan2.campStage, 60); }
   if (u.aiRole === 'wave') return plan.target ? spot(u, plan.target, plan.target.kind === 'region' ? FLAG_SPREAD : 50) : null;
   return null;
 }

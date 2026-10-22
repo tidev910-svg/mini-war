@@ -17,7 +17,8 @@ export const PATH_GOAL_TOLERANCE = TILE_SIZE * 1.5, PATH_REPATH_SECONDS = 1, PAT
 export const MOVE_BOUNDS = { left: 22, top: 45, right: W - 22, bottom: H - 30 };
 export function clampToBounds(u) { u.x = Math.max(MOVE_BOUNDS.left, Math.min(MOVE_BOUNDS.right, u.x)); u.y = Math.max(MOVE_BOUNDS.top, Math.min(MOVE_BOUNDS.bottom, u.y)); }
 // What `team` knows of the map: its explored tiles (team 0 = state.fogSeen, team 1 = state.enemyFogSeen).
-export function knownMap(team) { return team === 0 ? state.fogSeen : state.enemyFogSeen; }
+// Monsters (team 2, sim/creeps.ts) know the whole map: null.
+export function knownMap(team) { return team === 0 ? state.fogSeen : team === 1 ? state.enemyFogSeen : null; }
 
 // Moves `u` up to speed·dt along its path toward (gx, gy). Keeps u.path (world waypoints) and u.goal for drawing and
 // for the guest. Returns true when the unit has nothing left to walk (arrived, or the goal cannot be reached).

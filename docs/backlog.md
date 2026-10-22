@@ -37,11 +37,13 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 ## Dọn code & hiệu năng
 - [ ] Bật kiểm tra kiểu TypeScript: bỏ `// @ts-nocheck` từng file (bắt đầu từ `src/config/`), thêm interface `GameState`, `Unit`, `Region`, `Building`. → [architecture.md](architecture.md)
 - [ ] Gỡ các import ngược lớp còn lại (sim/net gọi `updateHUD()`, `sim/combat` gọi `finish()`…), để `sim/` chạy được không cần DOM. → [architecture.md](architecture.md)
-- [ ] Code chết: `state.guards` (quái canh mỏ), biến `guiding`, `aiExploreTarget`. → [economy.md](features/economy.md), [controls.md](features/controls.md), [ai-opponent.md](features/ai-opponent.md)
+- [ ] Code chết: biến `guiding`, `aiExploreTarget`. → [controls.md](features/controls.md), [ai-opponent.md](features/ai-opponent.md)
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 
 ## Đã xong gần đây
+**2026-10-22 (hang quái trung lập, bản 1–3):** ổ sói, trại cướp, hang quỷ đá đặt theo cặp đối xứng, thưởng tài nguyên cho phe gây nhiều sát thương nhất, quay lại sau vài phút; đồn cướp canh cờ chặn chiếm cờ; AI dọn hang theo độ khó; Lăng cổ mở lúc 8:00, hạ Vua Xương được buff +15% sát thương +10% tốc độ 90 giây. Thay khối "quái canh mỏ" chết. → [neutral-camps.md](features/neutral-camps.md)
+
 **2026-10-22 (công bằng sương mù khi tấn công):** mọi phe, mọi chế độ chỉ nhắm thứ đang thấy (hết chuyện quân xanh nhắm địch trong sương ở chế độ AI); bấm Tấn công khi chưa thấy địch thì quân tiến tới mục tiêu địch đã phát hiện gần nhất, chưa phát hiện gì thì đứng chờ và báo cần trinh sát.
 
 **2026-10-21 (hiệu ứng trận đánh):** mũi tên có hình, đạn súng là cầu lửa có vệt + chớp lửa và khói ở nòng; trúng đòn có vệt chém, tia lửa, mảnh gỗ, nổ nhỏ; quân ngã có bụi; công trình bị phá có khói và gạch đá; xây xong, chiếm cờ, vào cờ, xuất kích đều có hiệu ứng; đạn không còn lộ trong sương mù.

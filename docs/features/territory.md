@@ -1,6 +1,6 @@
 # Vùng lãnh thổ & cột cờ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-20
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Bản đồ (256 × 256 ô) được chia thành **đúng 20 vùng lãnh thổ** có cờ, cộng 2 vùng nhà chứa pháo đài. Ranh giới vùng là ranh giới tự nhiên, bám theo sông và vùng đá. Mỗi vùng có **đúng một loại tài nguyên** (lúa, gỗ, đá hoặc vàng), **một mỏ** loại đó, và **một cột cờ có sẵn** ở gần tâm vùng.
@@ -120,6 +120,7 @@ Chưa chốt, đang làm tạm:
 - Biến giao diện `selectedFlag` (id vùng, chỉ ở máy người chơi). Nút `#toggleTerritory`; phím T trong `keydown`.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): cờ có đồn cướp canh (`campGuarding()`) không chiếm được cho tới khi đồn được dọn; một số cặp cờ trung lập đối xứng có đồn canh.
 - [flag-defense.md](flag-defense.md): cờ có chủ tự bắn (10 sát thương / 2 giây, tầm 180); cờ còn quân đồn trú thì phe khác không chiếm được; cờ về trung lập thì thả quân đồn trú.
 - [buildings.md](buildings.md): tiền đồn giữ cờ; điều kiện lãnh thổ cho tháp; khoảng cách tới cờ.
 - [economy.md](economy.md): mỏ sinh lúa/gỗ/đá/vàng; mỏ lúa tính vào `foodPerMinute()`.

@@ -1,6 +1,6 @@
 # Thống kê cuối trận
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Khi trận kết thúc, hộp kết quả (`#overlay`) hiện thêm bảng so sánh hai phe và hai biểu đồ theo thời gian, để người chơi thấy vì sao thắng/thua và để ghi số liệu khi chơi thử cân bằng. Nút "⧉ Sao chép số liệu" chép toàn bộ số liệu dạng JSON.
@@ -19,6 +19,7 @@ Biểu đồ: **Số vùng** (kể cả vùng nhà) và **Quân số** (quân c�
 | Sát thương | chỉ tính phần máu thực sự mất (đòn thừa không tính) | `recordDamage()` trong `hurt()` |
 | Quân mất / hạ gục | chết trong giao tranh: bên chết +1 mất, bên đánh +1 hạ gục; xoá quân (Delete) chỉ tính mất | `recordUnitDeath()` |
 | Công trình xây / bị phá | đặt công trình (kể cả chưa xây xong) / công trình bị phá | `recordBuilt()`, `recordBuildingLost()` |
+| Hang quái đã dọn | phe nhận thưởng của hang +1; phần thưởng tính vào "đã thu"; sát thương vào quái không tính vào "Sát thương gây ra" ([neutral-camps.md](neutral-camps.md)) | `recordCamp()` trong `clearCamp()` (sim/creeps.ts) |
 
 ## Code liên quan
 - [src/sim/stats.ts](../../src/sim/stats.ts): `newStats()`, các hàm `record*()`, `sampleStats()`, `updateStats()`.

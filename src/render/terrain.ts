@@ -135,7 +135,8 @@ export function buildWorldDecor(){
  const keepClear=(x,y)=>state.bases.some(b=>Math.hypot(x-b.x,y-b.y)<Math.max(b.w||0,b.h||0)*.50+150)
   ||yards.some(r=>Math.abs(x-r.x)<r.w/2+40&&Math.abs(y-r.y)<r.h/2+40)
   ||state.mines.some(m=>Math.hypot(x-m.x,y-m.y)<95)
-  ||state.regions.some(r=>r.cp&&Math.hypot(x-r.cp.x,y-r.cp.y)<120);
+  ||state.regions.some(r=>r.cp&&Math.hypot(x-r.cp.x,y-r.cp.y)<120)
+  ||(state.camps||[]).some(c=>Math.hypot(x-c.x,y-c.y)<150); // neutral camps (neutral-camps.md)
  const roadBuffer=(x,y)=>{
   const mainRoadY=H*0.55;
   const roadCenterX=W*0.5,roadHalfWidth=W*0.38;

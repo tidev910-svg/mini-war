@@ -5,9 +5,9 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const MODULES = ['config/map', 'config/balance', 'config/theme', 'config/visuals', 'config/formation', 'ui/theme', 'core/game', 'core/view', 'core/match', 'core/actions',
-  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat', 'sim/stats', 'sim/formation', 'sim/garrison', 'sim/knowledge',
-  'ai/attack', 'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
-  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/intel', 'render/fx', 'render/paths', 'render/draw', 'ui/panels', 'ui/selection', 'ui/results', 'ui/info', 'ui/formation', 'ui/hotkeys', 'ui/settings', 'core/settings', 'config/audio', 'audio/instruments', 'audio/synth', 'audio/music', 'audio/sound'];
+  'map/terrain', 'map/regions', 'map/bases', 'map/paths', 'sim/movement', 'sim/economy', 'sim/units', 'sim/fog', 'sim/buildings', 'sim/territory', 'sim/combat', 'sim/stats', 'sim/formation', 'sim/garrison', 'sim/knowledge', 'sim/creeps', 'map/camps', 'config/creeps',
+  'ai/attack', 'ai/camps', 'ai/enemy', 'net/peer', 'net/snapshot', 'ui/modeScreen', 'ui/hud', 'ui/input', 'render/sprites', 'render/territory', 'render/units',
+  'render/buildings', 'render/terrain', 'render/flags', 'render/fog', 'render/minimap', 'render/intel', 'render/fx', 'render/creeps', 'render/paths', 'render/draw', 'ui/panels', 'ui/selection', 'ui/results', 'ui/info', 'ui/formation', 'ui/hotkeys', 'ui/settings', 'core/settings', 'config/audio', 'audio/instruments', 'audio/synth', 'audio/music', 'audio/sound'];
 
 // A 2D context whose methods do nothing; pixel buffers are real so fog/tint code can fill them.
 function fakeContext(canvas) {
@@ -51,5 +51,7 @@ export function quietMatch(g) {
   g.setMode('test');
   g.setGameStarted(true);
   g.state.units = [];
+  // No neutral camps unless a test adds them (tests/creeps.test.ts).
+  g.state.camps = []; g.state.creeps = [];
   return g.state;
 }

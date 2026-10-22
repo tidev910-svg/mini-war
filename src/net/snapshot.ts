@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Host → guest state snapshots (docs/features/multiplayer.md).
+import { revealOpenedCamps } from '../sim/creeps';
 import { MAP_TILES } from '../config/map';
 import { $, conn, ended, gameTime, localSelectedIds, localTeam, mode, netRole, normalizeUnitType, paused, selected, selectedBuilding, selectedFortress, setEnded, setGameTime, setPaused, setSelected, setSelectedBuilding, setSelectedFortress, setState, state } from '../core/game';
 import { setNetStatus } from './peer';
@@ -32,6 +33,6 @@ export function applySnapshot(packet){
  for(const u of state.units){u.selected=picked.has(u.id)&&u.team===localTeam();}
  setSelectedBuilding(state.buildings.find(b=>b.id===selectedBuildingId)||null);
  setSelected(state.units.find(u=>u.selected)||null);
- revealTeamVision(0);revealTeamVision(1);updateHUD();
+ revealTeamVision(0);revealTeamVision(1);revealOpenedCamps();updateHUD();
  if(ended){if(!$('overlay').classList.contains('show'))showMatchStats();$('overlay').classList.add('show');}else $('overlay').classList.remove('show');
 }

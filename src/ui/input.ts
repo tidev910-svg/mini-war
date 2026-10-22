@@ -1,5 +1,7 @@
 // @ts-nocheck
 // Mouse, touch and keyboard: selection, orders, camera pan/zoom, building placement, button wiring (docs/features/controls.md).
+import { campKnownState } from '../sim/creeps';
+import { campAt, campInfo } from '../render/creeps';
 import { MAP_WORLD_H, MAP_WORLD_W, MAX_ZOOM, MIN_ZOOM, VIEW_H, VIEW_W, camX, camY, canvas, clampCamera, gameApp, screenPlaneToWorld, setCamX, setCamY, setZoom, syncWorldMetrics, toggleSideHud, viewOffsets, worldToCanvas, zoom } from '../core/view';
 import { H, W } from '../config/map';
 import { $, addLog, canAfford, conn, costText, draggingFarm, ended, formatAmount, localSelectedIds, localTeam, missingText, mode, notifyShortfall, netRole, paused, peer, placement, selected, selectedBuilding, selectedFlag, selectedFortress, setDraggingFarm, setPaused, setPlacement, setSelected, setSelectedBuilding, setSelectedFlag, setSelectedFortress, setSuppressNextCanvasClick, state, suppressNextCanvasClick } from '../core/game';
@@ -109,7 +111,7 @@ export let selectingBox=false,boxStart=null,boxPointerId=null,guiding=false;
   setCamY(panCamStart.y-(e.clientY-panStart.y)*sy/zoom);
   clampCamera();
  });
- export function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){const own=state.regions.find(r=>r.cp&&r.owner===localTeam()&&flagHit(r,pos.x,pos.y));if(own){requestAction('garrison',{ids:chosen.map(u=>u.id),regionId:own.id});showMoveMarker(own.cp.x,own.cp.y);}else{requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});showMoveMarker(pos.x,pos.y);}setSelected(null);}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
+ export function stopPan(e){if(panning&&(!e||e.pointerId===panPointerId)){const wasDrag=panMoved,button=e?.button; if(button===2&&!wasDrag){const pos=canvasPos(e),chosen=state.units.filter(u=>u.team===localTeam()&&u.selected);if(chosen.length){const own=state.regions.find(r=>r.cp&&r.owner===localTeam()&&flagHit(r,pos.x,pos.y));const camp=!own&&campAt(pos.x,pos.y,localTeam());if(own){requestAction('garrison',{ids:chosen.map(u=>u.id),regionId:own.id});showMoveMarker(own.cp.x,own.cp.y);}else if(camp&&camp.state==='alive'&&campKnownState(camp,localTeam())==='alive'){requestAction('camp',{ids:chosen.map(u=>u.id),campId:camp.id});showMoveMarker(camp.x,camp.y);playSound('order.attack');}else{requestAction('move',{ids:chosen.map(u=>u.id),x:pos.x,y:pos.y});showMoveMarker(pos.x,pos.y);}setSelected(null);}} justPanned=wasDrag;panning=false;panPointerId=null;panStart=null;panCamStart=null;panMoved=false;canvas.style.cursor='';canvas.style.touchAction='';}}
  canvas.addEventListener('pointerup',stopPan);
 canvas.addEventListener('pointercancel',stopPan);
 canvas.addEventListener('click',e=>{
@@ -129,6 +131,9 @@ canvas.addEventListener('click',e=>{
   updateHUD();return;
  }
  setSelectedFlag(null);
+ // Neutral camps: click one (nothing selected) to read what it holds and gives (neutral-camps.md).
+ const camp=!selected&&campAt(x,y,localTeam());
+ if(camp){addLog(campInfo(camp,localTeam()));return;}
  const building=state.buildings.find(b=>b.team===localTeam()&&Math.abs(x-b.x)<=BUILDING_TYPES[b.kind].halfW&&Math.abs(y-b.y)<=BUILDING_TYPES[b.kind].halfH+10);
  if(building){
   for(const u of state.units)u.selected=false;localSelectedIds.clear();setSelected(null);setSelectedBuilding(building);

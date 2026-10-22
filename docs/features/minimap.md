@@ -1,6 +1,6 @@
 # Bản đồ thu nhỏ (minimap)
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-18
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Khung vuông viền `--gold-muted` có 4 góc trang trí kiểu huy hiệu, nằm ở góc trái dưới màn hình (màn hẹp: góc phải, dưới thanh tài nguyên). Khung cho thấy toàn bộ bản đồ 256 × 256 ô: địa hình, màu vùng theo phe, mỏ, cầu và cột cờ đã khám phá, công trình, pháo đài, quân, và khung nhìn của camera. Đồ của mình vẽ bằng màu phe, địch đang thấy vẽ bằng `--danger`. Nhấp hoặc kéo trên minimap để đưa camera tới đó. Minimap tôn trọng sương mù của phe mình.
@@ -31,6 +31,7 @@ Thao tác: nhấn chuột trái (hoặc chạm) rồi kéo trên minimap → tâ
 - Giao diện: `.minimap-frame`, `.corner`, `#minimap` trong [index.html](../../index.html) và [src/style.css](../../src/style.css).
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): hang phe mình biết hiện bằng hình thoi cam (đã dọn: xám), Lăng cổ to hơn và hiện cho cả hai phe khi đã mở.
 - [fog-of-war.md](fog-of-war.md): cùng quy tắc đã khám phá / đang nhìn thấy.
 - [territory.md](territory.md): màu vùng, cờ.
 - [controls.md](controls.md): di chuyển camera.

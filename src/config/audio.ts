@@ -46,6 +46,14 @@ export const SOUNDS = {
   'event.upgraded': { files: synth('upgraded'), bus: 'event', volume: .6, minGap: .5 },
   'event.starving': { files: synth('starving'), bus: 'event', volume: .7, minGap: 10 },
   'event.intruder': { files: synth('intruder'), bus: 'event', volume: .7, minGap: 25 },
+  // Neutral camps (neutral-camps.md): a camp waking up, monster hits, a camp cleared, the tomb opening.
+  'creep.howl': { files: takes('howl', 2), bus: 'sfx', volume: .55, minGap: 2 },
+  'creep.roar': { files: takes('roar', 2), bus: 'sfx', volume: .65, minGap: 2 },
+  'creep.horn': { files: synth('banditHorn'), bus: 'sfx', volume: .55, minGap: 2 },
+  'creep.bite': { files: takes('bite', 3), bus: 'sfx', volume: .4, maxVoices: 4, minGap: .04, pitch: .1 },
+  'creep.smash': { files: takes('smash', 2), bus: 'sfx', volume: .6, maxVoices: 3, minGap: .1, pitch: .06 },
+  'event.campCleared': { files: synth('campCleared'), bus: 'event', volume: .7, minGap: 1 },
+  'event.tombOpen': { files: synth('tombOpen'), bus: 'event', volume: .85, minGap: 5 },
 };
 // Positional sounds (battle): heard only inside the camera view plus AUDIO_VIEW_MARGIN of its size; quieter towards the
 // edges (down to AUDIO_EDGE_GAIN) and panned left/right by screen position (± AUDIO_PAN).

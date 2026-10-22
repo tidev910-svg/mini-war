@@ -1,6 +1,6 @@
 # Vật cản & tìm đường
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
 
 ## Mô tả
 Sông, hồ và vùng đá là **vật cản**: quân không đi xuyên qua được. Muốn sang bờ bên kia phải đi qua một trong 4 **cầu gỗ** bắc qua sông (một cầu nằm trên đường chính). Rừng, đồng cỏ, ruộng đi bình thường; cây và đá trang trí không chặn.
@@ -58,6 +58,7 @@ Mọi lần di chuyển (lệnh đi của người chơi, đuổi theo mục ti�
 - Dữ liệu quân: `u.path` (mảng điểm thế giới còn phải đi), `u.goal`, `u.repath`, `u.pathCheck`, `u.replans`, `u.moveGroup`.
 
 ## Tương tác
+- [neutral-camps.md](neutral-camps.md): quái đi bằng `steerTo()`; `knownMap(2)` trả `null` nên quái lập đường trên toàn bản đồ.
 - [units.md](units.md), [controls.md](controls.md): lệnh đi và đội hình.
 - [combat.md](combat.md): đuổi mục tiêu theo đường đi.
 - [ai-opponent.md](ai-opponent.md): AI di chuyển theo đường đi.
