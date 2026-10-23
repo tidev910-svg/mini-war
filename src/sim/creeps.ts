@@ -5,8 +5,7 @@
 // whole camp fights the units close to it (within aggro + CREEP_CHASE_PAD of the camp centre; archers anywhere within the
 // leash, since they may be shooting at it) and never follows anyone past `leash`; units only passing by are left alone. With nobody left
 // within reach the monsters walk home and heal. When the last one dies, the side that dealt most of the camp's damage
-// gets the reward (and the tomb's buff); the camp fills again after `respawn` seconds. A guard camp keeps its flag from
-// being captured while one of its monsters lives (sim/territory.ts).
+// gets the reward (and the tomb's buff); the camp fills again after `respawn` seconds.
 import { gameTime, nextFxId, nextId, setNextId, state, teamResources } from '../core/game';
 import { CAMP_TYPES, CREEP_CHASE_PAD, CREEP_ENGAGE_MARGIN, CREEP_REGEN, CREEP_SPLASH_SHARE, CREEP_TYPES } from '../config/creeps';
 import { specs } from '../config/balance';
@@ -22,8 +21,6 @@ export const CREEP_TEAM = 2; // monsters' side: neither player
 const AWAKE_SECONDS = 3;
 export const campById = id => (state?.camps || []).find(c => c.id === id) || null;
 export const campCreeps = camp => (state?.creeps || []).filter(c => c.camp === camp.id && c.hp > 0);
-// True while a living guard camp stands at this region's flag.
-export function campGuarding(regionId) { return (state?.camps || []).some(c => c.kind === 'guard' && c.regionId === regionId && c.state === 'alive'); }
 // The camp as `team` knows it: its state when it last saw the camp ('alive' | 'cleared' | 'closed'), or null if never seen.
 // An opened tomb is announced to both sides.
 export function campKnownState(camp, team) {
@@ -61,8 +58,8 @@ export function updateCreeps(dt) {
   for (const camp of state.camps) {
     const def = CAMP_TYPES[camp.kind];
     if (camp.state === 'closed' && gameTime >= def.opensAt) { spawnCamp(camp); camp.openedAt = gameTime; revealOpenedCamps(); }
-    // Refill once the time is up and nobody stands within its leash; a guard camp only while its region is neutral.
-    else if (camp.state === 'cleared' && gameTime >= camp.respawnAt && !unitsNear(camp, def.leash) && (camp.kind !== 'guard' || (state.regions[camp.regionId]?.owner ?? -1) < 0)) spawnCamp(camp);
+    // Refill once the time is up and nobody stands within its leash.
+    else if (camp.state === 'cleared' && gameTime >= camp.respawnAt && !unitsNear(camp, def.leash)) spawnCamp(camp);
     for (const team of [0, 1]) if (teamCanSee(team, camp.x, camp.y)) camp.seen[team] = camp.state;
   }
   const foes = state.units.filter(u => u.hp > 0 && u.garrison == null);

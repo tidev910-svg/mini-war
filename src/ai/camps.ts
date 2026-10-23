@@ -2,7 +2,7 @@
 // Red-side camp hunting for single-player mode (docs/features/ai-opponent.md, neutral-camps.md). Between attack waves the
 // AI sends a squad of free (or still gathering) fighters to a neutral camp it knows is full — only camps it has seen (or the announced tomb),
 // only the kinds its difficulty clears (AI_DIFFICULTY.camps) — and calls them back when the camp is cleared or the squad
-// is mostly lost. Guard camps at flags it wants come first, then the nearest camp. The squad first gathers at a stage
+// is mostly lost. The nearest camp comes first. The squad first gathers at a stage
 // point outside the camp's aggro, on the side facing the AI's fortress, and goes in together once most of it is there
 // (one by one, fast wolves pick them off).
 import { AI_CAMP_SQUAD, CAMP_TYPES } from '../config/creeps';
@@ -47,7 +47,7 @@ export function runCampPlan() {
   const spare = army.filter(u => free(u) || u.aiRole === 'rally').slice(lvl.homeGuard || 0);
   const options = state.camps.filter(c => kinds.includes(c.kind) && c.state === 'alive' && campKnownState(c, TEAM) === 'alive' && (!CAMP_TYPES[c.kind].opensAt || gameTime >= CAMP_TYPES[c.kind].opensAt))
     .filter(c => spare.length >= AI_CAMP_SQUAD[c.kind])
-    .sort((a, b) => (a.kind === 'guard' ? 0 : 1) - (b.kind === 'guard' ? 0 : 1) || hyp(a, home) - hyp(b, home));
+    .sort((a, b) => hyp(a, home) - hyp(b, home));
   const target = options[0]; if (!target) return;
   const sent = spare.sort((p, q) => hyp(p, target) - hyp(q, target)).slice(0, AI_CAMP_SQUAD[target.kind] + 1);
   for (const u of sent) { u.aiRole = 'camp'; u.aiSpot = null; u.dest = null; u.campTarget = target.id; }

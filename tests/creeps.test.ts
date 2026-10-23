@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Neutral camps (docs/features/neutral-camps.md): mirrored placement, waking, leash, healing, clearing and rewards,
-// respawn, guard camps blocking flags, the tomb and its buff, the AI's camp squads, and the snapshot.
+// respawn, the tomb and its buff, the AI's camp squads, and the snapshot.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { loadGame, quietMatch } from './helpers/game';
 
@@ -16,7 +16,7 @@ function quietSpot(state, away = 1300) {
   throw new Error('no quiet spot');
 }
 const put = (team, type, p) => { const u = g.spawn(team, type); u.x = p.x; u.y = p.y; u.order = 'hold'; return u; };
-const camp = (state, kind, p, extra = {}) => { const c = { id: state.camps.length + 1, kind, x: p.x, y: p.y, regionId: null, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0, ...extra }; state.camps.push(c); g.initCamps(); return c; };
+const camp = (state, kind, p, extra = {}) => { const c = { id: state.camps.length + 1, kind, x: p.x, y: p.y, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0, ...extra }; state.camps.push(c); g.initCamps(); return c; };
 const monsters = c => g.state.creeps.filter(m => m.camp === c.id);
 const feed = () => [...document.getElementById('feed').children].map(e => e.textContent).join('\n');
 
@@ -32,10 +32,9 @@ describe('placement', () => {
       for (const c of s.camps) {
         expect(s.bases.every(b => Math.hypot(b.x - c.x, b.y - c.y) > 20 * T)).toBe(true);
         if (c.kind === 'tomb') { expect(c.state).toBe('closed'); continue; }
-        const tol = (c.kind === 'guard' ? .12 : .06) * between + 1;
+        const tol = .06 * between + 1;
         const twin = s.camps.find(o => o !== c && o.kind === c.kind && Math.abs(d(c, 0) - d(o, 1)) <= tol && Math.abs(d(c, 1) - d(o, 0)) <= tol);
         expect(twin, `${c.kind} ${c.id} has a mirrored twin`).toBeTruthy();
-        if (c.kind === 'guard') expect(s.regions[c.regionId].cp).toMatchObject({ x: c.x, y: c.y });
       }
       // Every open camp starts full; the tomb's monsters only appear when it opens.
       for (const c of s.camps) expect(monsters(c).length > 0).toBe(c.state === 'alive');
@@ -109,22 +108,6 @@ describe('clearing', () => {
     expect(c.state).toBe('cleared');
     watcher.x = p.x + 3000; g.update(.05);
     expect(c.state).toBe('alive'); expect(monsters(c)).toHaveLength(g.CAMP_TYPES.wolves.creeps.wolf);
-  });
-});
-
-describe('guard camps', () => {
-  it('keep their flag from being captured until cleared', () => {
-    const state = quietMatch(g), r = state.regions.find(x => x.cp && x.owner < 0);
-    const c = camp(state, 'guard', r.cp, { regionId: r.id });
-    const units = [0, 1, 2].map(i => put(0, 'cavalry', { x: r.cp.x + i * 20, y: r.cp.y + 20 }));
-    for (const u of units) { u.max = u.hp = 1e6; }
-    g.update(.05); g.update(.05);
-    expect(g.campGuarding(r.id)).toBe(true);
-    expect(r.cap).toBe(0);
-    expect(feed()).toContain('đồn cướp canh giữ');
-    for (const m of monsters(c)) g.hurt(m, 9999, 0, 'cavalry');
-    g.update(.05); expect(g.campGuarding(r.id)).toBe(false);
-    step(3); expect(r.cap).toBeGreaterThan(0);
   });
 });
 

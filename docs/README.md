@@ -38,7 +38,7 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 | Cài đặt & hiệu ứng mở menu | [features/settings.md](features/settings.md) | `core/settings.ts`, `ui/settings.ts`, `showAnimated()` / `hideAnimated()` | Đang có |
 | Bản đồ thu nhỏ | [features/minimap.md](features/minimap.md) | `drawMinimap()`, `minimapToWorld()` | Đang có |
 | Vật cản & tìm đường | [features/pathfinding.md](features/pathfinding.md) | `findPath()`, `steerTo()`, `drawUnitPaths()` | Đang có |
-| Hang quái trung lập: ổ sói, trại cướp, quỷ đá, đồn canh cờ, Lăng cổ | [features/neutral-camps.md](features/neutral-camps.md) | `placeCamps()`, `updateCreeps()`, `creepTargetFor()`, `runCampPlan()`, `state.camps` | Cần kiểm thử |
+| Hang quái trung lập: ổ sói, trại cướp, quỷ đá, Lăng cổ | [features/neutral-camps.md](features/neutral-camps.md) | `placeCamps()`, `updateCreeps()`, `creepTargetFor()`, `runCampPlan()`, `state.camps` | Cần kiểm thử |
 | Hệ thống 4 tài nguyên & lãnh thổ | [features/resource-system.md](features/resource-system.md) | thiết kế gốc, quyết định, kế hoạch | Đang có |
 
 ## Cách cập nhật tài liệu

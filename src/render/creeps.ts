@@ -41,10 +41,9 @@ export function drawCampSite(camp, known) {
       poly([x - 54, y + 4, x - 40, y - 34, x - 6, y - 48, x + 30, y - 40, x + 50, y - 6, x + 40, y + 10, x - 44, y + 12], K.rock, K.outline);
       ell(x - 4, y - 6, 22, 16, K.dark);
       for (const [bx, by, a] of [[x + 30, y + 22, .4], [x - 36, y + 24, -.6], [x + 6, y + 30, 1.2]]) { ctx.save(); ctx.translate(bx, by); ctx.rotate(a); line(-8, 0, 8, 0, K.bone, 3); ell(-8, 0, 3, 3, K.bone); ell(8, 0, 3, 3, K.bone); ctx.restore(); }
-    } else if (kind === 'bandits' || kind === 'guard') {
+    } else if (kind === 'bandits') {
       tent(x - 40, y - 10, 1, K.tentA); tent(x + 38, y - 14, .9, K.tentB);
       for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i * .12), px = x + Math.cos(a) * 80, py = y + 10 + Math.sin(a) * 34; line(px, py, px, py - 18, K.wood, 4); }
-      if (kind === 'guard') { line(x + 62, y - 6, x + 62, y - 56, K.wood, 3); poly([x + 62, y - 56, x + 86, y - 50, x + 62, y - 42], K.banner, K.outline, 1.5); }
       if (alive) fire(x, y + 8); else for (let i = -1; i <= 1; i++) line(x - 9, y + 11 + i, x + 9, y + 7 - i, K.ash, 3);
     } else if (kind === 'troll') {
       for (const [bx, by, r] of [[x - 50, y - 6, 26], [x + 48, y - 8, 28], [x - 22, y - 34, 30], [x + 20, y - 38, 30]]) { ell(bx, by, r, r * .8, K.rock); ctx.strokeStyle = K.outline; ctx.lineWidth = 2; ctx.stroke(); ell(bx - r * .3, by - r * .35, r * .35, r * .2, K.moss); }
@@ -61,8 +60,7 @@ export function drawCampSite(camp, known) {
     if (settings.mapLabels && renderView.scale >= MAP_LABEL_MIN_SCALE) {
       const def = CAMP_TYPES[kind], seen = teamCanSee(localTeam(), x, y);
       const status = known === 'closed' ? `MỞ LÚC ${clock(def.opensAt)}` : known === 'cleared' ? (seen && camp.state === 'cleared' ? `ĐÃ DỌN · QUAY LẠI ${clock(Math.max(0, camp.respawnAt - gameTime))}` : 'ĐÃ DỌN') : rewardText(def).toUpperCase() + (def.buff ? ` · SỨC MẠNH ${def.buff.seconds}S` : '');
-      // A guard camp's labels go below its flag's label.
-      const ly = y + (kind === 'guard' ? 96 : 58);
+      const ly = y + 58;
       queueMapLabel(x, y, () => { mapText(def.name.toUpperCase(), x, ly, 13, 900, K.label); mapText(status, x, ly + 18, 11, 800, known === 'alive' ? K.reward : K.labelDim); });
     }
   });
@@ -169,12 +167,12 @@ export function campInfo(camp, team) {
   const who = Object.entries(def.creeps).map(([t, n]) => `${n} ${CREEP_TYPES[t].name.toLowerCase()}`).join(', ');
   if (known === 'closed') return `${def.name}: còn niêm phong, mở lúc ${clock(def.opensAt)}. Hạ Vua Xương để cả quân được +${Math.round(def.buff.damage * 100)}% sát thương, +${Math.round(def.buff.speed * 100)}% tốc độ trong ${def.buff.seconds} giây.`;
   if (known === 'cleared') return `${def.name}: đã dọn, quái sẽ quay lại sau ít phút.`;
-  return `${def.name}: ${who}. Phần thưởng ${rewardText(def)}` + (def.buff ? `, cả quân +${Math.round(def.buff.damage * 100)}% sát thương, +${Math.round(def.buff.speed * 100)}% tốc độ trong ${def.buff.seconds} giây` : '') + ` cho phe gây nhiều sát thương nhất.` + (camp.kind === 'guard' ? ' Cờ ở đây không chiếm được khi đồn còn quái.' : '') + ' Chọn quân rồi chuột phải vào hang để dọn.';
+  return `${def.name}: ${who}. Phần thưởng ${rewardText(def)}` + (def.buff ? `, cả quân +${Math.round(def.buff.damage * 100)}% sát thương, +${Math.round(def.buff.speed * 100)}% tốc độ trong ${def.buff.seconds} giây` : '') + ` cho phe gây nhiều sát thương nhất.` + ' Chọn quân rồi chuột phải vào hang để dọn.';
 }
 
 // ---- notices and calls (once per change, for the local side) ----
 let ref = null, before = new Map(), buffed = false;
-const CALL = { wolves: 'creep.howl', bandits: 'creep.horn', guard: 'creep.horn', troll: 'creep.roar', tomb: 'creep.roar' };
+const CALL = { wolves: 'creep.howl', bandits: 'creep.horn', troll: 'creep.roar', tomb: 'creep.roar' };
 export function updateCampNotices() {
   if (!state?.camps) return;
   const me = localTeam(), first = ref !== state; if (first) { ref = state; before = new Map(); buffed = false; }
@@ -184,7 +182,7 @@ export function updateCampNotices() {
     if (first || !old) continue;
     if (old.state === 'closed' && camp.state === 'alive') { addLog(`${name} đã mở! Hạ Vua Xương để cả quân được +${Math.round(def.buff.damage * 100)}% sát thương, +${Math.round(def.buff.speed * 100)}% tốc độ trong ${def.buff.seconds} giây (${rewardText(def)}).`, 'danger'); playSound('event.tombOpen'); }
     else if (old.state === 'alive' && camp.state === 'cleared') {
-      if (camp.winner === me) { addLog(`Đã dọn ${name.toLowerCase()}: ${rewardText(def)}` + (def.buff ? ` · cả quân +${Math.round(def.buff.damage * 100)}% sát thương, +${Math.round(def.buff.speed * 100)}% tốc độ trong ${def.buff.seconds} giây!` : '.') + (camp.kind === 'guard' ? ' Cờ đã có thể chiếm.' : '')); playSound('event.campCleared'); }
+      if (camp.winner === me) { addLog(`Đã dọn ${name.toLowerCase()}: ${rewardText(def)}` + (def.buff ? ` · cả quân +${Math.round(def.buff.damage * 100)}% sát thương, +${Math.round(def.buff.speed * 100)}% tốc độ trong ${def.buff.seconds} giây!` : '.')); playSound('event.campCleared'); }
       else if (camp.winner >= 0 && (seen || def.buff)) addLog(def.buff ? `Đối phương đã hạ Vua Xương: quân địch mạnh hơn trong ${def.buff.seconds} giây!` : `Đối phương đã dọn ${name.toLowerCase()}.`, 'danger');
     } else if (old.state === 'cleared' && camp.state === 'alive' && seen) addLog(`${name} đã có quái trở lại.`);
     if (camp.state === 'alive' && !old.awake && camp.awake > 0 && seen) playSound(CALL[camp.kind], camp);

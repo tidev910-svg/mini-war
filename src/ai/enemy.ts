@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Red-side AI for single-player mode (docs/features/ai-opponent.md).
-import { campGuarding, nearKnownCamp } from '../sim/creeps';
+import { nearKnownCamp } from '../sim/creeps';
 import { runCampPlan } from './camps';
 import { REGION_TYPES, TILE_SIZE } from '../config/map';
 import { canAfford, gameTime, spend, state, teamResources } from '../core/game';
@@ -34,9 +34,8 @@ export function runEnemyAI(){
  // 3. Territory: send small squads to stand at flags the AI has seen and does not own (neutral first, regions with a
  // missing resource first, then nearest), more flags at once as the match goes on.
  const squad=r=>state.units.filter(u=>u.team===team&&u.hp>0&&u.captureTarget===r.id);
- // Flags behind a guard camp wait until a camp squad has cleared it (ai/camps.ts); flags within reach of another camp it
- // knows is full are skipped.
- const flags=state.regions.filter(r=>r.cp&&r.owner!==team&&isTeamAreaExplored(team,r.cp.x,r.cp.y)&&!campGuarding(r.id)&&!nearKnownCamp(team,r.cp.x,r.cp.y))
+ // Flags within reach of a camp it knows is full are skipped (ai/camps.ts).
+ const flags=state.regions.filter(r=>r.cp&&r.owner!==team&&isTeamAreaExplored(team,r.cp.x,r.cp.y)&&!nearKnownCamp(team,r.cp.x,r.cp.y))
   .sort((a,b)=>(a.owner>=0)-(b.owner>=0)||wanted.some(k=>regionHas(b,k))-wanted.some(k=>regionHas(a,k))||Math.hypot(a.cp.x-base.x,a.cp.y-base.y)-Math.hypot(b.cp.x-base.x,b.cp.y-base.y));
  const active=flags.filter(r=>squad(r).length).length,limit=Math.min(AI_MAX_CAPTURE_TARGETS,1+Math.floor(gameTime/AI_CAPTURE_TARGET_INTERVAL));
  for(const r of flags){

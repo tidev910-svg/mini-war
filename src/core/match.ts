@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Match lifecycle: fresh() map and state, the simulation step update(), finish() and the frame loop (docs/features/match-flow.md).
 import { placeCamps } from '../map/camps';
-import { buffFactor, campById, campGuarding, creepTargetFor, initCamps, nearKnownCamp, updateCreeps } from '../sim/creeps';
+import { buffFactor, campById, creepTargetFor, initCamps, nearKnownCamp, updateCreeps } from '../sim/creeps';
 import { attackGoal, updateKnowledge } from '../sim/knowledge';
 import { enterGarrison, sortieGoal, sortieMayChase, updateFlagDefense } from '../sim/garrison';
 import { newStats, recordGathered, sampleStats, updateStats } from '../sim/stats';
@@ -114,7 +114,7 @@ export function update(dt){
    else if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
     const cols=MAP_TILES,rows=MAP_TILES,cw=W/cols,ch=H/rows;
     // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell. Both keep away from camps it knows are full.
-    const mineTargets=state.mines.filter(m=>m.owner!==1&&!campGuarding(m.regionId)&&!nearKnownCamp(1,m.x,m.y)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
+    const mineTargets=state.mines.filter(m=>m.owner!==1&&!nearKnownCamp(1,m.x,m.y)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
     let candidate=mineTargets.length?{x:mineTargets[0].x,y:mineTargets[0].y}:null;
     // Scouts sweep the edge of what the AI knows, moving outward from home (no knowledge of where the enemy lives).
     if(u.type==='scout')candidate=exploreSpot(u)||candidate;

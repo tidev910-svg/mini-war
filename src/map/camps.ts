@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Where the neutral camps stand (docs/features/neutral-camps.md). Called once by fresh() after the regions and mines are
 // placed. Camps come in pairs, one nearer each fortress at mirrored walking distances (CAMP_LAYOUT), so neither side has
-// the easier camps; guard camps stand at a pair of mirrored neutral flags; the tomb stands about halfway between.
+// the easier camps; the tomb stands about halfway between.
 import { MAP_TILES, MIN_LAND_PATCH_TILES, TILE_SIZE } from '../config/map';
 import { CAMP_LAYOUT, CAMP_PAIR_TOLERANCE, CAMP_SPACING, CAMP_TYPES } from '../config/creeps';
 import { landPatchSizes, terrainType, walkDistances } from './terrain';
@@ -16,7 +16,7 @@ export function placeCamps(blueBase, redBase, regions, mines) {
   for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) between = Math.min(between, walk[0][tileAt(redBase.x + dx * T, redBase.y + dy * T)]);
   if (!Number.isFinite(between) || between <= 0) return [];
   const camps = [], far = (p, list, tiles) => list.every(q => Math.hypot(p.x - q.x, p.y - q.y) > tiles * T);
-  const add = (kind, p, regionId = null) => camps.push({ id: camps.length + 1, kind, x: p.x, y: p.y, regionId, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0 });
+  const add = (kind, p) => camps.push({ id: camps.length + 1, kind, x: p.x, y: p.y, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0 });
   // Candidate spots every 3 tiles: open 3×3 ground on a large land patch, away from fortresses, flags and mines.
   const flags = regions.filter(r => r.cp).map(r => r.cp), spots = [];
   for (let gy = 3; gy < N - 3; gy += 3) for (let gx = 3; gx < N - 3; gx += 3) {
@@ -37,22 +37,6 @@ export function placeCamps(blueBase, redBase, regions, mines) {
       const even = spots.filter(s => share(s) >= .35 && far(s, camps, CAMP_SPACING.camp)).sort((a, b) => Math.abs(a.d[0] - a.d[1]) - Math.abs(b.d[0] - b.d[1]));
       const pick = even.slice(0, 8)[Math.floor(Math.random() * Math.min(8, even.length))];
       if (pick) add(kind, pick);
-      continue;
-    }
-    if (kind === 'guard') {
-      // Pairs of neutral flags at mirrored walking distances (stone and gold regions first), the camp around the flag.
-      const flagged = regions.filter(r => r.cp && r.home === null).map(r => { const i = tileAt(r.cp.x, r.cp.y); return { r, x: r.cp.x, y: r.cp.y, d: [walk[0][i], walk[1][i]] }; })
-        .filter(s => s.d.every(Number.isFinite) && share(s) >= band[0] && share(s) <= band[1]);
-      const rich = s => (s.r.resource === 'gold' || s.r.resource === 'stone' ? 0 : 1);
-      for (let n = 0; n < pairs; n++) {
-        const near = shuffle(flagged.filter(s => s.d[0] < s.d[1] && far(s, camps, CAMP_SPACING.camp))).sort((a, b) => rich(a) - rich(b));
-        let done = false;
-        for (const a of near) {
-          const b = flagged.find(s => s !== a && s.d[1] < s.d[0] && far(s, camps, CAMP_SPACING.camp) && Math.abs(a.d[0] - s.d[1]) <= tol * 2 && Math.abs(a.d[1] - s.d[0]) <= tol * 2);
-          if (b) { add(kind, a, a.r.id); add(kind, b, b.r.id); done = true; break; }
-        }
-        if (!done) break;
-      }
       continue;
     }
     const inBand = spots.filter(s => share(s) >= band[0] && share(s) <= band[1]);

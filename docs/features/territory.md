@@ -120,7 +120,6 @@ Chưa chốt, đang làm tạm:
 - Biến giao diện `selectedFlag` (id vùng, chỉ ở máy người chơi). Nút `#toggleTerritory`; phím T trong `keydown`.
 
 ## Tương tác
-- [neutral-camps.md](neutral-camps.md): cờ có đồn cướp canh (`campGuarding()`) không chiếm được cho tới khi đồn được dọn; một số cặp cờ trung lập đối xứng có đồn canh.
 - [flag-defense.md](flag-defense.md): cờ có chủ tự bắn (10 sát thương / 2 giây, tầm 180); cờ còn quân đồn trú thì phe khác không chiếm được; cờ về trung lập thì thả quân đồn trú.
 - [buildings.md](buildings.md): tiền đồn giữ cờ; điều kiện lãnh thổ cho tháp; khoảng cách tới cờ.
 - [economy.md](economy.md): mỏ sinh lúa/gỗ/đá/vàng; mỏ lúa tính vào `foodPerMinute()`.

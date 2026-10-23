@@ -56,8 +56,8 @@ Người phát triển yêu cầu làm bản 1–3 ngày 2026-10-22 mà chưa ch
 
 | # | Câu hỏi | Hiện tại | Quyết định |
 |---|---|---|---|
-| 9.1 | Phần thưởng kiểu nào? | Cả ba: tài nguyên tức thì (mọi hang), mở khoá cờ (đồn canh cờ), buff (Lăng cổ). Không có lính đánh thuê | |
+| 9.1 | Phần thưởng kiểu nào? | Hai: tài nguyên tức thì (mọi hang), buff (Lăng cổ). Mở khoá cờ (đồn canh cờ) đã bỏ ngày 2026-10-23 theo người phát triển. Không có lính đánh thuê | |
 | 9.2 | Hang cố định theo bản đồ hay ngẫu nhiên? | Sinh ngẫu nhiên mỗi trận, theo cặp đối xứng quãng đường đi bộ | |
 | 9.3 | Thưởng cho ai? | Phe gây nhiều sát thương nhất cho hang | |
-| 9.4 | Hồi sinh? | Có: 180–300 s tuỳ hang, không khi có quân trong dây xích; đồn canh chỉ khi vùng còn trung lập | |
+| 9.4 | Hồi sinh? | Có: 180–300 s tuỳ hang, không khi có quân trong dây xích | |
 | 9.5 | Số liệu quái, thưởng, giờ mở lăng, buff | Số tạm trong `config/creeps.ts` | |
