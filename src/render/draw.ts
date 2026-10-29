@@ -25,15 +25,40 @@ import { drawFog, refreshFog } from './fog';
 import { drawMinimap } from './minimap';
 import { drawBridges, drawUnitPaths } from './paths';
 
+// Cached sea outside the square world. It is screen-space decoration only: the
+// map, terrain data, camera and pathfinding remain in their existing world space.
+let seaMatte=null,seaMatteW=0,seaMatteH=0;
+function drawSeaMatte(){
+ if(!seaMatte||seaMatte.width!==VIEW_W||seaMatte.height!==VIEW_H){
+  seaMatte=document.createElement('canvas');seaMatte.width=VIEW_W;seaMatte.height=VIEW_H;seaMatteW=VIEW_W;seaMatteH=VIEW_H;
+  const water=seaMatte.getContext('2d'),g=water.createLinearGradient(0,0,VIEW_W,VIEW_H);
+  g.addColorStop(0,'#285e70');g.addColorStop(.48,'#347789');g.addColorStop(1,'#214f62');water.fillStyle=g;water.fillRect(0,0,VIEW_W,VIEW_H);
+  // Broad low-contrast ripples echo the game's painted water without a tiled seam.
+  water.lineCap='round';
+  for(let y=20,row=0;y<VIEW_H+40;y+=42,row++){
+   for(let x=(row%2)*35-60;x<VIEW_W+90;x+=118){
+    const length=42+((row*17+x*3)%37),rise=((row*13+x)%17)-8;
+    water.beginPath();water.moveTo(x,y);water.bezierCurveTo(x+length*.28,y-5+rise*.15,x+length*.68,y+5+rise*.15,x+length,y+rise*.2);
+    water.strokeStyle=(row+x)%3===0?'rgba(142,196,196,.16)':'rgba(12,47,62,.13)';water.lineWidth=(row%4===0)?2:1.2;water.stroke();
+   }
+  }
+  // A few soft color currents keep the matte from reading as a flat UI panel.
+  for(const [x,y,r,color] of [[.2,.3,.32,'rgba(90,158,166,.09)'],[.78,.68,.38,'rgba(12,54,70,.10)'],[.52,.08,.25,'rgba(115,174,177,.07)']]){
+   const cx=VIEW_W*x,cy=VIEW_H*y,rad=Math.max(VIEW_W,VIEW_H)*r,glow=water.createRadialGradient(cx,cy,0,cx,cy,rad);glow.addColorStop(0,color);glow.addColorStop(1,'rgba(20,68,82,0)');water.fillStyle=glow;water.fillRect(cx-rad,cy-rad,rad*2,rad*2);
+  }
+ }
+ ctx.drawImage(seaMatte,0,0,seaMatteW,seaMatteH);
+}
+
 export function draw(){
  const viewScale=zoom;
  const {x:offsetX,y:offsetY}=viewOffsets(viewScale);
  setRenderView({scale:viewScale,offsetX,offsetY});
  ctx.setTransform(1,0,0,1,0,0);
  ctx.clearRect(0,0,VIEW_W,VIEW_H);
-// The orthographic viewport's matte uses the same dark tone as unexplored fog,
-// so no green page/background corners appear around the square world.
-ctx.fillStyle=THEME['ui-fog'];ctx.fillRect(0,0,VIEW_W,VIEW_H);
+// Fill the viewport with water first; the square world and its Fog of War are
+// drawn above it, so only the area beyond the map's edges shows this sea.
+drawSeaMatte();
  ctx.save();
  ctx.translate(offsetX,offsetY);
  ctx.scale(viewScale,viewScale);

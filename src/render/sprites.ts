@@ -3,30 +3,57 @@
 
 // Shared atlas: blue/red idle and walk clips occupy dedicated rows; later actions can add rows without changing simulation data.
 export const infantrySpriteSheet=new Image();
-infantrySpriteSheet.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-sheet.png';
+infantrySpriteSheet.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-tran-sheet.png';
 export const infantryClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
 // Separate authored attack strips keep the established idle / walk atlas untouched.
 export const infantryAttackSheets={blue:new Image(),red:new Image()};
-infantryAttackSheets.blue.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-attack-directions-blue.png';
-infantryAttackSheets.red.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-attack-directions-red.png';
+infantryAttackSheets.blue.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-tran-attack-blue.png';
+infantryAttackSheets.red.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-tran-attack-red.png';
 // Four frame columns (wind-up, swing, impact, recovery) by four naturally drawn facing rows.
 export const infantryAttackClip={frames:4,directions:4};
+// Separate Tran-era portraits keep the current battlefield sprites and their animation atlas unchanged.
+export const infantryPortraits={blue:new Image(),red:new Image()};
+infantryPortraits.blue.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-portrait-blue.png';
+infantryPortraits.red.src=import.meta.env.BASE_URL+'assets/units/infantry/infantry-portrait-red.png';
 export const scoutSpriteSheet=new Image();
 scoutSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/scout/scout-sheet.png';
 export const scoutClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
 // Per-cell alpha bounds from the atlas keep blue and red scouts grounded at the same world Y.
 export const scoutFootAnchors=[[304,307,303,308],[294,297,297,298],[276,282,276,283],[267,270,269,270]].map(row=>row.map(bottom=>bottom/313.5));
 export const cavalrySpriteSheet=new Image();
-cavalrySpriteSheet.src=import.meta.env.BASE_URL+'assets/units/cavalry/cavalry-sheet.png';
-export const cavalryClips={blue:{idle:{row:0,frames:3,fps:1},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:3,fps:1},walk:{row:3,frames:4,fps:7}}};
+cavalrySpriteSheet.src=import.meta.env.BASE_URL+'assets/units/cavalry/cavalry-motion-4dir-v1.png';
+export const cavalryAttackSpriteSheet=new Image();
+cavalryAttackSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/cavalry/cavalry-attack-4dir-v2.png';
+export const CAVALRY_DIRECTIONS=['down','left','up','right'],CAVALRY_ROWS=8,CAVALRY_MOTION_COLUMNS=5;
+export const cavalryClips={blue:{idle:{row:0,column:0,frames:1},walk:{row:0,column:1,frames:4,fps:7}},red:{idle:{row:4,column:0,frames:1},walk:{row:4,column:1,frames:4,fps:7}}};
+const CAVALRY_FACING_ANGLES={right:0,'down-right':Math.PI/4,down:Math.PI/2,'down-left':Math.PI*.75,left:Math.PI,'up-left':Math.PI*1.25,up:Math.PI*1.5,'up-right':Math.PI*1.75};
+export function cavalryDirectionFromAngle(angle){
+ const a=((Number.isFinite(angle)?angle:Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+ if(a<Math.PI/4||a>=Math.PI*1.75)return 3;
+ if(a<Math.PI*.75)return 0;
+ if(a<Math.PI*1.25)return 1;
+ return 2;
+}
+export function cavalryDirectionFromFacing(facing){return cavalryDirectionFromAngle(CAVALRY_FACING_ANGLES[facing]??Math.PI/2);}
+export function cavalryMotionFrameRect(sheetWidth,sheetHeight,team,direction,column){
+ const sw=sheetWidth/CAVALRY_MOTION_COLUMNS,sh=sheetHeight/CAVALRY_ROWS,row=team*4+direction;
+ return {sx:column*sw,sy:row*sh,sw,sh};
+}
+export function cavalryAttackFrameRect(sheetWidth,sheetHeight,frame,team,direction){
+ const sw=sheetWidth/4,sh=sheetHeight/CAVALRY_ROWS,row=team*4+direction;
+ return {sx:frame*sw,sy:row*sh,sw,sh};
+}
 export const archerSpriteSheet=new Image();
-archerSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/archer/archer-sheet-v2.png';
+archerSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/archer/archer-tran-sheet-walkcycle-v3.png';
 export const archerClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
 export const archerAttackSpriteSheets={blue:new Image(),red:new Image()};
-archerAttackSpriteSheets.blue.src=import.meta.env.BASE_URL+'assets/units/archer/archer-attack-blue.png';
-archerAttackSpriteSheets.red.src=import.meta.env.BASE_URL+'assets/units/archer/archer-attack-red.png';
+archerAttackSpriteSheets.blue.src=import.meta.env.BASE_URL+'assets/units/archer/archer-tran-attack-blue.png';
+archerAttackSpriteSheets.red.src=import.meta.env.BASE_URL+'assets/units/archer/archer-tran-attack-red.png';
 // Four columns: aim, draw, release, recovery; rows: up, down, left, right for each team.
 export const archerAttackClip={frames:4,directions:4};
+export const archerPortraits={blue:new Image(),red:new Image()};
+archerPortraits.blue.src=import.meta.env.BASE_URL+'assets/units/archer/archer-portrait-blue.png';
+archerPortraits.red.src=import.meta.env.BASE_URL+'assets/units/archer/archer-portrait-red.png';
 // 16 rows: team*8 + direction*2 + (idle 0 | walk 1); built by tools/build_spearman_sheet.py.
 export const spearmanSpriteSheet=new Image();
 spearmanSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/spearman/spearman-sheet.png';

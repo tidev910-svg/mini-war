@@ -73,8 +73,8 @@ export const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTER
 // None of these give the AI resources, sight or knowledge the player does not have.
 export const AI_DIFFICULTY={
  easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520,farmsMax:2,farmEvery:0,  lanesMax:4,smartMix:false,reinforce:false,homeGuard:0,harass:false,camps:[]},
- normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false,camps:['guard','wolves']},
- hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true,camps:['guard','wolves','bandits','troll','tomb']},
+ normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false,camps:['wolves']},
+ hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true,camps:['wolves','bandits','troll','tomb']},
 };
 export const FORTRESS_GUN_COST={stone:150};
 // Combat V3.1 (2026-10-19, damage only): damage per shot of the fortress's built-in guns — [0] the main gun, [1] the

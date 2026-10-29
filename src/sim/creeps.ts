@@ -5,8 +5,7 @@
 // whole camp fights the units close to it (within aggro + CREEP_CHASE_PAD of the camp centre; archers anywhere within the
 // leash, since they may be shooting at it) and never follows anyone past `leash`; units only passing by are left alone. With nobody left
 // within reach the monsters walk home and heal. When the last one dies, the side that dealt most of the camp's damage
-// gets the reward (and the tomb's buff); the camp fills again after `respawn` seconds. A guard camp keeps its flag from
-// being captured while one of its monsters lives (sim/territory.ts).
+// gets the reward (and the tomb's buff); the camp fills again after `respawn` seconds.
 import { gameTime, nextFxId, nextId, setNextId, state, teamResources } from '../core/game';
 import { CAMP_TYPES, CREEP_CHASE_PAD, CREEP_ENGAGE_MARGIN, CREEP_REGEN, CREEP_SPLASH_SHARE, CREEP_TYPES } from '../config/creeps';
 import { specs } from '../config/balance';
@@ -16,14 +15,13 @@ import { nearestWalkable } from '../map/paths';
 import { hurt } from './combat';
 import { recordCamp, recordGathered } from './stats';
 import { facingFrom } from './units';
+import { WOLF_ATTACK_ANIM } from '../config/visuals';
 
 export const CREEP_TEAM = 2; // monsters' side: neither player
 // A camp stays awake this many seconds after the last unit came close or the last hit.
 const AWAKE_SECONDS = 3;
 export const campById = id => (state?.camps || []).find(c => c.id === id) || null;
 export const campCreeps = camp => (state?.creeps || []).filter(c => c.camp === camp.id && c.hp > 0);
-// True while a living guard camp stands at this region's flag.
-export function campGuarding(regionId) { return (state?.camps || []).some(c => c.kind === 'guard' && c.regionId === regionId && c.state === 'alive'); }
 // The camp as `team` knows it: its state when it last saw the camp ('alive' | 'cleared' | 'closed'), or null if never seen.
 // An opened tomb is announced to both sides.
 export function campKnownState(camp, team) {
@@ -61,8 +59,8 @@ export function updateCreeps(dt) {
   for (const camp of state.camps) {
     const def = CAMP_TYPES[camp.kind];
     if (camp.state === 'closed' && gameTime >= def.opensAt) { spawnCamp(camp); camp.openedAt = gameTime; revealOpenedCamps(); }
-    // Refill once the time is up and nobody stands within its leash; a guard camp only while its region is neutral.
-    else if (camp.state === 'cleared' && gameTime >= camp.respawnAt && !unitsNear(camp, def.leash) && (camp.kind !== 'guard' || (state.regions[camp.regionId]?.owner ?? -1) < 0)) spawnCamp(camp);
+    // Refill once the time is up and nobody stands within its leash.
+    else if (camp.state === 'cleared' && gameTime >= camp.respawnAt && !unitsNear(camp, def.leash)) spawnCamp(camp);
     for (const team of [0, 1]) if (teamCanSee(team, camp.x, camp.y)) camp.seen[team] = camp.state;
   }
   const foes = state.units.filter(u => u.hp > 0 && u.garrison == null);
@@ -87,11 +85,18 @@ function stepCreep(c, camp, def, foes, dt) {
   if (t) {
     const d = Math.hypot(t.x - c.x, t.y - c.y);
     if (d > reach(t)) {
+      if(c.creep==='wolf'&&c.attackVisualActionId!=null)cancelWolfBite(c,t);
       steerTo(c, t.x, t.y, s.speed, dt);
       const out = Math.hypot(c.x - camp.x, c.y - camp.y);
       if (out > def.leash) { c.x = camp.x + (c.x - camp.x) * def.leash / out; c.y = camp.y + (c.y - camp.y) * def.leash / out; }
-    } else if (c.timer <= 0) { c.timer = s.cooldown; strike(c, s, t); }
+    } else {
+      if(c.creep==='wolf'&&c.attackVisualActionId!=null&&c.attackVisualTargetId!==t.id)cancelWolfBite(c,t);
+      if(c.creep==='wolf'&&c.timer>0&&c.timer<=WOLF_ATTACK_ANIM.windupSeconds&&c.attackVisualActionId==null)beginWolfBite(c,t);
+      // Fixed-step subtraction can leave a tiny positive remainder (for example 1e-17) at the cooldown boundary.
+      if (c.timer <= 1e-9) { c.timer = s.cooldown; strike(c, s, t); }
+    }
   } else {
+    if(c.creep==='wolf'&&c.attackVisualActionId!=null)cancelWolfBite(c,null);
     if (Math.hypot(c.homeX - c.x, c.homeY - c.y) > 6) { if (steerTo(c, c.homeX, c.homeY, s.speed * 1.2, dt)) clearPath(c); }
     else if (c.path) clearPath(c);
     if (camp.awake <= 0) c.hp = Math.min(c.max, c.hp + c.max * CREEP_REGEN * dt);
@@ -100,9 +105,21 @@ function stepCreep(c, camp, def, foes, dt) {
   if (mx * mx + my * my > 1e-4) c.facing = facingFrom(mx, my, c.facing);
   else if (t) c.facing = facingFrom(t.x - c.x, t.y - c.y, c.facing);
 }
+function wolfBiteEvent(c,kind,t,actionId,duration=.2){
+  const angle=t?Math.atan2(t.y-c.y,t.x-c.x):0;
+  state.visualEvents??=[];
+  state.visualEvents.push({id:nextFxId(),kind,unitId:c.id,unitType:'wolf',team:CREEP_TEAM,x:c.x,y:c.y,targetUnitId:t?.id,actionId,angle,duration,life:Math.max(.24,duration),max:Math.max(.24,duration)});
+}
+function beginWolfBite(c,t){c.attackVisualActionId=nextFxId();c.attackVisualTargetId=t.id;wolfBiteEvent(c,'attackWindup',t,c.attackVisualActionId,WOLF_ATTACK_ANIM.windupSeconds);}
+function cancelWolfBite(c,t){wolfBiteEvent(c,'attackCancel',t,c.attackVisualActionId,.12);c.attackVisualActionId=null;c.attackVisualTargetId=null;}
 // Bandit archers shoot arrows; the rest hit in melee, the troll and the boss also every unit around the target.
 function strike(c, s, t) {
   if (s.ranged) { state.bullets.push({ id: nextFxId(), x: c.x, y: c.y - 3, target: t, damage: s.damage, team: CREEP_TEAM, speed: 280, life: 2, attackerType: s.counterAs }); return; }
+  if(c.creep==='wolf'){
+    const actionId=c.attackVisualActionId??nextFxId();
+    wolfBiteEvent(c,'attack',t,actionId,WOLF_ATTACK_ANIM.biteSeconds);
+    c.attackVisualActionId=null;c.attackVisualTargetId=null;
+  }
   hurt(t, s.damage, CREEP_TEAM, s.counterAs || null, c.creep);
   if (s.splash) for (const u of state.units) if (u !== t && u.hp > 0 && u.garrison == null && Math.hypot(u.x - t.x, u.y - t.y) <= s.splash) hurt(u, s.damage * CREEP_SPLASH_SHARE, CREEP_TEAM, s.counterAs || null, c.creep);
 }

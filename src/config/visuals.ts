@@ -30,9 +30,11 @@ export const UNIT_ANIM={fallSeconds:.42};
 // Archer pose-only timing and arrow-head coordinates inside the draw-frame cell (render/sprites.ts).
 // These are presentation timings; attackTimer, projectile speed and damage stay simulation-owned.
 export const ARCHER_ATTACK_ANIM={windupSeconds:.36,aimFraction:.30,releaseSeconds:.06,recoverySeconds:.18,
- // Pixel coordinates normalized within the nocked-arrow frame, measured from the authored 4×4 sheets.
- arrowTipInCell:{up:{x:.504,y:.061},down:{x:.60,y:.887},left:{x:.05,y:.48},right:{x:.91,y:.242}}};
+ // Arrow launch points normalized in each attack cell, placed at the archer's bow hand instead of the arrow tip at the cell edge.
+ arrowOriginInCell:{up:{x:.52,y:.35},down:{x:.52,y:.65},left:{x:.32,y:.50},right:{x:.68,y:.50}}};
 export const SPEARMAN_ATTACK_ANIM={windupSeconds:.24,impactSeconds:.07,recoverySeconds:.12};
+// Presentation timing only; cavalry attackTimer, cooldown and damage remain simulation-owned.
+export const CAVALRY_ATTACK_ANIM={windupSeconds:.18,thrustSeconds:.10,impactSeconds:.06,recoverySeconds:.14};
 export function spearmanAttackDirection(angle){
  const a=Number.isFinite(angle)?angle:Math.PI/2,dx=Math.cos(a),dy=Math.sin(a);
  return Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
@@ -52,3 +54,5 @@ export const CREEP_COLORS={outline:'#2b2118',shadow:'#1e2a1c55',groundShadow:'#2
  skin:'#d9a77e',leather:'#5a4030',banditCloth:'#6c4a3a',banditCloth2:'#57603f',banditHood:'#3b2d26',steel:'#cfd5dc',rust:'#9a5b35',
  troll:'#7d8a78',trollDark:'#59645a',robe:'#3a2550',robeTrim:'#6a3f8f',crown:'#e8c45a',curse:'#b07cff',curseGlow:'#e6d2ff',curseShadow:'#2a183f66',rune:'#b07cff',
  bar:'#ffb347',barBack:'#1a1410',label:'#ffe2b0',labelDim:'#c9bca6',reward:'#ffd75e',buff:'#c99bff',minimap:'#ffb347',minimapDim:'#8b8172'};
+// Presentation-only timing; wolf damage and cooldown remain owned by CREEP_TYPES.
+export const WOLF_ATTACK_ANIM={windupSeconds:.14,biteSeconds:.09,recoverySeconds:.14};

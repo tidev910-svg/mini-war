@@ -1,7 +1,7 @@
 // Combat presentation events are render-only: changing the display option must not change simulation results.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadGame, quietMatch } from './helpers/game';
-import { spearmanAttackClip, spearmanAttackFrameRect } from '../src/render/sprites';
+import { cavalryAttackFrameRect, cavalryDirectionFromAngle, cavalryMotionFrameRect, spearmanAttackClip, spearmanAttackFrameRect } from '../src/render/sprites';
 
 let g;
 beforeAll(async () => { g = await loadGame(); });
@@ -23,6 +23,15 @@ describe('Combat VFX isolation', () => {
     }
   });
 
+  it('maps every Cavalry motion and attack frame to its own team and facing cell', () => {
+    const motionWidth=1086,motionHeight=1448,attackWidth=872,attackHeight=1448;
+    for(let team=0;team<2;team++)for(let direction=0;direction<4;direction++){
+      for(let column=0;column<5;column++)expect(cavalryMotionFrameRect(motionWidth,motionHeight,team,direction,column)).toEqual({sx:column*217.2,sy:(team*4+direction)*181,sw:217.2,sh:181});
+      for(let frame=0;frame<4;frame++)expect(cavalryAttackFrameRect(attackWidth,attackHeight,frame,team,direction)).toEqual({sx:frame*218,sy:(team*4+direction)*181,sw:218,sh:181});
+    }
+    expect([0,Math.PI/2,Math.PI,-Math.PI/2].map(cavalryDirectionFromAngle)).toEqual([3,0,1,2]);
+  });
+
   it('emits one render event with the real melee hit and preserves damage', () => {
     for (const type of ['scout', 'infantry', 'spearman', 'archer', 'cavalry']) {
       const { state, attacker, target } = pair(type);
@@ -34,6 +43,19 @@ describe('Combat VFX isolation', () => {
         expect(state.effects.some(e => e.targetUnitId === target.id)).toBe(true);
       }
     }
+  });
+
+  it('starts the Cavalry lance pose before the existing hit and applies damage once at the original hit tick', () => {
+    const {state,attacker,target}=pair('cavalry');attacker.attackTimer=.27;
+    g.update(.016);
+    const windup=state.visualEvents.find(e=>e.unitId===attacker.id&&e.kind==='attackWindup'&&e.unitType==='cavalry');
+    expect(windup).toMatchObject({targetUnitId:target.id,angle:0});
+    expect(target.hp).toBe(1000);
+    g.update(.20);
+    g.update(.06);
+    const hit=state.visualEvents.find(e=>e.unitId===attacker.id&&e.kind==='attack'&&e.unitType==='cavalry');
+    expect(hit?.actionId).toBe(windup.actionId);
+    expect(target.hp).toBe(1000-g.specs.cavalry.damage);
   });
 
   it('keeps exactly one existing gameplay arrow when archer pose events are emitted', () => {

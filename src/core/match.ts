@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Match lifecycle: fresh() map and state, the simulation step update(), finish() and the frame loop (docs/features/match-flow.md).
 import { placeCamps } from '../map/camps';
-import { buffFactor, campById, campGuarding, creepTargetFor, initCamps, nearKnownCamp, updateCreeps } from '../sim/creeps';
+import { buffFactor, campById, creepTargetFor, initCamps, nearKnownCamp, updateCreeps } from '../sim/creeps';
 import { attackGoal, updateKnowledge } from '../sim/knowledge';
 import { enterGarrison, sortieGoal, sortieMayChase, updateFlagDefense } from '../sim/garrison';
 import { newStats, recordGathered, sampleStats, updateStats } from '../sim/stats';
@@ -20,7 +20,7 @@ import { buildRegionMap, generateRegions } from '../map/regions';
 import { setPauseButton, updateHUD, updateMatchClockHUD, updateTrainQueueHUD } from '../ui/hud';
 import { buildingDone, buildingVision, needsBuilder, updateBuildings } from '../sim/buildings';
 import { archerReleaseAnchor, attackRange, hurt, nearestEnemy, unitTargetValid } from '../sim/combat';
-import { ARCHER_ATTACK_ANIM, SPEARMAN_ATTACK_ANIM } from '../config/visuals';
+import { ARCHER_ATTACK_ANIM, CAVALRY_ATTACK_ANIM, SPEARMAN_ATTACK_ANIM } from '../config/visuals';
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
 import { aiLevel, aiUnitGoal, exploreSpot, newAIPlan } from '../ai/attack';
 import { buildWorldDecor } from '../render/terrain';
@@ -114,7 +114,7 @@ export function update(dt){
    else if(!u.dest||Math.hypot(u.dest.x-u.x,u.dest.y-u.y)<35||Math.random()<.003){
     const cols=MAP_TILES,rows=MAP_TILES,cw=W/cols,ch=H/rows;
     // Prefer neutral or enemy-controlled mines; otherwise explore an unseen cell. Both keep away from camps it knows are full.
-    const mineTargets=state.mines.filter(m=>m.owner!==1&&!campGuarding(m.regionId)&&!nearKnownCamp(1,m.x,m.y)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
+    const mineTargets=state.mines.filter(m=>m.owner!==1&&!nearKnownCamp(1,m.x,m.y)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y));
     let candidate=mineTargets.length?{x:mineTargets[0].x,y:mineTargets[0].y}:null;
     // Scouts sweep the edge of what the AI knows, moving outward from home (no knowledge of where the enemy lives).
     if(u.type==='scout')candidate=exploreSpot(u)||candidate;
@@ -125,7 +125,7 @@ export function update(dt){
    // Walk the path; an errand whose spot cannot be reached is dropped so a new one is picked next frame.
    if(Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>5&&steerTo(u,u.dest.x,u.dest.y,speed,dt)&&Math.hypot(u.dest.x-u.x,u.dest.y-u.y)>35&&u.captureTarget==null&&!u.buildTarget&&!goal){u.dest=null;clearPath(u);}
   }
-  if((u.type==='infantry'||u.type==='archer'||u.type==='spearman')&&u.attackVisualActionId!=null&&(!target||dist(u,target)>attackRange(u,target)||target.id!==u.attackVisualTargetId)){
+  if((u.type==='infantry'||u.type==='archer'||u.type==='spearman'||u.type==='cavalry')&&u.attackVisualActionId!=null&&(!target||dist(u,target)>attackRange(u,target)||target.id!==u.attackVisualTargetId)){
    state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackCancel',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,actionId:u.attackVisualActionId,life:.25,max:.25});
    u.attackVisualActionId=null;u.attackVisualTargetId=null;
   }
@@ -140,12 +140,16 @@ export function update(dt){
       u.attackVisualActionId=nextFxId();u.attackVisualTargetId=target.id;
       state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackWindup',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId:u.attackVisualActionId,angle:Math.atan2(target.y-u.y,target.x-u.x),duration:u.attackTimer,life:SPEARMAN_ATTACK_ANIM.windupSeconds,max:SPEARMAN_ATTACK_ANIM.windupSeconds});
     }
+    if(u.type==='cavalry'&&u.attackTimer>0&&u.attackTimer<=CAVALRY_ATTACK_ANIM.windupSeconds+CAVALRY_ATTACK_ANIM.thrustSeconds&&u.attackVisualActionId==null){
+      u.attackVisualActionId=nextFxId();u.attackVisualTargetId=target.id;
+      state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackWindup',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId:u.attackVisualActionId,angle:Math.atan2(target.y-u.y,target.x-u.x),duration:u.attackTimer,life:CAVALRY_ATTACK_ANIM.windupSeconds+CAVALRY_ATTACK_ANIM.thrustSeconds,max:CAVALRY_ATTACK_ANIM.windupSeconds+CAVALRY_ATTACK_ANIM.thrustSeconds});
+    }
     if(u.type==='infantry'&&u.attackTimer>0&&u.attackTimer<=.22&&u.attackVisualActionId==null){
       u.attackVisualActionId=nextFxId();u.attackVisualTargetId=target.id;
       state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attackWindup',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId:u.attackVisualActionId,angle:Math.atan2(target.y-u.y,target.x-u.x),life:.25,max:.25});
     }
     if(u.attackTimer<=0){u.attackTimer=cooldown;
-      const hasAttackPose=u.type==='infantry'||u.type==='archer'||u.type==='spearman';
+      const hasAttackPose=u.type==='infantry'||u.type==='archer'||u.type==='spearman'||u.type==='cavalry';
       const actionId=hasAttackPose?(u.attackVisualActionId??nextFxId()):null;
       state.visualEvents??=[];state.visualEvents.push({id:nextFxId(),kind:'attack',unitId:u.id,unitType:u.type,team:u.team,x:u.x,y:u.y,targetUnitId:target.id,actionId,angle:Math.atan2(target.y-u.y,target.x-u.x),life:.20,max:.20});
       if(hasAttackPose){u.attackVisualActionId=null;u.attackVisualTargetId=null;}
@@ -176,7 +180,7 @@ export function update(dt){
   else if(fm&&u.order==='formation'&&!engaged){const p=formationTarget(fm,u);if(Math.hypot(p.x-u.x,p.y-u.y)>4){if(steerTo(u,p.x,p.y,speed,dt)&&Math.hypot(p.x-u.x,p.y-u.y)>8)clearPath(u);clampToBounds(u);}else if(u.path)clearPath(u);}
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
-  if(u.type==='spearman'&&movedX*movedX+movedY*movedY>1e-4)u.walkDistance=(u.walkDistance||0)+Math.hypot(movedX,movedY);
+  if((u.type==='spearman'||u.type==='cavalry'||u.type==='archer')&&movedX*movedX+movedY*movedY>1e-4)u.walkDistance=(u.walkDistance||0)+Math.hypot(movedX,movedY);
   if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY,u.facing);
   else if(target&&dist(u,target)<=attackRange(u,target))u.facing=facingFrom(target.x-u.x,target.y-u.y);
  }

@@ -8,13 +8,13 @@ import { gameTime, localTeam, paused, state } from '../core/game';
 import { settings } from '../core/settings';
 import { teamCanSee } from '../sim/fog';
 import { BUILDING_TYPES } from '../config/balance';
-import { ARCHER_ATTACK_ANIM, SPEARMAN_ATTACK_ANIM, FX_COLORS as C, FX_MAX_PARTICLES } from '../config/visuals';
+import { ARCHER_ATTACK_ANIM, CAVALRY_ATTACK_ANIM, SPEARMAN_ATTACK_ANIM, WOLF_ATTACK_ANIM, FX_COLORS as C, FX_MAX_PARTICLES } from '../config/visuals';
 import { TEAM_COLORS } from '../config/theme';
 
 const parts = [], particlePool = [];
 let last = 0, primed = false, stateRef = null, lastGameTime = 0;
 let seenFx = new Set(), seenShots = new Map(), seenActions = new Set(), buildings = new Map(), owners = new Map(), garrisons = new Map(), sorties = new Map();
-const unitActions = new Map(), unitFlashes = new Map(), horseDustClocks = new Map();
+const unitActions = new Map(), creepActions = new Map(), unitFlashes = new Map(), horseDustClocks = new Map();
 // Private renderer-only generator: particle variation must never consume Math.random used by simulation/AI.
 let renderSeed = 0x6d2b79f5;
 const randomVisual = () => { renderSeed ^= renderSeed << 13; renderSeed ^= renderSeed >>> 17; renderSeed ^= renderSeed << 5; return (renderSeed >>> 0) / 0x100000000; };
@@ -69,8 +69,13 @@ export function updateFx(inView = () => true) {
     action.left -= dt;
     if (action.left <= 0 && action.type === 'archer' && action.phase === 'aim') { action.phase = 'draw'; action.left = action.drawLeft; action.duration = action.drawLeft; }
     else if (action.left <= 0 && action.type === 'archer' && action.phase === 'release') { action.phase = 'recovery'; action.left = ARCHER_ATTACK_ANIM.recoverySeconds; action.duration = ARCHER_ATTACK_ANIM.recoverySeconds; }
-    else if (action.left <= 0 && action.phase === 'impact') { const recovery = action.type === 'spearman' ? SPEARMAN_ATTACK_ANIM.recoverySeconds : .12; action.phase = 'recovery'; action.left = recovery; action.duration = recovery; }
+    else if (action.left <= 0 && action.phase === 'impact') { const recovery = action.type === 'spearman' ? SPEARMAN_ATTACK_ANIM.recoverySeconds : action.type === 'cavalry' ? CAVALRY_ATTACK_ANIM.recoverySeconds : .12; action.phase = 'recovery'; action.left = recovery; action.duration = recovery; }
     else if (action.left <= 0) unitActions.delete(id);
+  }
+  for (const [id, action] of creepActions) {
+    action.left -= dt;
+    if (action.left <= 0 && action.phase === 'bite') { action.phase = 'recovery'; action.left = WOLF_ATTACK_ANIM.recoverySeconds; action.duration = WOLF_ATTACK_ANIM.recoverySeconds; }
+    else if (action.left <= 0) creepActions.delete(id);
   }
   for (const [id, flashState] of unitFlashes) { flashState.left -= dt; if (flashState.left <= 0) unitFlashes.delete(id); }
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -85,7 +90,7 @@ export function updateFx(inView = () => true) {
   // reset them only when the match clock visibly rewinds into a new match.
   if (state !== stateRef) {
     const newMatch = stateRef != null && gameTime < lastGameTime - .01; stateRef = state;
-    if (newMatch || !primed) { primed = false; seenFx = new Set(); seenShots = new Map(); seenActions = new Set(); buildings = new Map(); owners = new Map(); garrisons = new Map(); sorties = new Map(); unitActions.clear(); unitFlashes.clear(); horseDustClocks.clear(); }
+    if (newMatch || !primed) { primed = false; seenFx = new Set(); seenShots = new Map(); seenActions = new Set(); buildings = new Map(); owners = new Map(); garrisons = new Map(); sorties = new Map(); unitActions.clear(); creepActions.clear(); unitFlashes.clear(); horseDustClocks.clear(); }
   }
   lastGameTime = gameTime;
   const team = localTeam(), see = (x, y) => teamCanSee(team, x, y);
@@ -106,20 +111,31 @@ export function updateFx(inView = () => true) {
   const actions = new Set();
   for (const e of state.visualEvents || []) {
     if (e.id == null) continue; actions.add(e.id);
-    const poseAction = (e.unitType === 'infantry' || e.unitType === 'archer' || e.unitType === 'spearman') && (e.kind === 'attackWindup' || e.kind === 'attack' || e.kind === 'attackCancel');
+    const poseAction = (e.unitType === 'infantry' || e.unitType === 'archer' || e.unitType === 'spearman' || e.unitType === 'cavalry' || e.unitType === 'wolf') && (e.kind === 'attackWindup' || e.kind === 'attack' || e.kind === 'attackCancel');
     if ((!settings.combatVfxEnabled && !poseAction) || seenActions.has(e.id) || !(e.team === team || see(e.x, e.y)) || !inView(e)) continue;
     const current = unitActions.get(e.unitId);
-    if (e.kind === 'attackWindup' && e.unitType === 'archer') {
+    const creepCurrent=creepActions.get(e.unitId);
+    if(e.unitType==='wolf'&&e.kind==='attackWindup'){
+      const duration=Math.max(.04,Math.min(WOLF_ATTACK_ANIM.windupSeconds,e.duration||WOLF_ATTACK_ANIM.windupSeconds));
+      creepActions.set(e.unitId,{left:duration,duration,angle:e.angle,type:'wolf',phase:'windup',actionId:e.actionId,targetUnitId:e.targetUnitId});
+    }
+    else if(e.unitType==='wolf'&&e.kind==='attack'){
+      creepActions.set(e.unitId,{left:WOLF_ATTACK_ANIM.biteSeconds,duration:WOLF_ATTACK_ANIM.biteSeconds,angle:e.angle,type:'wolf',phase:'bite',actionId:e.actionId,targetUnitId:e.targetUnitId});
+    }
+    else if(e.unitType==='wolf'&&e.kind==='attackCancel'){if(creepCurrent?.actionId===e.actionId)creepActions.delete(e.unitId);}
+    else if (e.kind === 'attackWindup' && e.unitType === 'archer') {
       const duration = Math.max(.04, Math.min(ARCHER_ATTACK_ANIM.windupSeconds, e.duration || ARCHER_ATTACK_ANIM.windupSeconds));
       const aimLeft = duration * ARCHER_ATTACK_ANIM.aimFraction, drawLeft = duration - aimLeft;
       unitActions.set(e.unitId, { left: aimLeft, duration: aimLeft, drawLeft, angle: e.angle, type: e.unitType, phase: 'aim', actionId: e.actionId });
     }
     else if (e.kind === 'attackWindup' && e.unitType === 'spearman') { const duration = Math.max(.04, Math.min(SPEARMAN_ATTACK_ANIM.windupSeconds, e.duration || SPEARMAN_ATTACK_ANIM.windupSeconds)); unitActions.set(e.unitId, { left: duration, duration, angle: e.angle, type: e.unitType, phase: 'windup', actionId: e.actionId }); }
+    else if (e.kind === 'attackWindup' && e.unitType === 'cavalry') { const duration = Math.max(.04, Math.min(CAVALRY_ATTACK_ANIM.windupSeconds+CAVALRY_ATTACK_ANIM.thrustSeconds, e.duration || CAVALRY_ATTACK_ANIM.windupSeconds+CAVALRY_ATTACK_ANIM.thrustSeconds)); unitActions.set(e.unitId, { left: duration, duration, angle: e.angle, type: e.unitType, phase: 'windup', actionId: e.actionId }); }
     else if (e.kind === 'attackWindup') unitActions.set(e.unitId, { left: .22, duration: .22, angle: e.angle, type: e.unitType, phase: 'windup', actionId: e.actionId });
     else if (e.kind === 'attackCancel') { if (current?.actionId === e.actionId) unitActions.delete(e.unitId); }
     else if (e.kind === 'attack' && e.unitType === 'archer') unitActions.set(e.unitId, { left: ARCHER_ATTACK_ANIM.releaseSeconds, duration: ARCHER_ATTACK_ANIM.releaseSeconds, angle: e.angle, type: e.unitType, phase: 'release', actionId: e.actionId });
     else if (e.kind === 'attack' && e.unitType === 'infantry') unitActions.set(e.unitId, { left: .07, duration: .07, angle: e.angle, type: e.unitType, phase: 'impact', actionId: e.actionId });
     else if (e.kind === 'attack' && e.unitType === 'spearman') unitActions.set(e.unitId, { left: SPEARMAN_ATTACK_ANIM.impactSeconds, duration: SPEARMAN_ATTACK_ANIM.impactSeconds, angle: e.angle, type: e.unitType, phase: 'impact', actionId: e.actionId });
+    else if (e.kind === 'attack' && e.unitType === 'cavalry') unitActions.set(e.unitId, { left: CAVALRY_ATTACK_ANIM.impactSeconds, duration: CAVALRY_ATTACK_ANIM.impactSeconds, angle: e.angle, type: e.unitType, phase: 'impact', actionId: e.actionId });
     else unitActions.set(e.unitId, { left: Math.min(.2, e.life || .2), duration: Math.min(.2, e.max || .2), angle: e.angle, type: e.unitType });
     if (settings.combatVfxEnabled && e.kind === 'attack') attackTrace(e);
   }
@@ -237,4 +253,5 @@ export function unitCombatVisual(u) {
   return { action: action ? { ...action, pulse: action.phase === 'windup' || action.phase === 'impact' || action.phase === 'recovery' ? 0 : Math.sin((1 - Math.max(0, action.left / Math.max(.001, action.duration))) * Math.PI) } : null,
     flash: flashState ? Math.max(0, flashState.left / .11) : 0 };
 }
+export function creepCombatVisual(c) { return creepActions.get(c.id) || null; }
 export const fxCount = () => parts.length;

@@ -6,7 +6,7 @@ import { TILE_SIZE } from '../config/map';
 import { normalizeUnitType } from '../core/game';
 import { specs } from '../config/balance';
 import { unitCombatVisual } from './fx';
-import { SPEARMAN_DIRECTIONS, SPEARMAN_ROWS, archerAttackClip, archerAttackSpriteSheets, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryAttackClip, infantryAttackSheets, infantryClips, infantrySpriteSheet, scoutClips, scoutFootAnchors, scoutSpriteSheet, spearmanAttackClip, spearmanAttackFrameRect, spearmanAttackSpriteSheet, spearmanClips, spearmanSpriteSheet } from './sprites';
+import { SPEARMAN_DIRECTIONS, SPEARMAN_ROWS, archerAttackClip, archerAttackSpriteSheets, archerClips, archerSpriteSheet, cavalryAttackFrameRect, cavalryAttackSpriteSheet, cavalryClips, cavalryDirectionFromAngle, cavalryDirectionFromFacing, cavalryMotionFrameRect, cavalrySpriteSheet, infantryAttackClip, infantryAttackSheets, infantryClips, infantrySpriteSheet, scoutClips, scoutFootAnchors, scoutSpriteSheet, spearmanAttackClip, spearmanAttackFrameRect, spearmanAttackSpriteSheet, spearmanClips, spearmanSpriteSheet } from './sprites';
 import { archerAttackDirection, spearmanAttackDirection } from '../config/visuals';
 
 export function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
@@ -71,7 +71,7 @@ function infantryAttackRow(angle){
 export function drawUnit(u){return drawUprightAt(u.x,u.y,()=>{
  const visual=unitCombatVisual(u)||{},action=visual.action,flash=visual.flash||0;
  ctx.save();
- if(action?.pulse>0&&u.type!=='infantry'&&u.type!=='archer'){const reach=(u.type==='cavalry'||u.type==='spearman'?5:3)/Math.max(.15,renderView.scale||1);ctx.translate(Math.cos(action.angle)*reach*action.pulse,Math.sin(action.angle)*reach*action.pulse);}
+ if(action?.pulse>0&&u.type!=='infantry'&&u.type!=='archer'&&u.type!=='cavalry'){const reach=u.type==='spearman'?5:3;ctx.translate(Math.cos(action.angle)*reach*action.pulse,Math.sin(action.angle)*reach*action.pulse);}
  drawUnitBody(u,action);
  if(flash>0){ctx.globalCompositeOperation='screen';ctx.globalAlpha=.24*flash;drawUnitBody(u,action);}
  ctx.restore();
@@ -89,11 +89,18 @@ function drawUnitBody(u,action=null){
   return;
  }
  if(u.type==='cavalry'&&cavalrySpriteSheet.complete&&cavalrySpriteSheet.naturalWidth){
-  const clip=cavalryClips[blue?'blue':'red'][u.moving?'walk':'idle'];
-  const cellW=cavalrySpriteSheet.naturalWidth/4,cellH=cavalrySpriteSheet.naturalHeight/4;
-  const frame=Math.floor(u.walk*clip.fps)%clip.frames,height=unitTargetHeight('cavalry')/.95,width=height*cellW/cellH;
+  const height=unitTargetHeight('cavalry')/.95,attackSheet=cavalryAttackSpriteSheet;
+  if(action?.phase&&attackSheet.complete&&attackSheet.naturalWidth){
+   const progress=1-Math.max(0,action.left/Math.max(.001,action.duration));
+   const frame=action.phase==='windup'?(progress<.55?0:1):action.phase==='impact'?2:3;
+   const direction=cavalryDirectionFromAngle(action.angle),rect=cavalryAttackFrameRect(attackSheet.naturalWidth,attackSheet.naturalHeight,frame,blue?0:1,direction),width=height*rect.sw/rect.sh;
+   ctx.drawImage(attackSheet,rect.sx,rect.sy,rect.sw,rect.sh,u.x-width/2,u.y-height*.88,width,height);
+   return;
+  }
+  const clip=cavalryClips[blue?'blue':'red'][u.moving?'walk':'idle'],direction=cavalryDirectionFromFacing(u.facing),column=u.moving?clip.column+Math.floor((u.walkDistance||0)/(Math.max(1,s.speed)/clip.fps))%clip.frames:clip.column;
+  const rect=cavalryMotionFrameRect(cavalrySpriteSheet.naturalWidth,cavalrySpriteSheet.naturalHeight,blue?0:1,direction,column),width=height*rect.sw/rect.sh;
   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+3,width*.33,height*.11,0,0,Math.PI*2);ctx.fill();
-  ctx.drawImage(cavalrySpriteSheet,frame*cellW,clip.row*cellH,cellW,cellH,u.x-width/2,u.y-height*.88,width,height);
+  ctx.drawImage(cavalrySpriteSheet,rect.sx,rect.sy,rect.sw,rect.sh,u.x-width/2,u.y-height*.88,width,height);
   return;
  }
  if(u.type==='spearman'&&spearmanSpriteSheet.complete&&spearmanSpriteSheet.naturalWidth){
@@ -147,7 +154,8 @@ function drawUnitBody(u,action=null){
   }
   const clip=archerClips[blue?'blue':'red'][u.moving?'walk':'idle'];
   const cellW=archerSpriteSheet.naturalWidth/4,cellH=archerSpriteSheet.naturalHeight/4;
-  const frame=Math.floor(u.walk*clip.fps)%clip.frames;
+  // Step the gait by ground distance so frames pause when blocked and match actual movement speed.
+  const frame=u.moving?Math.floor((u.walkDistance||0)*clip.fps/Math.max(1,specs.archer.speed))%clip.frames:Math.floor(u.walk*clip.fps)%clip.frames;
   const height=unitTargetHeight('archer')/.95,width=height*cellW/cellH;
   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+2,width*.31,height*.10,0,0,Math.PI*2);ctx.fill();
   ctx.save();ctx.imageSmoothingEnabled=false;

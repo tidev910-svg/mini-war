@@ -6,7 +6,7 @@ import { settings } from '../core/settings';
 import { playSound } from '../audio/sound';
 import { specs } from '../config/balance';
 import { buyProblem } from '../sim/units';
-import { SPEARMAN_ROWS, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryClips, infantrySpriteSheet, scoutClips, scoutSpriteSheet, spearmanSpriteSheet } from '../render/sprites';
+import { SPEARMAN_ROWS, archerClips, archerPortraits, archerSpriteSheet, CAVALRY_ROWS, CAVALRY_MOTION_COLUMNS, cavalryClips, cavalrySpriteSheet, infantryClips, infantryPortraits, infantrySpriteSheet, scoutClips, scoutSpriteSheet, spearmanSpriteSheet } from '../render/sprites';
 
 const PANELS = { train: 'trainDrawer', build: 'buildDrawer', guide: 'guideModal', confirm: 'confirmModal', settings: 'settingsModal' };
 // Show / hide with the open and close animations of style.css. `hidden` changes at once (so code and tests see the new
@@ -59,9 +59,9 @@ export function updateUnitCards() {
 // Portrait = first idle frame of the unit's sprite sheet in the local side's colour (sheets are 4 columns wide).
 const SHEETS = {
   scout: { img: scoutSpriteSheet, rows: 4, row: t => scoutClips[t ? 'red' : 'blue'].idle.row },
-  infantry: { img: infantrySpriteSheet, rows: 4, row: t => infantryClips[t ? 'red' : 'blue'].idle.row },
-  archer: { img: archerSpriteSheet, rows: 4, row: t => archerClips[t ? 'red' : 'blue'].idle.row },
-  cavalry: { img: cavalrySpriteSheet, rows: 4, row: t => cavalryClips[t ? 'red' : 'blue'].idle.row },
+  infantry: { img: infantrySpriteSheet, portraits: infantryPortraits, rows: 4, row: t => infantryClips[t ? 'red' : 'blue'].idle.row },
+  archer: { img: archerSpriteSheet, portraits: archerPortraits, rows: 4, row: t => archerClips[t ? 'red' : 'blue'].idle.row },
+  cavalry: { img: cavalrySpriteSheet, rows: CAVALRY_ROWS, columns: CAVALRY_MOTION_COLUMNS, row: t => cavalryClips[t ? 'red' : 'blue'].idle.row, column: t => cavalryClips[t ? 'red' : 'blue'].idle.column },
   spearman: { img: spearmanSpriteSheet, rows: SPEARMAN_ROWS, row: t => t * 8 },
 };
 export function drawPortraits() {
@@ -69,13 +69,18 @@ export function drawPortraits() {
   for (const el of document.querySelectorAll('canvas.portrait')) {
     const sheet = SHEETS[el.dataset.unit]; if (!sheet) continue;
     const pctx = el.getContext('2d'); pctx.clearRect(0, 0, el.width, el.height);
+    const portrait = sheet.portraits?.[team ? 'red' : 'blue'];
+    if (portrait?.complete && portrait.naturalWidth) { pctx.drawImage(portrait, 0, 0, el.width, el.height); continue; }
     const img = sheet.img; if (!img.complete || !img.naturalWidth) continue;
-    const cw = img.naturalWidth / 4, ch = img.naturalHeight / sheet.rows, scale = Math.min(el.width / cw, el.height / ch) * 1.25;
+    const cw = img.naturalWidth / (sheet.columns || 4), ch = img.naturalHeight / sheet.rows, scale = Math.min(el.width / cw, el.height / ch) * 1.25;
     const w = cw * scale, h = ch * scale;
-    pctx.drawImage(img, 0, sheet.row(team) * ch, cw, ch, (el.width - w) / 2, el.height - h * 0.92, w, h);
+    pctx.drawImage(img, (sheet.column?.(team) || 0) * cw, sheet.row(team) * ch, cw, ch, (el.width - w) / 2, el.height - h * 0.92, w, h);
   }
 }
-for (const sheet of Object.values(SHEETS)) sheet.img.addEventListener('load', drawPortraits);
+for (const sheet of Object.values(SHEETS)) {
+  sheet.img?.addEventListener('load', drawPortraits);
+  for (const portrait of Object.values(sheet.portraits || {})) portrait.addEventListener('load', drawPortraits);
+}
 
 // Notice banner: shows the newest log line, fades after settings.noticeSeconds; the scroll button opens the last 12 entries.
 // A 'danger' line (under attack, losses) gives the banner a red rim while it is the newest.
