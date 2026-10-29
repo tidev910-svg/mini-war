@@ -36,10 +36,10 @@ export function attackRange(u,target){
  const base=s.range+(target.w?35:10);return s.range<MELEE_RANGE_MAX?Math.max(base,structureReach(target)):base;
 }
 export function unitTargetValid(t,u){return t&&t.hp>0&&((t.team!==undefined&&t.team!==u.team)||t.team===undefined);}
-// The arrow tip in each authored draw-frame cell, transformed through the same render box and foot anchor.
+// The arrow starts at the bow hand in each authored attack cell, transformed through the same render box and foot anchor.
 export function archerReleaseAnchor(u,angle){
- const size=TILE_SIZE*1.3/.95,cell=ARCHER_ATTACK_ANIM.arrowTipInCell[archerAttackDirection(angle)];
- return {x:u.x-size/2+cell.x*size,y:u.y-size*.88+cell.y*size};
+ const height=TILE_SIZE*1.3/.95,width=height*(318/310),cell=ARCHER_ATTACK_ANIM.arrowOriginInCell[archerAttackDirection(angle)];
+ return {x:u.x-width/2+cell.x*width,y:u.y-height*.88+cell.y*height};
 }
 export function damageMultiplier(attackerType,target){
  if(!attackerType||!target)return 1;

@@ -147,7 +147,8 @@ function drawUnitBody(u,action=null){
   }
   const clip=archerClips[blue?'blue':'red'][u.moving?'walk':'idle'];
   const cellW=archerSpriteSheet.naturalWidth/4,cellH=archerSpriteSheet.naturalHeight/4;
-  const frame=Math.floor(u.walk*clip.fps)%clip.frames;
+  // Step the gait by ground distance so frames pause when blocked and match actual movement speed.
+  const frame=u.moving?Math.floor((u.walkDistance||0)*clip.fps/Math.max(1,specs.archer.speed))%clip.frames:Math.floor(u.walk*clip.fps)%clip.frames;
   const height=unitTargetHeight('archer')/.95,width=height*cellW/cellH;
   ctx.fillStyle=p.glow+'20';ctx.beginPath();ctx.ellipse(u.x,u.y+2,width*.31,height*.10,0,0,Math.PI*2);ctx.fill();
   ctx.save();ctx.imageSmoothingEnabled=false;

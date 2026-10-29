@@ -20,13 +20,16 @@ export const cavalrySpriteSheet=new Image();
 cavalrySpriteSheet.src=import.meta.env.BASE_URL+'assets/units/cavalry/cavalry-sheet.png';
 export const cavalryClips={blue:{idle:{row:0,frames:3,fps:1},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:3,fps:1},walk:{row:3,frames:4,fps:7}}};
 export const archerSpriteSheet=new Image();
-archerSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/archer/archer-sheet-v2.png';
+archerSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/archer/archer-tran-sheet-walkcycle-v3.png';
 export const archerClips={blue:{idle:{row:0,frames:4,fps:1.25},walk:{row:1,frames:4,fps:7}},red:{idle:{row:2,frames:4,fps:1.25},walk:{row:3,frames:4,fps:7}}};
 export const archerAttackSpriteSheets={blue:new Image(),red:new Image()};
-archerAttackSpriteSheets.blue.src=import.meta.env.BASE_URL+'assets/units/archer/archer-attack-blue.png';
-archerAttackSpriteSheets.red.src=import.meta.env.BASE_URL+'assets/units/archer/archer-attack-red.png';
+archerAttackSpriteSheets.blue.src=import.meta.env.BASE_URL+'assets/units/archer/archer-tran-attack-blue.png';
+archerAttackSpriteSheets.red.src=import.meta.env.BASE_URL+'assets/units/archer/archer-tran-attack-red.png';
 // Four columns: aim, draw, release, recovery; rows: up, down, left, right for each team.
 export const archerAttackClip={frames:4,directions:4};
+export const archerPortraits={blue:new Image(),red:new Image()};
+archerPortraits.blue.src=import.meta.env.BASE_URL+'assets/units/archer/archer-portrait-blue.png';
+archerPortraits.red.src=import.meta.env.BASE_URL+'assets/units/archer/archer-portrait-red.png';
 // 16 rows: team*8 + direction*2 + (idle 0 | walk 1); built by tools/build_spearman_sheet.py.
 export const spearmanSpriteSheet=new Image();
 spearmanSpriteSheet.src=import.meta.env.BASE_URL+'assets/units/spearman/spearman-sheet.png';

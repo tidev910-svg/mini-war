@@ -6,7 +6,7 @@ import { settings } from '../core/settings';
 import { playSound } from '../audio/sound';
 import { specs } from '../config/balance';
 import { buyProblem } from '../sim/units';
-import { SPEARMAN_ROWS, archerClips, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryClips, infantrySpriteSheet, scoutClips, scoutSpriteSheet, spearmanSpriteSheet } from '../render/sprites';
+import { SPEARMAN_ROWS, archerClips, archerPortraits, archerSpriteSheet, cavalryClips, cavalrySpriteSheet, infantryClips, infantrySpriteSheet, scoutClips, scoutSpriteSheet, spearmanSpriteSheet } from '../render/sprites';
 
 const PANELS = { train: 'trainDrawer', build: 'buildDrawer', guide: 'guideModal', confirm: 'confirmModal', settings: 'settingsModal' };
 // Show / hide with the open and close animations of style.css. `hidden` changes at once (so code and tests see the new
@@ -60,7 +60,7 @@ export function updateUnitCards() {
 const SHEETS = {
   scout: { img: scoutSpriteSheet, rows: 4, row: t => scoutClips[t ? 'red' : 'blue'].idle.row },
   infantry: { img: infantrySpriteSheet, rows: 4, row: t => infantryClips[t ? 'red' : 'blue'].idle.row },
-  archer: { img: archerSpriteSheet, rows: 4, row: t => archerClips[t ? 'red' : 'blue'].idle.row },
+  archer: { img: archerSpriteSheet, portraits: archerPortraits, rows: 4, row: t => archerClips[t ? 'red' : 'blue'].idle.row },
   cavalry: { img: cavalrySpriteSheet, rows: 4, row: t => cavalryClips[t ? 'red' : 'blue'].idle.row },
   spearman: { img: spearmanSpriteSheet, rows: SPEARMAN_ROWS, row: t => t * 8 },
 };

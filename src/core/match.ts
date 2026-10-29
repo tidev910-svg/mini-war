@@ -176,7 +176,7 @@ export function update(dt){
   else if(fm&&u.order==='formation'&&!engaged){const p=formationTarget(fm,u);if(Math.hypot(p.x-u.x,p.y-u.y)>4){if(steerTo(u,p.x,p.y,speed,dt)&&Math.hypot(p.x-u.x,p.y-u.y)>8)clearPath(u);clampToBounds(u);}else if(u.path)clearPath(u);}
   // Face the direction actually travelled this frame; when standing, face a target that is within attack range.
   const movedX=u.x-startX,movedY=u.y-startY;
-  if(u.type==='spearman'&&movedX*movedX+movedY*movedY>1e-4)u.walkDistance=(u.walkDistance||0)+Math.hypot(movedX,movedY);
+  if((u.type==='spearman'||u.type==='archer')&&movedX*movedX+movedY*movedY>1e-4)u.walkDistance=(u.walkDistance||0)+Math.hypot(movedX,movedY);
   if(movedX*movedX+movedY*movedY>1e-4)u.facing=facingFrom(movedX,movedY,u.facing);
   else if(target&&dist(u,target)<=attackRange(u,target))u.facing=facingFrom(target.x-u.x,target.y-u.y);
  }

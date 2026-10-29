@@ -30,8 +30,8 @@ export const UNIT_ANIM={fallSeconds:.42};
 // Archer pose-only timing and arrow-head coordinates inside the draw-frame cell (render/sprites.ts).
 // These are presentation timings; attackTimer, projectile speed and damage stay simulation-owned.
 export const ARCHER_ATTACK_ANIM={windupSeconds:.36,aimFraction:.30,releaseSeconds:.06,recoverySeconds:.18,
- // Pixel coordinates normalized within the nocked-arrow frame, measured from the authored 4×4 sheets.
- arrowTipInCell:{up:{x:.504,y:.061},down:{x:.60,y:.887},left:{x:.05,y:.48},right:{x:.91,y:.242}}};
+ // Arrow launch points normalized in each attack cell, placed at the archer's bow hand instead of the arrow tip at the cell edge.
+ arrowOriginInCell:{up:{x:.52,y:.35},down:{x:.52,y:.65},left:{x:.32,y:.50},right:{x:.68,y:.50}}};
 export const SPEARMAN_ATTACK_ANIM={windupSeconds:.24,impactSeconds:.07,recoverySeconds:.12};
 export function spearmanAttackDirection(angle){
  const a=Number.isFinite(angle)?angle:Math.PI/2,dx=Math.cos(a),dy=Math.sin(a);
