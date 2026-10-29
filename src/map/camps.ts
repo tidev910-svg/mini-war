@@ -16,7 +16,7 @@ export function placeCamps(blueBase, redBase, regions, mines) {
   for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) between = Math.min(between, walk[0][tileAt(redBase.x + dx * T, redBase.y + dy * T)]);
   if (!Number.isFinite(between) || between <= 0) return [];
   const camps = [], far = (p, list, tiles) => list.every(q => Math.hypot(p.x - q.x, p.y - q.y) > tiles * T);
-  const add = (kind, p, regionId = null) => camps.push({ id: camps.length + 1, kind, x: p.x, y: p.y, regionId, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0 });
+  const add = (kind, p) => camps.push({ id: camps.length + 1, kind, x: p.x, y: p.y, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0 });
   // Candidate spots every 3 tiles: open 3×3 ground on a large land patch, away from fortresses, flags and mines.
   const flags = regions.filter(r => r.cp).map(r => r.cp), spots = [];
   for (let gy = 3; gy < N - 3; gy += 3) for (let gx = 3; gx < N - 3; gx += 3) {

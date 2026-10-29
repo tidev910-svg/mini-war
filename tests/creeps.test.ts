@@ -16,7 +16,7 @@ function quietSpot(state, away = 1300) {
   throw new Error('no quiet spot');
 }
 const put = (team, type, p) => { const u = g.spawn(team, type); u.x = p.x; u.y = p.y; u.order = 'hold'; return u; };
-const camp = (state, kind, p, extra = {}) => { const c = { id: state.camps.length + 1, kind, x: p.x, y: p.y, regionId: null, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0, ...extra }; state.camps.push(c); g.initCamps(); return c; };
+const camp = (state, kind, p, extra = {}) => { const c = { id: state.camps.length + 1, kind, x: p.x, y: p.y, state: 'alive', respawnAt: 0, damage: [0, 0], seen: [null, null], awake: 0, ...extra }; state.camps.push(c); g.initCamps(); return c; };
 const monsters = c => g.state.creeps.filter(m => m.camp === c.id);
 
 describe('placement', () => {
