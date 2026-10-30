@@ -1,6 +1,6 @@
 # Chọn chế độ & chơi với bạn bè (P2P)
 
-> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Sảnh chính (`#modeScreen`, xem [hud-ui.md](hud-ui.md)) có 2 chế độ chơi:
@@ -15,7 +15,8 @@ Không có tài khoản/đăng nhập; ai có mã phòng đều vào được.
 | Mã phòng | 6 ký tự A–Z0–9 ngẫu nhiên; thử lại tối đa 5 lần nếu trùng ID | `createRoom()` |
 | Peer ID | `'miniwarr' + mã viết thường` | `roomPeerId()` |
 | Mã khách nhập | lọc còn A–Z0–9, 4–8 ký tự | `joinRoom()` |
-| Chu kỳ snapshot | 0.18 giây + ngay sau mỗi action | `loop()`, `setupConnection()` |
+| Chu kỳ snapshot | `SNAPSHOT_INTERVAL` = 0.18 giây + ngay sau mỗi action | `loop()`, `setupConnection()` |
+| Làm mượt ở khách | Mỗi quân trượt từ vị trí đang vẽ tới vị trí snapshot mới trong `SNAPSHOT_INTERVAL`; nhảy xa hơn `SNAPSHOT_TELEPORT` = 180 (vừa xuất quân, rời cờ…) thì đặt thẳng | `applySnapshot()` → `glideFrom()`, `smoothGuestUnits()` (gọi từ `loop()`) |
 | Thư viện | PeerJS 1.5.4 từ jsDelivr, tải khi cần | `ensurePeerJs()` |
 | Số khách | 1; kết nối thứ hai bị đóng nếu đã có kết nối mở | `createRoom()` |
 
@@ -30,14 +31,14 @@ Guest                                   Host
 Thông điệp:
 - `{type:'hello', room}` — guest gửi khi kết nối mở; host trả snapshot.
 - `{type:'action', action, payload}` — xem danh sách action trong [architecture.md](../architecture.md).
-- `{type:'snapshot', gameTime, paused, ended, state, resultTitle, resultText}` — `state` bỏ fog, `target:null`, `selected:false`; mỗi quân mang theo `path`/`goal`/`moveGroup` để khách vẽ đường đi.
+- `{type:'snapshot', gameTime, paused, ended, state, resultTitle, resultText}` — `state` mang `mapId` (bản đồ chủ phòng chọn; khách gọi `useMap()` trước khi dựng vùng, [realms-map.md](realms-map.md)), bỏ fog, `target:null`, `selected:false`; mỗi quân mang theo `path`/`goal`/`moveGroup` để khách vẽ đường đi.
 
 Ngắt kết nối:
 - Guest rời → host tự **tạm dừng**, phòng vẫn mở, guest có thể vào lại bằng mã cũ.
 - Host rời (hoặc guest mất kết nối) → guest đóng peer, quay về bảng phòng, các nút được mở lại và ô mã phòng điền sẵn mã cũ; bấm "Tham gia phòng" để vào lại.
 
 ## Code liên quan
-- [src/ui/modeScreen.ts](../../src/ui/modeScreen.ts), [src/net/peer.ts](../../src/net/peer.ts), [src/net/snapshot.ts](../../src/net/snapshot.ts), [src/core/actions.ts](../../src/core/actions.ts), [src/core/game.ts](../../src/core/game.ts): `startAIMode()`, `startHostGame()`, `startGuestFromSnapshot()`, `createRoom()`, `joinRoom()`, `setupConnection()`, `destroyPeer()`, `ensurePeerJs()`, `serializeSnapshot()`, `sendSnapshot()`, `applySnapshot()`, `requestAction()`, `applyAction()`, `localTeam()`, `isMultiplayer()`.
+- [src/ui/modeScreen.ts](../../src/ui/modeScreen.ts), [src/net/peer.ts](../../src/net/peer.ts), [src/net/snapshot.ts](../../src/net/snapshot.ts) (`smoothGuestUnits()`, `glideFrom()`), [src/core/actions.ts](../../src/core/actions.ts), [src/core/game.ts](../../src/core/game.ts): `startAIMode()`, `startHostGame()`, `startGuestFromSnapshot()`, `createRoom()`, `joinRoom()`, `setupConnection()`, `destroyPeer()`, `ensurePeerJs()`, `serializeSnapshot()`, `sendSnapshot()`, `applySnapshot()`, `requestAction()`, `applyAction()`, `localTeam()`, `isMultiplayer()`.
 - UI lobby: `showFriendPanel()`, `showModeHome()`, `hideModeScreen()`, `showModeScreen()`, `setNetStatus()`, `setGameModeLabel()`; xử lý `?room=` ở cuối file.
 - [index.html](../../index.html): `#modeAI`, `#modeFriends`, `#createRoom`, `#roomInput`, `#joinRoom`, `#roomCode`, `#copyRoomLink`, `#copyRoomCode`, `#netStatus`, `#modeBack`.
 - Biến: `mode`, `netRole`, `peer`, `conn`, `roomCode`, `snapshotClock`, `connectionIntent` (gán nhưng chưa dùng).
@@ -61,6 +62,7 @@ Mọi tính năng thay đổi `state` đều phải đi qua action để chạy 
 ## Giới hạn / việc tồn đọng
 - **Bảo mật lệnh:** host kiểm tra loại quân bằng `Object.hasOwn(specs, type)`; các action khác kẹp toạ độ/kiểm tra team. Chưa giới hạn tần suất lệnh.
 - Log của host không tới guest; riêng việc mua quân thì guest tự kiểm tra trước (`requestBuy()`) nên vẫn thấy lý do bị từ chối. Ngoại lệ: bấm mua nhanh nhiều lần trong một chu kỳ snapshot thì guest chưa thấy hàng đợi đầy, host từ chối phần thừa (không trừ tiền) mà guest không thấy lý do. Log "đã xếp vào hàng huấn luyện" / "huấn luyện xong" của guest cũng chỉ hiện ở host; guest theo dõi qua bảng Hàng đợi (`#trainQueue`). Các lệnh khác (xây, nâng cấp) bị từ chối thì guest không thấy lý do.
+- Làm mượt chỉ áp cho vị trí quân; đạn, quái, hiệu ứng vẫn nhảy theo snapshot. Khách thấy quân trễ tối đa ~0.18 giây so với host.
 - Snapshot gửi toàn bộ `state` mỗi 0.18 giây (không nén, không delta), nay gồm cả `buildings`, `regions`, ~20 `mines` — tốn băng thông khi nhiều quân/công trình.
 - Log sự kiện (xây xong, chiếm vùng, thiếu tiếp tế…) chỉ hiện ở host; guest chỉ thấy qua bản đồ/HUD.
 - `regionMap` (bản đồ vùng 256×256) không gửi qua mạng; guest tự dựng lại từ hạt giống trong `state.regions` (`ensureRegionMap()`), nên host và guest phải cùng địa hình (`buildTerrain()` tất định).

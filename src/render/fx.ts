@@ -3,6 +3,7 @@
 // buildings, captures and garrisons. Display only: like updateSoundscape(), updateFx() spots new things by comparing the
 // state between frames (effect / bullet ids, buildings, flag owners, garrisons), so the PvP guest sees the same. Particles
 // live here, not in state; they only start where the local side sees, and stop while the game is paused.
+import { CREEP_TYPES } from '../config/creeps';
 import { ctx, drawUprightAt } from '../core/view';
 import { gameTime, localTeam, paused, state } from '../core/game';
 import { settings } from '../core/settings';
@@ -54,9 +55,9 @@ function attackTrace(e) {
 
 // Hits by attacker (effect.src, sim/combat.ts): melee swings, arrows, gun shots.
 // Monsters (sim/creeps.ts) name their own hits: the troll and the boss smash the ground.
-const MELEE = { infantry: 4, spearman: 3, cavalry: 7, scout: 2, wolf: 3, bandit: 4, skeleton: 3 };
+const MELEE = { infantry: 4, spearman: 3, cavalry: 7, scout: 2, wolf: 3, bandit: 4, skeleton: 3, boar: 3, spiderling: 2 };
 function hit(e) {
-  if (e.src === 'troll' || e.src === 'boss') { flash(e.x, e.y, 30, e.src === 'boss' ? C.curse : C.glow, .18); dust(e.x, e.y + 6, 6, 14); debris(e.x, e.y, 5, C.dust, 80); ring(e.x, e.y, e.src === 'boss' ? C.curse : C.dust, 40, .4); }
+  if (CREEP_TYPES[e.src]?.splash) { const tint = e.src === 'boss' ? C.curse : e.src === 'dragon' ? C.fire : null; flash(e.x, e.y, 30, tint || C.glow, .18); dust(e.x, e.y + 6, 6, 14); debris(e.x, e.y, 5, C.dust, 80); ring(e.x, e.y, tint || C.dust, 40, .4); if (e.src === 'dragon') sparks(e.x, e.y, 10, C.sparkHot, 160); }
   else if (MELEE[e.src]) { slash(e.x, e.y); flash(e.x, e.y - 12, 14, C.spark, .1); sparks(e.x, e.y, MELEE[e.src] + 2); }
   else if (e.src === 'archer' || e.src === 'flag') { splinters(e.x, e.y, 3); dust(e.x, e.y + 6, 1, 6); }
   else { flash(e.x, e.y - 8, 26, C.fire); sparks(e.x, e.y, 6, C.sparkHot, 150); smoke(e.x, e.y, 2, 12); debris(e.x, e.y, 3, C.dust, 60); }

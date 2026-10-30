@@ -1,6 +1,6 @@
 # Đối thủ AI
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Ở chế độ "Chơi với AI", phe đỏ (team 1) do máy điều khiển, với 3 độ khó **Dễ / Thường / Khó** chọn ở sảnh (dưới nút "Chơi với AI") hoặc Cài đặt → Điều khiển; đổi giữa trận có hiệu lực ngay. AI dùng cùng luật với người chơi: 4 tài nguyên, nông trại, đứng ở cờ để chiếm vùng, lúa nuôi quân; mọi loại quân tuyển tại pháo đài. AI có sương mù riêng; chỉ xây và chỉ nhắm cờ ở chỗ nó đã khám phá.
@@ -46,7 +46,7 @@
    - **Tiếp viện:** quân mới ra trong lúc đang tấn công nhập vào đợt quân **theo nhóm ≥ 4** (`REINFORCE_GROUP`; đi lẻ từng quân thì chết dần ở tuyến phòng thủ), giữ lại `homeGuard` quân ở nhà.
    - **Trinh sát** dò điểm chưa khám phá bằng `exploreSpot()` (xa pháo đài đỏ, gần trinh sát): quét dần ra ngoài thay vì đi ngẫu nhiên. Không biết trước nhà người chơi.
 
-   Hang quái (`camps`, [neutral-camps.md](neutral-camps.md)): Dễ không chủ động dọn; Thường dọn ổ sói; Khó dọn mọi loại, cả Lăng cổ. `runCampPlan()` gửi đội (`AI_CAMP_SQUAD` + 1) từ quân rảnh hoặc đang tập hợp, chừa `homeGuard`, chỉ tới hang AI đã thấy (hoặc lăng đã mở); đội tập hợp ở điểm ngoài tầm đánh thức rồi cùng vào; rút khi dọn xong hoặc còn dưới một nửa. Quân đang đi đường đi tiếp qua hang; đủ quân quanh một hang bị đánh thức thì cùng dọn (`fightWokenCamps()`, mọi độ khó, trừ Lăng cổ). Đội chiếm cờ bỏ qua cờ nằm cạnh hang biết còn quái; khi đi lang thang AI tránh hang biết còn quái (`nearKnownCamp()`).
+   Hang quái (`camps`, [neutral-camps.md](neutral-camps.md)): Dễ không chủ động dọn; Thường dọn ổ sói (và bãi heo rừng trên bản đồ Ngũ Vực); Khó dọn mọi loại, cả Lăng cổ và các hang của bản đồ Ngũ Vực (tổ nhện, hang gấu đá, hầm golem, Hang Rồng Vàng). `runCampPlan()` gửi đội (`AI_CAMP_SQUAD` + 1) từ quân rảnh hoặc đang tập hợp, chừa `homeGuard`, chỉ tới hang AI đã thấy (hoặc lăng đã mở); đội tập hợp ở điểm ngoài tầm đánh thức rồi cùng vào; rút khi dọn xong hoặc còn dưới một nửa. Quân đang đi đường đi tiếp qua hang; đủ quân quanh một hang bị đánh thức thì cùng dọn (`fightWokenCamps()`, mọi độ khó, trừ Lăng cổ). Đội chiếm cờ bỏ qua cờ nằm cạnh hang biết còn quái; khi đi lang thang AI tránh hang biết còn quái (`nearKnownCamp()`).
    Nguồn: `AI_DIFFICULTY` trong `config/balance.ts`. Độ khó không cho AI thêm tài nguyên, tầm nhìn hay thông tin.
 
 AI không qua `buy()`/`applyAction()` nên không có log.

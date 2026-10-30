@@ -1,6 +1,6 @@
 # Sương mù chiến tranh & tầm nhìn
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22 · Theo đặc tả "MINI WAR V3.1 — Hệ thống sương mù chiến tranh và tầm nhìn"
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30 · Theo đặc tả "MINI WAR V3.1 — Hệ thống sương mù chiến tranh và tầm nhìn"
 
 ## Mô tả
 Ba trạng thái cho mỗi ô và mỗi phe:
@@ -78,6 +78,8 @@ Fog là dữ liệu cục bộ của từng trình duyệt, không đồng bộ.
 - [ ] PvP: khách thấy theo phe đỏ, không thấy vùng phe xanh đã khám phá.
 - Unit test: `tests/fog.test.ts`, `tests/territory.test.ts` (vùng lãnh thổ 450). Smoke `vision` (bán kính 5 loại quân, 450 quanh cờ, đổi chủ, ký ức), `pvp` (khách giữ cờ thấy 450).
 - Đã chạy thử 2026-10-20: ảnh chụp trinh sát thấy nông trại đỏ rồi đi khỏi — nông trại vẫn hiện trong vùng mờ; toàn bộ smoke đạt; `draw()` 2,8 ms/frame; AI 8 phút × 3 bản đồ không lỗi.
+
+**Chữ trên bản đồ trong sương mù** (rà lại 2026-10-30): nhãn cờ, mỏ, hang quái, công trình và pháo đài địch chỉ vẽ ở chỗ đã khám phá (hoặc đang nhìn thấy, với công trình địch) và ghi thông tin lần cuối thấy; tên miền của bản đồ Ngũ Vực cũng chỉ hiện khi chỗ đặt tên đã khám phá (`drawRealmLabels()`, [realms-map.md](realms-map.md)). Ngoại lệ có chủ ý: Lăng cổ được báo cho cả hai phe nên hiện cả khi chưa khám phá.
 
 ## Giới hạn / việc tồn đọng
 - Khoảng 2 ô ở mép vùng đã khám phá bị phủ mờ một phần (đổi lấy việc ô chưa khám phá không lộ chút nào).

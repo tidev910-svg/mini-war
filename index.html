@@ -63,6 +63,7 @@
       <nav class="lobby-menu" aria-label="Sảnh chính">
         <button class="lobby-btn primary" id="modeAI" type="button" style="--i:0"><svg class="ico"><use href="#i-sword"/></svg><span><strong>Chơi với AI</strong><small>Đấu với máy · không cần Internet</small></span><kbd>Enter</kbd></button>
         <div class="ai-difficulty" id="aiDifficulty" role="radiogroup" aria-label="Độ khó AI" style="--i:0"><span>Độ khó AI</span><button type="button" role="radio" data-level="easy">Dễ</button><button type="button" role="radio" data-level="normal">Thường</button><button type="button" role="radio" data-level="hard">Khó</button></div>
+        <div class="ai-difficulty" id="mapKind" role="radiogroup" aria-label="Bản đồ" style="--i:0"><span>Bản đồ</span><button type="button" role="radio" data-map="classic" data-tip="Sông chia đôi, 4 cầu, vị trí nhà ngẫu nhiên">Đại Lục</button><button type="button" role="radio" data-map="realms" data-tip="5 miền đất: Đồng Lúa, Rừng Già, Núi Đá, Đồi Vàng, Vực Vàng — mỗi miền một khoáng sản và một loài quái canh giữ">Ngũ Vực</button></div>
         <button class="lobby-btn" id="modeFriends" type="button" style="--i:1"><svg class="ico"><use href="#i-units"/></svg><span><strong>Solo với bạn bè</strong><small>Tạo phòng hoặc nhập mã · kết nối P2P</small></span></button>
         <button class="lobby-btn ghost" id="lobbySettings" type="button" style="--i:2"><svg class="ico"><use href="#i-gear"/></svg><span><strong>Cài đặt</strong><small>Đồ hoạ, hiển thị, điều khiển</small></span></button>
         <button class="lobby-btn ghost" id="lobbyGuide" type="button" style="--i:3"><svg class="ico"><use href="#i-help"/></svg><span><strong>Hướng dẫn &amp; phím tắt</strong><small>Luật chơi, tài nguyên, lãnh thổ</small></span></button>
@@ -73,7 +74,7 @@
     <div id="friendPanel" class="lobby">
       <button class="mode-back" id="modeBack" type="button">← Quay lại sảnh chính</button>
       <h2>Solo với bạn bè</h2>
-      <p class="intro">Tạo phòng để làm chủ phòng (quân xanh), hoặc nhập mã do bạn bè gửi (quân đỏ).</p>
+      <p class="intro">Tạo phòng để làm chủ phòng (quân xanh), hoặc nhập mã do bạn bè gửi (quân đỏ). Trận dùng bản đồ chủ phòng chọn ở sảnh chính.</p>
       <div id="friendActions">
         <div class="mode-actions"><button class="btn primary" id="createRoom">＋ Tạo phòng mới</button></div>
         <label for="roomInput" class="mode-label">Mã phòng của bạn bè</label>
@@ -217,7 +218,7 @@
       <h3>Lãnh thổ & cột cờ</h3>
       <p>Bản đồ chia thành 20 vùng (ranh giới bám theo sông, đá; phím T để ẩn/hiện), mỗi vùng có sẵn một cột cờ lớn ở giữa; gần nhà luôn có đủ vùng lúa, gỗ, đá, vàng. Đưa quân chiến đấu vào vòng quanh cờ để chiếm (trinh sát không chiếm được): 1 quân khoảng 60 giây, càng đông càng nhanh, từ 10 quân trở lên khoảng 15 giây. Hai phe cùng đứng trong vòng thì tiến độ dừng; bỏ trống cờ 5 giây thì tiến độ giảm dần về 0 (không đổi chủ). Cờ của địch chiếm qua 2 giai đoạn: hạ cờ về trung lập rồi mới chiếm. Giữ cờ thì thấy toàn bộ vùng. Xây tiền đồn cạnh cờ đã chiếm để có súng và giữ cờ: còn tiền đồn thì đối phương không chiếm được cờ.</p>
       <h3>Quân đội</h3>
-      <p>Mọi loại quân tuyển tại pháo đài (nút <b>Huấn luyện</b>, phím H rồi Q W E R T): trả tiền khi xếp hàng; 4 hàng đợi huấn luyện song song (mỗi hàng một quân, 4–12 giây), thêm 4 chỗ chờ; mua thêm hàng đợi từ thứ 5 bằng nút "Mở hàng đợi" trong bảng Huấn luyện. Quân mới tập kết tại sân cạnh pháo đài và tự chiến đấu khi ở gần đối thủ. Kéo chuột trái trên vùng trống để chọn nhiều lính; giữ Shift rồi nhấp để thêm/bỏ một lính. Giữ chuột phải và rê để dẫn nhóm quân đã chọn. Nút <b>Tấn công</b> (phím A) chỉ ra lệnh cho nhóm đang chọn.</p>
+      <p>Mọi loại quân tuyển tại pháo đài (nút <b>Huấn luyện</b>, phím H rồi Q W E R T): trả tiền khi xếp hàng; 4 hàng đợi huấn luyện song song (mỗi hàng một quân, 4–12 giây), thêm 4 chỗ chờ; mua thêm hàng đợi từ thứ 5 bằng nút "Mở hàng đợi" trong bảng Huấn luyện. Quân mới tập kết tại sân cạnh pháo đài và tự chiến đấu khi ở gần đối thủ. Kéo chuột trái để khoanh chọn nhiều lính (giữ Shift khi kéo để thêm vào nhóm); giữ Shift rồi nhấp để thêm/bỏ một lính; nhấp vùng trống để bỏ chọn. Nhấp phải để ra lệnh cho nhóm đang chọn; giữ chuột phải và rê để kéo bản đồ. Trên màn hình cảm ứng: chạm vào bản đồ để ra lệnh cho nhóm đang chọn. Nút <b>Tấn công</b> (phím A) chỉ ra lệnh cho nhóm đang chọn.</p>
       <h3>Công trình</h3>
       <p>Nút <b>Xây dựng</b> (phím B): chọn công trình, đặt ở chỗ xanh trên vùng đã khám phá bằng chuột trái; nhấp phải hoặc Esc để huỷ. Không xây trên nước, đá hoặc chồng lên công trình/đơn vị; kéo được nông trại đã xây. Tháp chỉ xây trong lãnh thổ của mình. Nhấp công trình của mình để chọn rồi bấm nâng cấp. Pháo đài có tối đa 2 khẩu pháo; khẩu thứ hai tốn 150 đá.</p>
       <h3>Điều khiển</h3>

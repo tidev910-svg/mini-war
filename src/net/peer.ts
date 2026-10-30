@@ -33,7 +33,7 @@ export function startGuestFromSnapshot(packet){
  // Drop the fog this browser made for its own pre-lobby map, then reveal the host's real home territories.
  if(state){state.fogSeen=new Uint8Array(MAP_TILES*MAP_TILES);state.enemyFogSeen=new Uint8Array(MAP_TILES*MAP_TILES);}
  // Scenery is laid out around the host's fortresses, mines and flags, so rebuild it for the host's map.
- applySnapshot(packet);ensureRegionMap();buildWorldDecor();revealHomeTerritory();setZoom(DEFAULT_ZOOM);centerCameraOnHome();addLog('Đã vào phòng. Bạn là quân đỏ.');
+ applySnapshot(packet);ensureRegionMap();buildWorldDecor();revealHomeTerritory();setZoom(DEFAULT_ZOOM);centerCameraOnHome();setGameModeLabel();addLog('Đã vào phòng. Bạn là quân đỏ.');
 }
 export function createRoom(){
  if(peer||conn)destroyPeer();setConnectionIntent('host');setNetStatus('Đang khởi tạo phòng...');$('createRoom').disabled=true;$('joinRoom').disabled=true;

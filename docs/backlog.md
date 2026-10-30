@@ -1,6 +1,6 @@
 # Việc tồn đọng (backlog)
 
-> Cập nhật lần cuối: 2026-10-19 · Tổng hợp từ mục "Giới hạn / việc tồn đọng" của các file trong `features/`.
+> Cập nhật lần cuối: 2026-10-30 · Tổng hợp từ mục "Giới hạn / việc tồn đọng" của các file trong `features/`.
 
 Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưởng. Khi làm xong một mục: xoá dòng ở đây **và** dòng tương ứng trong file tính năng (quy tắc 5 trong `CLAUDE.md`). Chi tiết kỹ thuật nằm trong file tính năng được dẫn.
 
@@ -9,6 +9,10 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 
 ## Lối chơi
 - [ ] **Lỗi thỉnh thoảng:** smoke `path` hỏng 1 lần (2026-10-21): 6 quân lập lại đường 82 lần, không tới đích trong 300 giây (chạy lại 5/5 đạt). Nghi liên quan công trình chặn đường / tách quân (2026-10-19). → [pathfinding.md](features/pathfinding.md)
+- [ ] **Lỗi thỉnh thoảng:** smoke `camps` hỏng 2 lần (2026-10-30): 6 lính giáo không dọn xong ổ sói trong thời gian chờ (chạy lại 5/5 đạt, cả đúng thứ tự `maps` → `camps`). → [neutral-camps.md](features/neutral-camps.md)
+- [ ] **Lỗi thỉnh thoảng:** unit test `fog-aware planning › walks straight into the fog…` (tests/pathfinding.test.ts) hỏng 1 lần, smoke `path` ("gặp sông trong vùng mù thì tìm đường khác", `replans` = 0) hỏng 1 lần (2026-10-30); chạy lại đều đạt (smoke 4/4). Nghi do bản đồ ngẫu nhiên: khi đoạn sông trên đường đã được khám phá sẵn thì đường lập ban đầu đã đúng, không cần lập lại — nên cố định bản đồ/đích trong hai bài này. → [pathfinding.md](features/pathfinding.md)
+- [ ] **Lỗi thỉnh thoảng:** unit test `Ngũ Vực map › gives every flag region the resource of its realm…` (tests/map.test.ts) hỏng 1 lần trong lượt chạy cả bộ (2026-10-30); chạy lại 3/3 đạt, thử 300 bản đồ Ngũ Vực với đúng các điều kiện của test đều đạt, nên chưa rõ điều kiện nào hỏng — nên in thêm chi tiết khi hỏng.
+- [ ] Bản đồ Ngũ Vực: chốt số tạm (golem vàng, hầm golem, vàng giàu ×2) sau khi chơi thử; thử PvP thật giữa hai máy. → [realms-map.md](features/realms-map.md)
 - [ ] AI mở rộng chậm nếu trinh sát chết sớm; nhóm chiếm cờ và thợ xây bị rút khỏi đội hình. → [ai-opponent.md](features/ai-opponent.md)
 - [ ] Vị trí vùng lãnh thổ không đối xứng giữa hai phe (đã có kiểm tra công bằng theo chi phí đi bộ, độ lệch ≤ 0,3). → [territory.md](features/territory.md)
 - [ ] Tốc độ giảm tiến độ khi bỏ trống cờ (60 giây cho cả thanh) là số tạm. → [territory.md](features/territory.md)
@@ -37,7 +41,7 @@ Danh sách việc cho các phiên làm việc sau, xếp theo mức ảnh hưở
 ## Dọn code & hiệu năng
 - [ ] Bật kiểm tra kiểu TypeScript: bỏ `// @ts-nocheck` từng file (bắt đầu từ `src/config/`), thêm interface `GameState`, `Unit`, `Region`, `Building`. → [architecture.md](architecture.md)
 - [ ] Gỡ các import ngược lớp còn lại (sim/net gọi `updateHUD()`, `sim/combat` gọi `finish()`…), để `sim/` chạy được không cần DOM. → [architecture.md](architecture.md)
-- [ ] Code chết: biến `guiding`, `aiExploreTarget`. → [controls.md](features/controls.md), [ai-opponent.md](features/ai-opponent.md)
+- [ ] Code chết: biến `aiExploreTarget`. → [ai-opponent.md](features/ai-opponent.md)
 - [ ] `nearestEnemy()` O(n²) mỗi frame. → [combat.md](features/combat.md)
 - [ ] Kéo nông trại ở host/AI không qua `applyAction()`. → [farms.md](features/farms.md)
 

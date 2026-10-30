@@ -1,12 +1,12 @@
 # Bản đồ, địa hình & đồ hoạ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
-Bản đồ vuông lớn, nhìn từ trên xuống: đồng cỏ, rừng dày, một con sông và 9 hồ có bãi cát, vùng đá, ruộng tài nguyên, đường đất. Khoảng 2.900 vật thể trang trí (cây thông, cây lá rộng, bụi cây, cụm đá, đá nhỏ, cỏ lau ven nước, lá súng trên hồ) được vẽ như sprite đứng và sắp xếp theo chiều sâu cùng quân lính để quân có thể đi trước/sau cây. Vật thể trang trí không chặn đường đi.
+Bản đồ vuông lớn, nhìn từ trên xuống: đồng cỏ, rừng dày, một con sông và 9 hồ có bãi cát, vùng đá, ruộng tài nguyên, xóm mái tranh quanh mỏ, tháp canh, chùa trên núi, mây quanh mép khi thu nhỏ. Khoảng 2.900 vật thể trang trí (cây thông, cây lá rộng, bụi cây, cụm đá, đá nhỏ, cỏ lau ven nước, lá súng trên hồ) được vẽ như sprite đứng và sắp xếp theo chiều sâu cùng quân lính để quân có thể đi trước/sau cây. Vật thể trang trí không chặn đường đi.
 
 ## Luật & thông số
-**Địa hình** (`buildTerrain()`, cố định — không ngẫu nhiên theo trận): lưới 256×256 = 65.536 ô, `terrainType` mã:
+**Địa hình** (`buildTerrain(mapId)`, tất định — không ngẫu nhiên theo trận; mỗi bản đồ một địa hình, `useMap()` dựng lại khi trận mới đổi bản đồ và tăng `terrainVersion` để minimap và lớp đốm nền dựng lại; bảng số ô dưới đây là bản đồ Đại Lục, bản đồ Ngũ Vực xem [realms-map.md](realms-map.md)): lưới 256×256 = 65.536 ô, `terrainType` mã:
 | Mã | Loại | Số ô | Đi qua/xây được |
 |---:|---|---:|---|
 | 0 | Đồng cỏ (ô sát nước tô màu bãi cát) | phần còn lại | Có |
@@ -19,7 +19,7 @@ Vùng rừng/đá/tài nguyên lấy từ `forestRegions`, `rockRegions`, `goldR
 
 **Lớp vẽ trong `draw()`** (theo thứ tự):
 1. Nền `--ui-fog` (`THEME['ui-fog']`), rồi `terrainSmoothCanvas` (bản địa hình làm mờ 8 px + đốm màu) và 8% lớp `terrainCanvas` gốc.
-2. `drawTerrainDetail(viewLeft, viewTop, viewRight, viewBottom)` (đốm cỏ/đá dựng sẵn, chỉ vẽ trong camera; xem mục Hiệu năng), đường chính (bezier ngang ~y=0.55H, cắt theo khung bản đồ để không thò ra ngoài) và đường phụ phía trên.
+2. `drawTerrainDetail(viewLeft, viewTop, viewRight, viewBottom)` (đốm cỏ/đá dựng sẵn, chỉ vẽ trong camera; xem mục Hiệu năng). Không còn đường đất: hai con đường bezier cố định bị thay bằng mạng đường nối cờ ngày 2026-10-30, rồi bỏ hẳn cùng ngày theo yêu cầu.
 3. Lớp lãnh thổ `drawTerritory()` (tô màu phe, ranh giới theo ô dày theo pixel màn hình; bật/tắt phím T), mỏ (nếu đã khám phá/đang thấy), vòng tầm pháo khi chọn pháo đài.
 4. Lá súng (phẳng, dưới mọi vật đứng), rồi danh sách `sceneActors` sắp theo Y: cây/bụi, đá, cỏ lau, pháo đài (+ sân tập kết), cột cờ (`drawFlag()`, chỗ đã khám phá), công trình (`drawBuilding()`; công trình địch chỉ vẽ khi đang thấy), hang quái và quái (`render/creeps.ts`), quân. Khi zoom < `DECOR_LAYER_SCALE` (0,2) mọi vật trang trí lấy từ một ảnh lớp vẽ sẵn (`decorLayerCanvas()`) thay vì vẽ từng cái.
 5. Thanh máu quân, vòng chọn, đạn, hiệu ứng.
@@ -54,7 +54,25 @@ Clip `walk` dùng khi `u.moving`; riêng lính giáo chọn hàng theo `u.facing
 | `rockCluster`, `rockStone`, `grassStone` | ô đá; đá nhỏ cả trên cỏ | 4 / 0,32 / 115; 2 / 0,16 / 30; 5 / 0,035 / 40 | ~76 cụm, ~210 đá nhỏ |
 | `reed` | ô cỏ/rừng sát nước | 1 / 0,20 / 30 | ~300 |
 | `lily` | ô nước có 4 phía đều là nước | 2 / 0,09 / 34 | ~166 |
-Chừa trống: quanh pháo đài (nửa kích thước + 150), sân tập kết (+40), mỏ (95), cột cờ (120), đường chính. Sprite vẽ sẵn bằng canvas: `makePineSprite()` (5 kiểu), `makeBroadleafSprite()` (3, kiểu 2 màu thu), `makeBushSprite()` (2, một kiểu có hoa), `drawRockClusterSprite()`, `makeStoneSprite()` (3), `makeReedSprite()` (2), `makeLilySprite()` (2, một kiểu có hoa). `decorSprite(item)` trả về ảnh + khung cho mỗi loại (`kind`); `drawDecor(item)` vẽ một vật. Dựng toàn bộ mất ~80 ms mỗi trận.
+| Cảnh vật từng miền (chỉ bản đồ Ngũ Vực) | `REALM_DECOR_PASSES` trong [src/render/realm-decor.ts](../../src/render/realm-decor.ts), bảng ở [realms-map.md](realms-map.md) | theo từng loại | ~1.300 |
+**Vật cản** (2026-10-30; [src/render/obstacles.ts](../../src/render/obstacles.ts), thông số `OBSTACLE_LOOK` trong `config/visuals.ts`). Lớp nền địa hình bị làm mờ nên trước đây mép đá và nước nhòe, khó thấy chỗ nào chặn quân. `drawObstacles()` vẽ ngay sau lớp nền (trước đường, cảnh vật, quân) một lớp nét căng bám đúng ô chặn (`terrainType` 2 và 3; đi được hay không vẫn do `walkable` quyết định):
+- **Đá thành vách núi:** viền các ô đá được dò thành vòng khép kín (`loopsOf()`: cạnh ô giữa đá và không phải đá, nối thành vòng), bỏ điểm thẳng hàng, bo góc 2 lượt (`smoothPasses`), rung nhẹ mép (`edgeNoise`). Vẽ: khối lặp lại thấp hơn `cliffHeight` = 16 màu vách (chỉ lộ ở mặt phía nam, như vách dựng đứng), rồi mặt đá có vân, vệt nứt (`stone`), viền sáng ở mép trên và viền tối ở chân vách.
+- **Nước:** cũng dò vòng (ô dưới cầu tính là nước nên bờ chạy liền dưới mặt cầu), bo góc 3 lượt; vẽ dải bãi cát (nửa ngoài của nét `bankWidth` = 46, che quầng nước mờ lan lên đất đi được), tô nước có gợn sóng bên trong bờ thật, rồi viền bọt trắng.
+- **Ruộng lúa** (2026-10-30): ô ruộng cũng dò thành vòng (`loopsOf()`, bỏ đất vàng của Đồi Vàng / Vực Vàng: `tileRealm > 0`) và vẽ trước nước và đá: viền cỏ, bờ đất rộng `fieldBankWidth`, rồi mẫu ô ruộng `paddies` — các ô to nhỏ không đều (chia đôi lặp lại, tất định), phần lớn xanh lúa non (`fieldPlots`), `fieldGoldShare` = 7% lúa chín, `fieldWaterShare` = 10% ruộng ngập có ánh trời và mạ, luống đổi hướng theo ô, bờ ruộng `fieldBankPx`; cả mẫu xoay `fieldAngle` = −9° cho khỏi thẳng lưới.
+- **Đỉnh núi tuyết** (`peak`; vẽ lại 2026-10-30 theo kiểu tranh: 4 kiểu, mỗi kiểu là cụm 2–3 đỉnh, ánh sáng từ trên bên trái — sườn sáng màu đá ấm, sườn bóng tím lạnh, khe rãnh và gờ đá, mũ tuyết có ngấn chảy theo khe, đỉnh phía sau nhạt và xanh hơn, viền tối quanh khối, chân núi đá vụn; `paintPeak()`, `PEAK_LAYOUTS`; kích thước thế giới `peakWorld` × `peakScale`): trên ô đá có ≥ 80% ô đá trong 9×9 quanh (`peakDepth`), cách nhau ≥ 420 (`placePeaks()`, gọi trong `buildWorldDecor()` trước cụm đá).
+- Gần (tỉ lệ ≥ `layerScale` = 0,3): chỉ vẽ các vòng cắt khung nhìn, dạng vector nên căng nét ở mọi mức zoom. Thu nhỏ hơn: một ảnh dựng sẵn cả bản đồ (`layerRes` = 0,2 px/đơn vị). Dựng lại khi `terrainVersion` đổi (đổi bản đồ). Đo 2026-10-30: dựng vòng ~20 ms; `draw()` ~2 ms mỗi khung.
+
+**Làng, tháp canh** (2026-10-30, phong cách bản đồ chiến dịch vẽ tay; cả hai bản đồ; [src/render/settlements.ts](../../src/render/settlements.ts), thông số `SETTLEMENT_LOOK` trong `config/visuals.ts`). `buildSettlements()` chạy đầu `buildWorldDecor()`, trước cây và đá, nên cây mọc tránh chúng. Chỉ để nhìn: không chặn quân, công trình hay tầm nhìn.
+| Thành phần | Cách đặt | Số lượng (chạy thử) |
+|---|---|---:|
+| Xóm (`hut` 2 kiểu) | 3–4 nhà mái tranh trên vòng `hamletRadius` = 150–235 quanh mỗi mỏ | ~50–70 nhà |
+| Vật theo tài nguyên (`hamletProps` = 2) | lúa: ruộng lúa kẻ ô nằm phẳng `paddy`; gỗ: đống gỗ `logPile`; đá: đá khối `stonePile`; vàng: đống vàng `goldHeap` | ~20 |
+| Tháp canh gỗ (`watchtower`) | Một tháp mỗi cờ, cách `towerRadius` = 235, phía trên hoặc hai bên (nhãn cờ ở dưới) | 19–20 |
+| Chùa ba tầng (`pagoda`) | Trên ô đá có ≥ 44/49 ô đá quanh (7×7), tối đa `pagodas` = 4, cách nhau ≥ 1.800 | 4 |
+| Mây (`drawMapClouds()`) | Cụm mây dày ở 4 góc, vài cụm lệch dọc mép (phần lớn ngoài bản đồ); hiện dần khi thu nhỏ dưới tỉ lệ 0,42, rõ hẳn ở 0,22 — không hiện ở mức zoom chơi bình thường nên không che quân | — |
+Ruộng (ô loại 4, trừ Đồi Vàng / Vực Vàng của Ngũ Vực) vẽ thành ruộng lúa nét căng trong lớp vật cản (mục "Vật cản"; thay các luống mờ trong `paintTerrain()` trước 2026-10-30).
+
+Vật nằm phẳng (súng, hoa dại, vòng ấn chú, ruộng lúa) ở `waterDecor` / `groundDecor`, vẽ dưới mọi vật đứng; vật đứng sắp xếp theo `y`. Chừa trống: quanh pháo đài (nửa kích thước + 150), sân tập kết (+40), mỏ (95), cột cờ (120). Sprite vẽ sẵn bằng canvas: `makePineSprite()` (5 kiểu), `makeBroadleafSprite()` (3, kiểu 2 màu thu), `makeBushSprite()` (2, một kiểu có hoa), `drawRockClusterSprite()`, `makeStoneSprite()` (3), `makeReedSprite()` (2), `makeLilySprite()` (2, một kiểu có hoa). `decorSprite(item)` trả về ảnh + khung cho mỗi loại (`kind`); `drawDecor(item)` vẽ một vật. Dựng toàn bộ mất ~80 ms mỗi trận.
 
 Màu phe: `teamPalette(team)`, xanh lá-lam cho team 0 và đỏ đất cho team 1.
 
@@ -104,7 +122,7 @@ Trước 2026-10-21: đạn là một gạch ngắn cùng màu, trúng đòn là
 - Quy tắc: thay đổi phần vẽ không được làm đổi logic ([conventions.md](../conventions.md)).
 
 ## Multiplayer
-Vẽ chạy cục bộ ở mọi trình duyệt; địa hình giống nhau vì `buildTerrain()` tất định. Vật trang trí tất định theo bản đồ: host dựng trong `fresh()`, khách dựng lại trong `startGuestFromSnapshot()` sau khi nhận bản đồ của host (trước 2026-10-18 khách giữ cây đá của bản đồ riêng lúc tải trang, có thể mọc đè nhà/mỏ thật).
+Vẽ chạy cục bộ ở mọi trình duyệt; địa hình giống nhau vì `buildTerrain()` tất định và khách dựng theo `state.mapId`. Vật trang trí tất định theo bản đồ: host dựng trong `fresh()`, khách dựng lại trong `startGuestFromSnapshot()` sau khi nhận bản đồ của host (trước 2026-10-18 khách giữ cây đá của bản đồ riêng lúc tải trang, có thể mọc đè nhà/mỏ thật).
 
 ## Kiểm thử thủ công
 - [ ] Mở game: không có sprite nào hiện ô vuông dự phòng (kiểm tra tab Network không có 404 ở `/assets/`).

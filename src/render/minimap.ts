@@ -11,7 +11,7 @@ import { FOG_RGB, FOG_MEMORY_ALPHA } from '../config/visuals';
 import { TEAM_COLORS, THEME, hexRgb } from '../config/theme';
 import { VIEW_H, VIEW_W, camX, camY, zoom } from '../core/view';
 import { localTeam, state } from '../core/game';
-import { terrainCanvas } from '../map/terrain';
+import { terrainCanvas, terrainVersion } from '../map/terrain';
 import { regionMap } from '../map/regions';
 import { isTeamAreaExplored, teamCanSee } from '../sim/fog';
 import { fogVisible } from './fog';
@@ -27,9 +27,10 @@ export const minimapCanvas = document.getElementById('minimap');
 const mctx = minimapCanvas?.getContext('2d');
 const layerCanvas = document.createElement('canvas'); layerCanvas.width = layerCanvas.height = MAP_TILES;
 const layerCtx = layerCanvas.getContext('2d'), layerImage = layerCtx.createImageData(MAP_TILES, MAP_TILES);
-let terrainSmall = null, layerBuiltAt = 0;
+let terrainSmall = null, terrainSmallVersion = -1, layerBuiltAt = 0;
 
 function buildTerrainSmall() {
+  terrainSmallVersion = terrainVersion;
   terrainSmall = document.createElement('canvas'); terrainSmall.width = terrainSmall.height = MAP_TILES;
   terrainSmall.getContext('2d').drawImage(terrainCanvas, 0, 0, MAP_TILES, MAP_TILES);
 }
@@ -59,7 +60,7 @@ export function drawMinimap() {
   const now = performance.now(), size = minimapCanvas.width, sx = size / W, sy = minimapCanvas.height / H, team = localTeam();
   const own = TEAM_COLORS[team].light, ownSolid = TEAM_COLORS[team].primary, foe = THEME.danger;
   const explored = (x, y) => isTeamAreaExplored(team, x, y);
-  if (!terrainSmall) buildTerrainSmall();
+  if (!terrainSmall || terrainSmallVersion !== terrainVersion) buildTerrainSmall(); // new map: new ground
   if (now - layerBuiltAt > 1000 / MINIMAP_LAYER_HZ) { layerBuiltAt = now; buildLayer(); }
   mctx.save();
   mctx.imageSmoothingEnabled = true;
@@ -96,7 +97,7 @@ export function drawMinimap() {
   // Neutral camps the side knows of: an amber diamond, grey once cleared (neutral-camps.md).
   for (const c of state.camps || []) {
     const known = campKnownState(c, team); if (known == null || (!explored(c.x, c.y) && !CAMP_TYPES[c.kind].opensAt)) continue;
-    mark('diamond', c.x * sx, c.y * sy, c.kind === 'tomb' ? 4.5 : 3.2, known === 'alive' ? CREEP_COLORS.minimap : CREEP_COLORS.minimapDim);
+    mark('diamond', c.x * sx, c.y * sy, CAMP_TYPES[c.kind]?.opensAt ? 4.5 : 3.2, known === 'alive' ? CREEP_COLORS.minimap : CREEP_COLORS.minimapDim);
   }
   for (const u of state.units) {
     if (u.hp <= 0) continue;

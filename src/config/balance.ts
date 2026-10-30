@@ -73,8 +73,8 @@ export const AI_CAPTURE_SQUAD=2,AI_MAX_CAPTURE_TARGETS=4,AI_CAPTURE_TARGET_INTER
 // None of these give the AI resources, sight or knowledge the player does not have.
 export const AI_DIFFICULTY={
  easy:  {label:'Dễ',    tick:7,maxTraining:1,firstAttack:420,waveSize:6, waveGrowth:2,gatherSeconds:90,retreatAt:.4,regroup:180,fortressAfterWave:3,defendRadius:520,farmsMax:2,farmEvery:0,  lanesMax:4,smartMix:false,reinforce:false,homeGuard:0,harass:false,camps:[]},
- normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false,camps:['wolves']},
- hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true,camps:['wolves','bandits','troll','tomb']},
+ normal:{label:'Thường',tick:5,maxTraining:3,firstAttack:270,waveSize:8, waveGrowth:3,gatherSeconds:90,retreatAt:.3,regroup:120,fortressAfterWave:2,defendRadius:620,farmsMax:6,farmEvery:110,lanesMax:5,smartMix:true, reinforce:true, homeGuard:3,harass:false,camps:['wolves','boars']},
+ hard:  {label:'Khó',   tick:4,maxTraining:6,firstAttack:180,waveSize:10,waveGrowth:4,gatherSeconds:75,retreatAt:.2,regroup:75, fortressAfterWave:1,defendRadius:720,farmsMax:9,farmEvery:75, lanesMax:6,smartMix:true, reinforce:true, homeGuard:4,harass:true,camps:['wolves','bandits','troll','golem','tomb','boars','spiders','bears','dragon']},
 };
 export const FORTRESS_GUN_COST={stone:150};
 // Combat V3.1 (2026-10-19, damage only): damage per shot of the fortress's built-in guns — [0] the main gun, [1] the
@@ -90,4 +90,7 @@ export const FOOD_REGION_FARM_BONUS=.25;
 // Every standing fortress pays this much per minute from the first second, with or without territory (no growth over time).
 // V3.1 (2026-10-19): 40 lúa, 30 gỗ, 10 đá, 10 vàng.
 export const FORTRESS_INCOME_PER_MINUTE={food:40,wood:30,stone:10,gold:10};
+// "Ngũ Vực" map (config/maps.ts): the gold mines of the abyss at the centre yield this many times a normal gold mine
+// (PROVISIONAL, 2026-10-30: 35 → 70 vàng/phút; the strongest camp, the tomb, guards them).
+export const RICH_GOLD_MULTIPLIER=2;
 export const MINE_TYPES={food:{label:'MỎ LÚA',perSecond:45/60,crystal:'#f2d36b'},wood:{label:'MỎ GỖ',perSecond:45/60,crystal:'#9ccf6a'},stone:{label:'MỎ ĐÁ',perSecond:35/60,crystal:'#d9dee3'},gold:{label:'MỎ VÀNG',perSecond:35/60,crystal:'#ffca5e'}};

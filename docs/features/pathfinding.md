@@ -1,6 +1,6 @@
 # Vật cản & tìm đường
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Sông, hồ và vùng đá là **vật cản**: quân không đi xuyên qua được. Muốn sang bờ bên kia phải đi qua một trong 4 **cầu gỗ** bắc qua sông (một cầu nằm trên đường chính). Rừng, đồng cỏ, ruộng đi bình thường; cây và đá trang trí không chặn.
@@ -16,7 +16,7 @@ Mọi lần di chuyển (lệnh đi của người chơi, đuổi theo mục ti�
 | Tách quân | Hai quân (bất kỳ phe) chồng lên nhau quá `SEPARATION_SPACING` = 85% tổng bán kính thì đẩy nhau ra, mỗi giây bớt `SEPARATION_RATE` = 6 lần phần chồng (tối đa toàn bộ trong 1 frame, chia đôi mỗi bên); chồng khít thì tách theo góc cố định theo `id`. Không đẩy vào nước, đá, công trình, ra ngoài `MOVE_BOUNDS` (quân đang kẹt trong ô chặn thì được đẩy ra). Lưới băm 32 px, mỗi cặp xét một lần | `separateUnits()` |
 | Đội hình | Điểm neo của đội hình có đường riêng (`findPath()` trên bản đồ đã khám phá); từng quân `steerTo()` tới chỗ của mình đang trôi theo neo. Chỗ trôi ít hơn `PATH_GOAL_TOLERANCE` không tự lập lại đường, nên khi đường đã hết mà còn cách chỗ > 8 px thì bỏ đường, lập lại ở frame sau. Xem [formations.md](formations.md) | `formationTarget()`, `core/match.ts` |
 | Đánh công trình cận chiến | Công trình chặn ô nên quân cận chiến (tầm < `MELEE_RANGE_MAX` = 60) đánh từ ngay sát khung: tầm tới tâm = max(tầm cũ, `structureReach()`); cung thủ giữ tầm cũ. Xem [combat.md](combat.md) | `attackRange()` |
-| Cầu | 4 cầu ở hàng 14%, 36%, 53,5% (đường chính), 80% chiều cao bản đồ, mỗi cầu cao `BRIDGE_WIDTH_TILES` = 3 ô, phủ hết đoạn nước của hàng | `BRIDGE_ROWS`, `bridges`, `bridgeTiles` |
+| Cầu | Chỉ bản đồ Đại Lục (bản đồ Ngũ Vực không có sông, đi qua các khe giữa những dãy núi ngắn: [realms-map.md](realms-map.md)). 4 cầu ở hàng 14%, 36%, 53,5% (đường chính), 80% chiều cao bản đồ, mỗi cầu cao `BRIDGE_WIDTH_TILES` = 3 ô, phủ hết đoạn nước của hàng | `BRIDGE_ROWS`, `bridges`, `bridgeTiles` |
 | Cầu gặp bờ đá | Mặt cầu kéo qua tối đa `BRIDGE_MAX_RAMP_TILES` = 10 ô đá; vẫn chưa tới đất thì cầu dời sang hàng gần nhất (trong `BRIDGE_ROW_SEARCH_TILES` = 12 ô) mà cả 3 hàng đều chạm đất hai bờ | `buildWalkable()` |
 | Lưới lập đường | Theo hiểu biết của phe: ô đi được thật **hoặc chưa khám phá** = mở; nước/đá đã khám phá = chặn (`planGrid(known)`, `known` = `state.fogSeen` cho xanh, `state.enemyFogSeen` cho đỏ; `knownMap(team)`). Không truyền `known` = địa hình thật (dùng khi sinh bản đồ, đo công bằng) | `planGrid()`, `knownMap()` |
 | Phát hiện vật cản | Mỗi `PATH_CHECK_SECONDS` = 0,4 giây kiểm tra lại các đoạn đường còn lại trên bản đồ đã khám phá mới nhất; có đoạn bị chắn → tìm đường lại (`u.replans` đếm số lần) | `steerTo()`, `pathStillOpen()` |

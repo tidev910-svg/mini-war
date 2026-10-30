@@ -42,3 +42,93 @@ describe('generated maps', () => {
     }
   });
 });
+
+// "Ngũ Vực" (docs/features/realms-map.md): five realms, each with its own resource and its own monster camp.
+describe('Ngũ Vực map', () => {
+  const tileAt = p => Math.floor(p.y / g.TILE_SIZE) * g.MAP_TILES + Math.floor(p.x / g.TILE_SIZE);
+  const realmOf = p => g.tileRealm[tileAt(p)];
+  const realmIdx = id => g.REALMS.findIndex(r => r.id === id);
+  const play = id => { g.setSetting('mapKind', id); g.fresh(); };
+
+  it('mirrors the ground left ↔ right and has no river bridges', () => {
+    play('realms');
+    const N = g.MAP_TILES; let diff = 0;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N / 2; x++) if (g.terrainType[y * N + x] !== g.terrainType[y * N + N - 1 - x] || g.tileRealm[y * N + x] !== g.tileRealm[y * N + N - 1 - x]) diff++;
+    expect(diff).toBe(0);
+    expect(g.bridges).toHaveLength(0);
+    expect(new Set(g.tileRealm).size).toBe(5);
+  });
+
+  it('gives every flag region the resource of its realm, with mirrored fortresses and fair walking distances', () => {
+    for (let k = 0; k < 6; k++) {
+      play('realms');
+      expect(g.state.mapId).toBe('realms');
+      const flags = g.state.regions.filter(r => r.cp), [b0, b1] = g.state.bases;
+      expect(flags).toHaveLength(g.REGION_COUNT);
+      expect(Math.abs(b0.x + b1.x - g.W)).toBeLessThan(1);
+      expect(b0.y).toBe(b1.y);
+      expect([b0, b1].every(b => realmOf(b) === realmIdx('plains'))).toBe(true);
+      for (const r of flags) {
+        expect(realmOf(r.cp)).toBe(r.realm);
+        expect(r.resource).toBe(g.REALMS[r.realm].resource);
+      }
+      g.REALMS.forEach((realm, i) => expect(flags.filter(r => r.realm === i)).toHaveLength(realm.seeds * 2));
+      // Both sides walk about as far to each resource (same check as the classic map).
+      const walk = g.state.bases.map(g.walkDistances), cost = (r, t) => walk[t][tileAt(r.cp)];
+      for (const type of g.REGION_TYPES) {
+        const d = [0, 1].map(t => Math.min(...flags.filter(r => r.resource === type).map(r => cost(r, t))));
+        expect(d.every(Number.isFinite)).toBe(true);
+        expect(Math.abs(d[0] - d[1]) / Math.max(...d)).toBeLessThan(.15);
+      }
+    }
+  });
+
+  it('pays double gold at the abyss mines only', () => {
+    play('realms');
+    const rich = g.state.mines.filter(m => m.rich), abyss = realmIdx('abyss');
+    expect(rich).toHaveLength(2);
+    for (const m of rich) { expect(g.state.regions[m.regionId].realm).toBe(abyss); expect(m.income).toBeCloseTo(g.MINE_TYPES.gold.perSecond * g.RICH_GOLD_MULTIPLIER); }
+    for (const m of g.state.mines.filter(m => !m.rich)) expect(m.income).toBeCloseTo(g.MINE_TYPES[m.resource].perSecond);
+  });
+
+  it("places each realm's own monster camp inside that realm, in mirrored pairs, the dragon's lair at the centre", () => {
+    for (let k = 0; k < 4; k++) {
+      play('realms');
+      const camps = g.state.camps;
+      for (const c of camps) expect(g.REALMS[realmOf(c)].camp).toBe(c.kind);
+      const center = g.REALMS.find(r => r.centerCamp).camp;
+      expect(camps.filter(c => c.kind === center)).toHaveLength(1);
+      for (const kind of g.REALMS.filter(r => !r.centerCamp).map(r => r.camp)) {
+        const list = camps.filter(c => c.kind === kind);
+        expect(list.length).toBeGreaterThan(0);
+        expect(list.length % 2).toBe(0);
+        for (const c of list) expect(list.some(o => Math.abs(o.x + c.x - g.W) < 1 && o.y === c.y)).toBe(true);
+      }
+      // The monster grows with the worth of the ground: total camp hit points rise realm by realm.
+      const hp = kind => Object.entries(g.CAMP_TYPES[kind].creeps).reduce((s, [t, n]) => s + g.CREEP_TYPES[t].hp * n, 0);
+      const order = g.REALMS.map(r => hp(r.camp));
+      expect(order.slice().sort((a, b) => a - b)).toEqual(order);
+    }
+  });
+
+  it('has its own monsters in every realm, none of the classic camps, and every camp monster defined', () => {
+    play('realms');
+    const kinds = new Set(g.state.camps.map(c => c.kind));
+    expect([...kinds].sort()).toEqual(['bears', 'boars', 'dragon', 'golem', 'spiders']);
+    for (const def of Object.values(g.CAMP_TYPES)) for (const t of Object.keys(def.creeps)) expect(g.CREEP_TYPES[t]).toBeTruthy();
+    // The dragon's lair, like the tomb, opens later and names the boss whose death gives the buff.
+    expect(g.CAMP_TYPES.dragon.opensAt).toBe(g.CAMP_TYPES.tomb.opensAt);
+    expect(g.CAMP_TYPES.dragon.bossName).toBeTruthy();
+    expect(g.state.camps.find(c => c.kind === 'dragon').state).toBe('closed');
+  });
+
+  it('switches back to the classic map with the same ground as before', () => {
+    play('classic');
+    const before = g.terrainType.slice();
+    play('realms'); play('classic');
+    expect(g.state.mapId).toBe('classic');
+    expect(g.terrainType.every((t, i) => t === before[i])).toBe(true);
+    expect(g.bridges).toHaveLength(4);
+    expect(g.tileRealm.every(v => v === -1)).toBe(true);
+  });
+});

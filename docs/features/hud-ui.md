@@ -1,6 +1,6 @@
 # HUD & giao diện
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Giao diện theo phong cách **huy hiệu & cờ hiệu**, tông màu "sắt & máu": bản đồ phủ toàn màn hình, các bảng nổi có hình khiên và dải cờ đuôi én. **Màu phe** là điểm nhấn chính. Vàng đồng chỉ dùng làm viền cho thành phần quan trọng. Hình khối vẽ bằng CSS/SVG (bộ icon đơn sắc nét viền trong `index.html`), không thêm ảnh bitmap. Toàn bộ chữ tiếng Việt.
@@ -89,6 +89,7 @@ Bảng màu **"sắt & máu"** (đổi ngày 2026-10-18, thay cho tông xanh nav
 - Khung giữa viền `--gold` 2px: khiên lớn màu phe kèm tiêu đề "MINI WAR" và dòng giới thiệu.
 - Menu dải cờ đuôi én (`.lobby-btn`):
   - **Chơi với AI** (`#modeAI`, nổi bật màu phe, phím **Enter**)
+  - Hai hàng chọn nhanh dưới nút này (`.ai-difficulty`): **Độ khó AI** (`#aiDifficulty`) và **Bản đồ** (`#mapKind`: Đại Lục / Ngũ Vực, [realms-map.md](realms-map.md))
   - **Cài đặt** (`#lobbySettings` → `#settingsModal`, [settings.md](settings.md))
   - **Solo với bạn bè** (`#modeFriends` → `#friendPanel`)
   - **Hướng dẫn & phím tắt** (`#lobbyGuide` → `#guideModal`; Esc để đóng)

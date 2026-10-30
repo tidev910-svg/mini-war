@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Start screen: AI or friend mode, room panel (docs/features/multiplayer.md, hud-ui.md).
-import { $, conn, gameStarted, localSelectedIds, localTeam, mode, netRole, setGameStarted, setMode, setNetRole, setPaused } from '../core/game';
+import { $, conn, gameStarted, localSelectedIds, localTeam, mode, netRole, setGameStarted, setMode, setNetRole, setPaused, state } from '../core/game';
 import { TEAM_COLORS } from '../config/theme';
 import { fresh } from '../core/match';
 import { destroyPeer } from '../net/peer';
@@ -8,13 +8,15 @@ import { closeMenu, closePanels, confirmAction, drawPortraits } from './panels';
 import { setFactionTheme } from './theme';
 import { onSettingChange, setSetting, settings } from '../core/settings';
 import { AI_DIFFICULTY } from '../config/balance';
+import { MAPS } from '../config/maps';
 
 export function showFriendPanel(){ $('modeHome').style.display='none';$('friendPanel').classList.add('show'); }
 export function showModeHome(){ $('friendPanel').classList.remove('show');$('modeHome').style.display='block'; }
 export function hideModeScreen(){ $('modeScreen').classList.add('hidden'); }
 export function showModeScreen(){ $('modeScreen').classList.remove('hidden'); }
 export function setGameModeLabel(){
- $('modeStatus').textContent=mode==='pvp'?(netRole==='host'?'Solo với bạn bè · Chủ phòng': 'Solo với bạn bè · Khách'):`Chơi với AI · ${(AI_DIFFICULTY[settings.aiDifficulty]||AI_DIFFICULTY.normal).label}`;
+ const mapName=MAPS[state?.mapId]?.name||'';
+ $('modeStatus').textContent=(mode==='pvp'?(netRole==='host'?'Solo với bạn bè · Chủ phòng': 'Solo với bạn bè · Khách'):`Chơi với AI · ${(AI_DIFFICULTY[settings.aiDifficulty]||AI_DIFFICULTY.normal).label}`)+(mapName?' · '+mapName:'');
  $('sideName').textContent=TEAM_COLORS[localTeam()].name;$('crest').classList.toggle('red',localTeam()===1);setFactionTheme(localTeam());drawPortraits();
  const labels=document.querySelectorAll('.legend span');if(labels.length>=2){labels[0].innerHTML='<i class="dot blue"></i>'+(localTeam()===0?'Quân xanh của bạn':'Quân xanh đối thủ');labels[1].innerHTML='<i class="dot red"></i>'+(localTeam()===1?'Quân đỏ của bạn':(mode==='pvp'?'Quân đỏ đối thủ':'Quân đỏ của máy'));}
 }
@@ -34,3 +36,8 @@ function showAIDifficulty(){for(const b of document.querySelectorAll('#aiDifficu
 $('aiDifficulty')?.addEventListener('click',e=>{const b=e.target.closest?.('button[data-level]');if(b)setSetting('aiDifficulty',b.dataset.level);});
 onSettingChange(key=>{if(key!=='aiDifficulty')return;showAIDifficulty();if(gameStarted&&mode==='ai')setGameModeLabel();});
 showAIDifficulty();
+// Lobby map picker (realms-map.md): settings.mapKind, used by the next match this browser starts (AI, or a room it hosts).
+function showMapKind(){for(const b of document.querySelectorAll('#mapKind button'))b.setAttribute('aria-checked',String(b.dataset.map===(MAPS[settings.mapKind]?settings.mapKind:'classic')));}
+$('mapKind')?.addEventListener('click',e=>{const b=e.target.closest?.('button[data-map]');if(b)setSetting('mapKind',b.dataset.map);});
+onSettingChange(key=>{if(key==='mapKind')showMapKind();});
+showMapKind();

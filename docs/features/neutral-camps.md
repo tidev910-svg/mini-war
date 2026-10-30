@@ -1,6 +1,6 @@
 # Hang quái trung lập (đánh quái)
 
-> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-23
+> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Trên bản đồ có các **hang quái trung lập** không thuộc phe nào. Quái canh giữ phần thưởng. Hai phe phải chọn: dồn quân dọn hang để lấy tài nguyên và lợi thế, hay giữ quân để đánh nhau. Có ba bậc:
@@ -32,6 +32,7 @@ Mọi số dưới đây là số **tạm** (2026-10-22, đã chỉnh cùng ngà
 | Trại cướp | 3 cướp + 2 cướp cung | 100 gỗ + 60 vàng | 240 s | 150 | 360 |
 | Hang quỷ đá | 1 quỷ đá | 120 đá + 60 vàng | 300 s | 130 | 300 |
 | Lăng cổ | Vua Xương + 4 lính xương | 150 vàng + buff +15% sát thương, +10% tốc độ trong 90 s | 300 s | 180 | 420 |
+| Hầm golem vàng, bãi heo rừng, tổ nhện, hang gấu đá, Hang Rồng Vàng (chỉ bản đồ Ngũ Vực; chỉ số ở [realms-map.md](realms-map.md)) — dòng golem: | 2 golem vàng (máu 900, sát thương 22 đánh lan 30, tầm 34, tốc độ 28, hồi 1,5 s, khắc chế như lính giáo) | 140 vàng | 300 s | 140 | 320 |
 
 - **Ngủ và thức:** hang ngủ cho tới khi một quân của bất kỳ phe nào vào trong bán kính "đánh thức" của một con quái, hoặc một con quái bị đánh. Khi đó **cả hang** thức và đánh quân ở gần hang: trong tầm đánh thức + `CREEP_CHASE_PAD` = 60 tính từ tâm hang (cung thủ: cả vòng "dây xích", vì có thể đang bắn vào hang). Quân chỉ đi ngang ở rìa thì không bị đuổi; hang ngủ lại 3 giây sau lần cuối có quân lại gần hoặc bị đánh.
 - **Dây xích:** quái không bao giờ ra quá vòng dây xích. Không còn ai trong vòng thì quái đi về chỗ cũ và hồi `CREEP_REGEN` = 12% máu tối đa mỗi giây.
@@ -46,7 +47,7 @@ Mọi số dưới đây là số **tạm** (2026-10-22, đã chỉnh cùng ngà
 
 Địch trong tầm vẫn được ưu tiên; nhưng nếu địch ngoài tầm mà một con quái đang ở trong tầm thì quân đánh con quái.
 
-**Vị trí trên bản đồ** (`CAMP_LAYOUT`, `placeCamps()`): theo **cặp**, mỗi cặp một hang gần mỗi pháo đài, quãng đường đi bộ đối xứng (lệch tối đa `CAMP_PAIR_TOLERANCE` = 6% khoảng cách hai pháo đài), nên không phe nào có hang dễ hơn.
+**Vị trí trên bản đồ** (`CAMP_LAYOUT`, `placeCamps()`; bản đồ Ngũ Vực đặt hang theo miền đất bằng `placeRealmCamps()`, xem [realms-map.md](realms-map.md)): theo **cặp**, mỗi cặp một hang gần mỗi pháo đài, quãng đường đi bộ đối xứng (lệch tối đa `CAMP_PAIR_TOLERANCE` = 6% khoảng cách hai pháo đài), nên không phe nào có hang dễ hơn.
 
 | Loại | Số cặp | Khoảng cách tới pháo đài gần hơn (tỉ lệ khoảng cách hai pháo đài) |
 |---|---:|---|
@@ -62,8 +63,8 @@ Hang cách pháo đài ≥ 20 ô, cờ ≥ 11 ô (quân đứng chiếm cờ n�
 | Độ khó | Dọn | Đội gửi đi |
 |---|---|---|
 | Dễ | không chủ động | — |
-| Thường | ổ sói | sói 5 (+1) |
-| Khó | mọi loại, cả Lăng cổ | sói 5, cướp 6, quỷ đá 8, lăng 12 (+1) |
+| Thường | ổ sói, bãi heo rừng | sói 5, heo rừng 5 (+1) |
+| Khó | mọi loại, cả hầm golem, Lăng cổ và các hang của bản đồ Ngũ Vực | sói 5, cướp 6, quỷ đá 8, golem 10, lăng 12; heo rừng 5, nhện 6, gấu đá 7, rồng 14 (+1) |
 
 - AI chỉ biết hang nó **đã thấy** (hoặc lăng đã mở), hang gần pháo đài AI nhất trước.
 - Đội tập hợp trước ở một điểm ngoài tầm đánh thức (phía pháo đài AI), đủ 70% mới cùng vào, để không bị sói xử từng quân.

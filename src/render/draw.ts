@@ -11,6 +11,8 @@ import { updateSoundscape } from '../audio/sound';
 import { VIEW_H, VIEW_W, camX, camY, ctx, drawUprightAt, renderView, setRenderView, viewOffsets, zoom } from '../core/view';
 import { H, W } from '../config/map';
 import { terrainCanvas, terrainPadding, terrainSmoothCanvas } from '../map/terrain';
+import { drawMapClouds } from './settlements';
+import { drawObstacles } from './obstacles';
 import { localTeam, placement, selected, selectedFortress, state } from '../core/game';
 import { dragSelect } from '../ui/input';
 import { BUILDING_TYPES, MINE_TYPES } from '../config/balance';
@@ -19,7 +21,7 @@ import { fortressGunPosition } from '../map/bases';
 import { drawTerritory } from './territory';
 import { drawFallenUnit, drawUnit, drawUnitHealthBar, drawUnitSelection, flushMapLabels, mapText, queueMapLabel, showFallenBody, teamPalette, unitTargetHeight } from './units';
 import { MAP_LABEL_MIN_SCALE, drawBase, drawBuilding, drawMusterYard } from './buildings';
-import { DECOR_LAYER_SCALE, decorLayerCanvas, drawDecor, drawTerrainDetail, rockDecor, shoreDecor, treeDecor, waterDecor } from './terrain';
+import { DECOR_LAYER_SCALE, decorLayerCanvas, drawDecor, drawRealmLabels, drawTerrainDetail, groundDecor, rockDecor, shoreDecor, treeDecor, waterDecor } from './terrain';
 import { drawFlag } from './flags';
 import { drawFog, refreshFog } from './fog';
 import { drawMinimap } from './minimap';
@@ -67,15 +69,9 @@ drawSeaMatte();
  ctx.drawImage(terrainSmoothCanvas,terrainPadding,terrainPadding,terrainCanvas.width,terrainCanvas.height,0,0,W,H);
  ctx.globalAlpha=.08;ctx.drawImage(terrainCanvas,0,0,W,H);ctx.globalAlpha=1;
  drawTerrainDetail(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
- // Main road crossing meadow and ford, about 2–3 tiles wide.
- // Roads start off-map; clip them to the world so their ends do not poke out past the fog into the margin.
- ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();ctx.lineCap='round';ctx.lineJoin='round';
- ctx.beginPath();ctx.moveTo(-80,H*.57);ctx.bezierCurveTo(W*.12,H*.52,W*.19,H*.67,W*.32,H*.58);ctx.bezierCurveTo(W*.43,H*.50,W*.49,H*.51,W*.57,H*.57);ctx.bezierCurveTo(W*.72,H*.67,W*.83,H*.47,W+80,H*.52);
- ctx.strokeStyle='#765f3d55';ctx.lineWidth=83;ctx.stroke();ctx.strokeStyle='#d3bd82';ctx.lineWidth=100;ctx.stroke();ctx.strokeStyle='#e4d29d';ctx.lineWidth=80;ctx.stroke();
- ctx.globalAlpha=.38;ctx.setLineDash([12,15]);ctx.strokeStyle='#a98d5a';ctx.lineWidth=2.5;ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.restore();
- // Secondary earth track softens the open approach lanes without crossing bases or unit paths.
- ctx.save();ctx.beginPath();ctx.moveTo(W*.18,H*.21);ctx.quadraticCurveTo(W*.30,H*.29,W*.38,H*.26);ctx.quadraticCurveTo(W*.52,H*.33,W*.64,H*.25);ctx.quadraticCurveTo(W*.73,H*.18,W*.82,H*.26);
- ctx.strokeStyle='#9a7d59aa';ctx.lineWidth=26;ctx.stroke();ctx.strokeStyle='#f0d9a3cc';ctx.lineWidth=18;ctx.stroke();ctx.restore(); // Once a mine is discovered, keep its location visible on explored terrain.
+ // Rock as crisp cliffs and water with a foam shoreline, so impassable ground reads at a glance (render/obstacles.ts).
+ drawObstacles(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale);
+ // Once a mine is discovered, keep its location visible on explored terrain.
  // Unexplored mines remain hidden by fog; current vision is not required after discovery.
  // Territory layer: owner tint and borders (only where explored); toggled with T. Flags are drawn with the scene (drawFlag).
  updateIntel(); // what the local side last saw in the veil (render/intel.ts)
@@ -99,7 +95,7 @@ drawSeaMatte();
   for(let i=0;i<5;i++){const cx=m.x-12+i*6,cy=m.y-6+(i%2)*6;ctx.fillStyle='#9a6d22';ctx.beginPath();ctx.moveTo(cx-3,cy+4);ctx.lineTo(cx-2,cy-3);ctx.lineTo(cx,cy-7);ctx.lineTo(cx+3,cy-2);ctx.lineTo(cx+3,cy+4);ctx.closePath();ctx.fill();ctx.fillStyle=crystal;ctx.beginPath();ctx.moveTo(cx-2,cy+3);ctx.lineTo(cx-1,cy-3);ctx.lineTo(cx,cy-6);ctx.lineTo(cx+2,cy-2);ctx.lineTo(cx+2,cy+3);ctx.closePath();ctx.fill();}
   // Label at least 12 px on screen in the owner's light colour (cream when neutral), queued above the scenery; hidden when
   // zoomed far out, where the flag label already names the region's resource.
-  if(settings.mapLabels&&viewScale>=MAP_LABEL_MIN_SCALE){const text=(m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+MINE_TYPES[m.resource].label+' +'+Math.round(m.income*60)+'/PHÚT';queueMapLabel(m.x,m.y,()=>mapText(text,m.x,m.y+34,11,800,m.owner>=0?TEAM_COLORS[m.owner].light:THEME['text-main']));}
+  if(settings.mapLabels&&viewScale>=MAP_LABEL_MIN_SCALE){const text=(m.owner===0?'XANH · ':m.owner===1?'ĐỎ · ':'TRUNG LẬP · ')+MINE_TYPES[m.resource].label+(m.rich?' GIÀU':'')+' +'+Math.round(m.income*60)+'/PHÚT';queueMapLabel(m.x,m.y,()=>mapText(text,m.x,m.y+34,11,800,m.owner>=0?TEAM_COLORS[m.owner].light:THEME['text-main']));}
   });
  }
  // Show friendly integrated cannon coverage while the unified fortress is selected.
@@ -113,6 +109,7 @@ drawSeaMatte();
  if(viewScale<DECOR_LAYER_SCALE)ctx.drawImage(decorLayerCanvas(),0,0,W,H);
  else{
   for(const lily of waterDecor)if(inView(lily))drawDecor(lily);
+  for(const item of groundDecor)if(inView(item))drawDecor(item);
   for(const item of treeDecor)if(inView(item))enqueue(item.y,()=>drawDecor(item));
   for(const item of rockDecor)if(inView(item))enqueue(item.y+(item.kind==='stone'?4:18),()=>drawDecor(item));
   for(const item of shoreDecor)if(inView(item))enqueue(item.y,()=>drawDecor(item));
@@ -149,6 +146,8 @@ drawSeaMatte();
  // Fog of war overlay: unexplored tiles are veiled (drawFog); explored terrain stays visible.
  drawFog();
  drawTerritory(camX,camY,camX+VIEW_W/viewScale,camY+VIEW_H/viewScale,'over');
+ drawMapClouds();
+ drawRealmLabels();
  // Route lines of the selected units go above the fog so a march into unexplored ground stays visible.
  if(settings.unitPaths)drawUnitPaths();
  // Keep placement feedback readable even when the cursor crosses unexplored fog.
