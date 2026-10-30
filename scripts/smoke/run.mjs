@@ -177,6 +177,32 @@ if (solo.length) {
       await key('?');
       t.ok(!(await c.page("document.getElementById('guideModal').hidden")) && (await c.page("document.querySelectorAll('#hotkeyTable tr').length")) > 10, '?: mở hướng dẫn có bảng phím tắt');
       await key('Escape');
+      // Real mouse input (CDP), so the browser also fires the `click` that follows each pointerup.
+      const pts = await c.game(`fresh();setMode('test');setGameStarted(true);state.units=[];for(let i=0;i<3;i++)spawn(0,'infantry');
+        const b=state.bases[0],gx=b.x+b.dir*520,gy=b.y;state.units.forEach((u,i)=>{u.x=gx+i*40;u.y=gy;u.order='hold';u.path=null;});
+        centerCameraAt(gx+40,gy);selectUnits([]);const r=canvas.getBoundingClientRect(),sc=(x,y)=>{const p=worldToCanvas(x,y);return {x:r.left+p.x*r.width/VIEW_W,y:r.top+p.y*r.height/VIEW_H};};
+        return {units:state.units.map(u=>sc(u.x,u.y)),corner:sc(gx-90,gy-90),ground:sc(gx+40,gy+260)}`);
+      const mouse = async (type, p, o = {}) => c.send('Input.dispatchMouseEvent', { type, x: p.x, y: p.y, button: o.button || 'left', buttons: type === 'mouseReleased' ? 0 : (o.button === 'right' ? 2 : 1), clickCount: 1, modifiers: o.shift ? 8 : 0 });
+      const drag = async (a, b, o) => { await mouse('mousePressed', a, o); for (let i = 1; i <= 5; i++) await mouse('mouseMoved', { x: a.x + (b.x - a.x) * i / 5, y: a.y + (b.y - a.y) * i / 5 }, o); await mouse('mouseReleased', b, o); await sleep(60); };
+      const nSel = () => c.game(`return state.units.filter(u=>u.selected).length`);
+      await drag(pts.corner, pts.units[2]);
+      t.ok(await nSel() === 3, 'kéo khung kết thúc ngay trên một quân: vẫn chọn cả 3 (cú nhấp sau khi kéo bị bỏ qua)');
+      await drag(pts.units[0], pts.units[0], { shift: true });
+      t.ok(await nSel() === 2, 'Shift + nhấp vào quân đang chọn: bỏ quân đó khỏi nhóm');
+      await drag(pts.ground, pts.ground);
+      t.ok(await nSel() === 0, 'nhấp vùng trống: bỏ chọn');
+      await drag(pts.units[0], { x: pts.units[2].x + 30, y: pts.units[2].y + 30 });
+      t.ok(await nSel() === 3, 'kéo khung bắt đầu trên một quân: vẫn khoanh được');
+      const cam0 = await c.game(`return [camX,camY]`);
+      await drag(pts.ground, { x: pts.ground.x + 3, y: pts.ground.y + 2 }, { button: 'right' });
+      const rc = await c.game(`return {moving:state.units.every(u=>u.order==='move'),cam:[camX,camY]}`);
+      t.ok(rc.moving && rc.cam.join() === cam0.join(), 'nhấp phải hơi rung tay: vẫn là lệnh đi, camera không nhích', rc);
+      await c.game(`selectUnits([]);const s=document.createElement('input');s.type='range';s.id='smokeRange';document.body.append(s);s.focus();return 1`);
+      await key('a', { ctrl: true, code: 'KeyA' });
+      t.ok(await nSel() === 3, 'Ctrl+A khi thanh trượt (âm lượng) đang được focus');
+      await c.game(`selectUnits([]);document.getElementById('smokeRange').remove();return 1`);
+      await key('ф', { ctrl: true, code: 'KeyA' });
+      t.ok(await nSel() === 3, 'Ctrl+A với bố cục bàn phím khác (theo mã phím KeyA)');
       results.push(t.report());
     }
 
@@ -199,7 +225,13 @@ if (solo.length) {
       t.ok(m.every(x => x.inRegion && x.onLand), 'cờ nằm trong vùng, trên khối đất lớn');
       t.ok(m.every(x => x.sep >= r.W * 0.55 && x.dir && x.clear), 'hai nhà cách ≥ 55% bản đồ, quay về nhau, đứng trên đất');
       t.ok(m.some(x => x.bx > r.W / 2) && m.some(x => x.bx < r.W / 2), 'nhà xanh xuất hiện ở cả hai nửa bản đồ');
-      results.push(t.report({ 'ms/bản đồ': Math.round(r.ms) }));
+      // "Ngũ Vực" (realms-map.md): 10 maps in the real browser, every flag and every camp kind placed, fortresses mirrored.
+      const rv = await c.game(`setSetting('mapKind','realms');const out=[],t0=performance.now();
+        for(let k=0;k<10;k++){fresh();out.push({flags:state.regions.filter(r=>r.cp).length,kinds:new Set(state.camps.map(c=>c.kind)).size,
+          mirror:Math.abs(state.bases[0].x+state.bases[1].x-W)<1&&state.bases[0].y===state.bases[1].y,realm:state.regions.filter(r=>r.cp).every(r=>REALMS[r.realm].resource===r.resource)});}
+        const ms=(performance.now()-t0)/10;setSetting('mapKind','classic');fresh();return {ms,out}`);
+      t.ok(rv.out.every(x => x.flags === 20 && x.kinds === 5 && x.mirror && x.realm), 'Ngũ Vực: 20 cờ đúng tài nguyên của miền, đủ 5 loại hang, hai nhà đối xứng', rv.out);
+      results.push(t.report({ 'ms/bản đồ': Math.round(r.ms), 'ms/bản đồ Ngũ Vực': Math.round(rv.ms) }));
     }
 
     if (want('path')) {

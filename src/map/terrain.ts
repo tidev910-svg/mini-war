@@ -1,7 +1,10 @@
 // @ts-nocheck
 // Procedural terrain (grass/water/rock), passability and walking distances (docs/features/rendering.md, territory.md).
 import { MAP_TILES, TILE_SIZE, forestRegions, goldRegions, lakeRegions, rockRegions } from '../config/map';
-import { nearestWalkable, terrainWalkable } from './paths';
+import { DEFAULT_MAP, MAPS } from '../config/maps';
+import { REALM_GROUND } from '../config/visuals';
+import { buildWalkable, nearestWalkable, terrainWalkable } from './paths';
+import { fillRealmsTerrain } from './realms';
 
 export const terrainCanvas=document.createElement('canvas'),terrainCtx=terrainCanvas.getContext('2d'),terrainSmoothCanvas=document.createElement('canvas'),terrainSmoothCtx=terrainSmoothCanvas.getContext('2d'),terrainType=new Uint8Array(MAP_TILES*MAP_TILES),resourceTiles=[];
 terrainCanvas.width=MAP_TILES*8;
@@ -9,9 +12,28 @@ terrainCanvas.height=MAP_TILES*8;
 export const terrainPadding=32;
 terrainSmoothCanvas.width=terrainCanvas.width+terrainPadding*2;
 terrainSmoothCanvas.height=terrainCanvas.height+terrainPadding*2;
-export function buildTerrain(){
- const total=MAP_TILES*MAP_TILES,parts=[];
- const rnd=(x,y)=>{const v=Math.sin((x+17)*127.1+(y+31)*311.7)*43758.5453;return v-Math.floor(v);};
+// Realm index of every tile on the "Ngũ Vực" map (map/realms.ts); -1 everywhere on maps without realms.
+export const tileRealm=new Int8Array(MAP_TILES*MAP_TILES).fill(-1);
+// Which map the terrain currently shows, and a counter bumped on every rebuild so renderers drop their cached layers.
+export let terrainMapId=null,terrainVersion=0;
+const rnd=(x,y)=>{const v=Math.sin((x+17)*127.1+(y+31)*311.7)*43758.5453;return v-Math.floor(v);};
+// Builds the ground of map `mapId` (MAPS in config/maps.ts) into terrainType, tileRealm and the terrain canvases.
+export function buildTerrain(mapId=DEFAULT_MAP){
+ terrainType.fill(0);tileRealm.fill(-1);resourceTiles.length=0;
+ if(mapId==='realms')fillRealmsTerrain(terrainType,tileRealm,rnd);else buildClassicTerrain();
+ paintTerrain();
+ terrainMapId=mapId;landPatchSize=null;terrainVersion++;
+}
+// Switches the match ground to `mapId` (unknown ids: the default map): rebuilds terrain and passability only when it changes.
+// Called by fresh() (host / single player) and applySnapshot() (guest, from state.mapId).
+export function useMap(mapId){
+ if(!MAPS[mapId])mapId=DEFAULT_MAP;
+ if(mapId===terrainMapId)return false;
+ buildTerrain(mapId);buildWalkable();return true;
+}
+// The original map: a river with lakes, rock, golden fields and forest placed by affinity to the biome centres.
+function buildClassicTerrain(){
+ const parts=[];
  const affinity=(x,y,centers)=>Math.max(...centers.map(([cx,cy,rx,ry])=>1-Math.hypot((x-cx)/rx,(y-cy)/ry)));
  for(let y=0;y<MAP_TILES;y++)for(let x=0;x<MAP_TILES;x++){
   const nx=(x+.5)/MAP_TILES,ny=(y+.5)/MAP_TILES,jitter=rnd(x,y)*.20+rnd(Math.floor(x/8),Math.floor(y/8))*.16;
@@ -35,6 +57,9 @@ export function buildTerrain(){
   }
  });
  assign('rock',4588,3);assign('resource',3276,4);assign('forest',13107,1);
+}
+function paintTerrain(){
+ terrainCtx.clearRect(0,0,terrainCanvas.width,terrainCanvas.height);
  // Grass and forest tiles next to water get a sandy shore colour.
  const nearWater=i=>{const x=i%MAP_TILES,y=(i-x)/MAP_TILES;for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const tx=x+ox,ty=y+oy;if(tx>=0&&ty>=0&&tx<MAP_TILES&&ty<MAP_TILES&&terrainType[ty*MAP_TILES+tx]===2)return true;}return false;};
  const pxPerTile=terrainCanvas.width/MAP_TILES;
@@ -85,7 +110,7 @@ export function buildTerrain(){
    if(n>.55){terrainCtx.fillStyle='#e6dfae';terrainCtx.fillRect(px+1.4,py+2,1.6,1.1);}
   }
   else{
-   const plains=['#7bbd63','#82c66d','#70ad61','#8ec96c'];
+   const plains=REALM_GROUND[tileRealm[i]]||['#7bbd63','#82c66d','#70ad61','#8ec96c'];
    terrainCtx.fillStyle=plains[Math.floor(n*plains.length)];terrainCtx.fillRect(px,py,pxPerTile,pxPerTile);
    if(n>.62){terrainCtx.fillStyle='#d5e7a1';terrainCtx.fillRect(px+1.6,py+2.2,1.3,1.1);}
   }
@@ -100,7 +125,6 @@ export function buildTerrain(){
  }
 }
 
-buildTerrain();
 /// Walking cost from a fortress to every tile (4 directions, one per tile), the way units really walk: water and rock
 // block, the river is crossed on the bridges (docs/features/pathfinding.md). Unreachable tiles stay Infinity.
 export function walkDistances(base){
@@ -132,3 +156,5 @@ export function landPatchSizes(){
 }
 // ---- Buildings & territory (docs/features/buildings.md, docs/features/territory.md) ----
 export function tilePassable(x,y){const gx=Math.floor(x/TILE_SIZE),gy=Math.floor(y/TILE_SIZE);if(gx<1||gy<1||gx>=MAP_TILES-1||gy>=MAP_TILES-1)return false;const t=terrainType[gy*MAP_TILES+gx];return t!==2&&t!==3;}
+// The default map's ground exists from page load (lobby background, tests); fresh() switches maps with useMap().
+buildTerrain(DEFAULT_MAP);

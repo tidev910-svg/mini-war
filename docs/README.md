@@ -11,6 +11,7 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 1. [architecture.md](architecture.md): các file, trạng thái toàn cục, vòng lặp, luồng lệnh, toạ độ.
 2. [conventions.md](conventions.md): nguyên tắc sửa đổi, quy ước team, thuật ngữ.
    - [assets.md](assets.md): thư mục ảnh nhân vật và quy ước đặt tên file.
+   - [art-prompts.md](art-prompts.md): prompt tạo ảnh (AI) cho quái, hang quái, công trình, mỏ, cảnh vật và địa hình còn đang vẽ bằng code.
 3. File tính năng liên quan trong bảng dưới.
 
 ## Danh sách tính năng
@@ -19,6 +20,7 @@ Tài liệu mô tả **hiện trạng** các cơ chế game, chia theo tính nă
 | Luồng trận, chọn vị trí nhà, thắng/thua | [features/match-flow.md](features/match-flow.md) | `fresh()`, `update()`, `finish()`, `baseSiteClear()` | Đang có |
 | Kinh tế: 4 tài nguyên, lúa duy trì | [features/economy.md](features/economy.md) | `state.resources`, `canAfford()`, `spend()`, `updateSupply()` | Đang có |
 | Công trình: nông trại, tiền đồn, tháp | [features/buildings.md](features/buildings.md) | `BUILDING_TYPES`, `placeBuilding()`, `updateBuildings()` | Đang có |
+| Bản đồ Ngũ Vực: 5 miền đất, mỗi miền một khoáng sản và một loài quái | [features/realms-map.md](features/realms-map.md) | `REALMS`, `useMap()`, `fillRealmsTerrain()`, `placeRealmCamps()` | Cần kiểm thử |
 | Vùng lãnh thổ, cột cờ có sẵn, chiếm cờ | [features/territory.md](features/territory.md) | `generateRegions()`, `updateCaptures()`, `drawFlag()`, `state.regions` | Đang có |
 | Quân lính & xuất quân | [features/units.md](features/units.md) | `specs`, `buy()`, `spawn()`, `state.pendingSpawns` | Đang có |
 | Pháo đài & pháo tích hợp | [features/fortress.md](features/fortress.md) | `buildTurret()`, `fortressGunPosition()`, `state.bases` | Đang có |

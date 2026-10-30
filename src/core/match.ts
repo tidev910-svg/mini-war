@@ -13,7 +13,7 @@ import { endPlacement } from '../ui/input';
 import { FLAG_CAPTURE_RADIUS_TILES, FLAG_DEFENSE, FORTRESS_INCOME_PER_MINUTE, STARTING_RESOURCES, TRAIN_LANES_START, FORTRESS_GUN_DAMAGE, specs } from '../config/balance';
 import { facingFrom, processPendingSpawns, unitVisionRadius, updateQueueLanes, updateTraining } from '../sim/units';
 import { farmFoodPerMinute, supplyFactor, updateSupply } from '../sim/economy';
-import { sendSnapshot } from '../net/snapshot';
+import { SNAPSHOT_INTERVAL, sendSnapshot, smoothGuestUnits } from '../net/snapshot';
 import { aiCanSee, revealHomeTerritory, revealTeamVision, teamCanSee, visionSources } from '../sim/fog';
 import { baseSiteClear, fortressGunPosition, musterYard } from '../map/bases';
 import { buildRegionMap, generateRegions } from '../map/regions';
@@ -24,6 +24,9 @@ import { ARCHER_ATTACK_ANIM, CAVALRY_ATTACK_ANIM, SPEARMAN_ATTACK_ANIM } from '.
 import { flagStandSpot, runEnemyAI } from '../ai/enemy';
 import { aiLevel, aiUnitGoal, exploreSpot, newAIPlan } from '../ai/attack';
 import { buildWorldDecor } from '../render/terrain';
+import { DEFAULT_MAP, MAPS, REALM_BASE } from '../config/maps';
+import { settings } from './settings';
+import { useMap } from '../map/terrain';
 import { draw } from '../render/draw';
 import { clampToBounds, clearPath, separateUnits, steerTo, syncStructureObstacles } from '../sim/movement';
 import { formationMayChase, formationOf, formationTarget, updateFormations } from '../sim/formation';
@@ -40,17 +43,26 @@ export function fresh(){
  // Random fortresses anywhere on the map, at least BASE_MIN_SEPARATION of the map width apart, with their regions, mines
  // and flags (generateRegions, territory.md). Re-roll until both sides have every resource type at a similar walking
  // distance; keep the fairest attempt otherwise.
+ // The map comes from the lobby choice (settings.mapKind); the guest reads it from state.mapId (applySnapshot()).
+ const mapId=MAPS[settings.mapKind]?settings.mapKind:DEFAULT_MAP;
+ useMap(mapId);
  const margin=420;
  let best=null;
  for(let attempt=0,rolls=0;attempt<MAP_GENERATION_TRIES&&rolls<2000;rolls++){
-  const makeBase=team=>({team,x:margin+Math.random()*(W-2*margin),y:margin+Math.random()*(H-2*margin),hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]});
-  const blueBase=makeBase(0),redBase=makeBase(1);
+  const makeBase=(team,x=margin+Math.random()*(W-2*margin),y=margin+Math.random()*(H-2*margin))=>({team,x,y,hp:1230,max:1230,w:TILE_SIZE*5.5,h:TILE_SIZE*5.0,guns:[{active:true,cool:0},{active:false,cool:0}]});
+  let blueBase=makeBase(0),redBase=makeBase(1);
+  // "Ngũ Vực" (realms-map.md): one fortress in each plains strip, mirror images of each other; blue's side is random.
+  if(mapId==='realms'){
+   const fx=REALM_BASE.baseX[0]+Math.random()*(REALM_BASE.baseX[1]-REALM_BASE.baseX[0]),fy=REALM_BASE.baseY[0]+Math.random()*(REALM_BASE.baseY[1]-REALM_BASE.baseY[0]);
+   const left=fx*W,right=W-left,blueLeft=Math.random()<.5;
+   blueBase=makeBase(0,blueLeft?left:right,fy*H);redBase=makeBase(1,blueLeft?right:left,fy*H);
+  }
   if(Math.hypot(blueBase.x-redBase.x,blueBase.y-redBase.y)<W*BASE_MIN_SEPARATION&&(best||rolls<1999))continue;
   blueBase.dir=redBase.x>=blueBase.x?1:-1;redBase.dir=-blueBase.dir;
   // A fortress or muster yard standing mostly on rock or water cannot deploy units; re-roll (cheap, no region map needed).
   if(![blueBase,redBase].every(baseSiteClear)&&(best||rolls<1999))continue;
   attempt++;
-  const gen=generateRegions(blueBase,redBase);
+  const gen=generateRegions(blueBase,redBase,mapId);
   // Both muster yards, every flag and every mine must be reachable on foot (water and rock block; bridges cross the river).
   const reach=reachableFrom(musterYard(blueBase).x,musterYard(blueBase).y),onFoot=p=>{const q=nearestWalkable(p.x,p.y,4);return !!q&&reach[tileOf(q.y)*MAP_TILES+tileOf(q.x)]===1;};
   if(!onFoot(musterYard(redBase))||gen.regions.some(r=>r.cp&&!onFoot(r.cp))||gen.mines.some(m=>!onFoot(m)))gen.unfairness=Infinity;
@@ -60,8 +72,8 @@ export function fresh(){
  const {regions,mines,blueBase,redBase}=best;
  buildRegionMap(regions);
  // Neutral camps in mirrored pairs (map/camps.ts, neutral-camps.md); their monsters spawn below, once ids restart.
- const camps=placeCamps(blueBase,redBase,regions,mines);
- setState({resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],visualEvents:[],buildings:[],regions,camps,creeps:[],buffs:[],guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[],garrisons:[]});
+ const camps=placeCamps(blueBase,redBase,regions,mines,mapId);
+ setState({mapId,resources:[{...STARTING_RESOURCES},{...STARTING_RESOURCES}],supply:[{status:'ok',grace:0},{status:'ok',grace:0}],units:[],bullets:[],effects:[],visualEvents:[],buildings:[],regions,camps,creeps:[],buffs:[],guards:[],bases:[blueBase,redBase],mines,fogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyFogSeen:new Uint8Array(MAP_TILES*MAP_TILES),enemyMemory:{base:null,targets:[]},aiExploreTarget:null,pendingSpawns:[],trainQueue:[],queueLanes:[TRAIN_LANES_START,TRAIN_LANES_START],laneUpgrade:[null,null],stats:newStats(),aiPlan:newAIPlan(),formations:[],garrisons:[]});
  syncStructureObstacles();
  buildWorldDecor();revealHomeTerritory();
  setGameTime(0);aiTimer=5;incomeTimer=0;setNextId(1);lastHudSecond=-1;pendingSpawnRetryTimer=0;setSelected(null);setPaused(false);setEnded(false);setCamX(0);setCamY(0);setZoom(DEFAULT_ZOOM);
@@ -227,4 +239,4 @@ export function update(dt){
  // The HUD refreshes at most every HUD_REFRESH_MS from the frame loop (actions still call updateHUD() at once).
  const now=performance.now();if(now-hudRefreshedAt>=HUD_REFRESH_MS){hudRefreshedAt=now;updateHUD();}
 }
-export function loop(ts){if(!last)last=ts;let dt=Math.min((ts-last)/1000,.05);last=ts;update(dt);if(mode==='pvp'&&netRole==='host'&&gameStarted){snapshotClock+=dt;if(snapshotClock>=.18){snapshotClock=0;sendSnapshot();}}draw();requestAnimationFrame(loop);}
+export function loop(ts){if(!last)last=ts;let dt=Math.min((ts-last)/1000,.05);last=ts;update(dt);if(mode==='pvp'&&netRole==='guest')smoothGuestUnits(dt);if(mode==='pvp'&&netRole==='host'&&gameStarted){snapshotClock+=dt;if(snapshotClock>=SNAPSHOT_INTERVAL){snapshotClock=0;sendSnapshot();}}draw();requestAnimationFrame(loop);}

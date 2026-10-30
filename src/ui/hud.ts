@@ -1,5 +1,6 @@
 // @ts-nocheck
 // HUD over the battlefield: player panel, resource banners, queue panel, side rail and menu (docs/features/hud-ui.md).
+import { buffSource } from '../render/creeps';
 import { addBattleHeat } from '../audio/music';
 import { MUSIC_HEAT } from '../config/audio';
 import { gameApp, syncWorldMetrics, toggleSideHud } from '../core/view';
@@ -60,9 +61,9 @@ export function updateHUD(){
  const ours=[...state.units,...(state.garrisons||[])].filter(u=>u.team===team),queued=state.pendingSpawns.filter(u=>u.team===team).length;
  updateTrainQueueHUD(team);setText($('unitCount'),String(ours.length+queued));
  setHTML($('unitBreakdown'),armyRow(ours,queued));
- // Tomb buff (sim/creeps.ts): what it gives and the seconds left.
+ // Camp buff (tomb, dragon's lair: sim/creeps.ts): what it gives, where from, and the seconds left.
  const buff=(state.buffs||[]).filter(b=>b.team===team&&b.until>gameTime).sort((a,b)=>b.until-a.until)[0],chip=$('buffChip');
- if(chip){chip.hidden=!buff;if(buff){setText(chip.querySelector('b'),`+${Math.round(buff.damage*100)}% sát thương · ${Math.ceil(buff.until-gameTime)}s`);setData(chip,'tip',`Sức mạnh Lăng cổ: cả quân +${Math.round(buff.damage*100)}% sát thương, +${Math.round(buff.speed*100)}% tốc độ`);}}
+ if(chip){chip.hidden=!buff;if(buff){setText(chip.querySelector('b'),`+${Math.round(buff.damage*100)}% sát thương · ${Math.ceil(buff.until-gameTime)}s`);setData(chip,'tip',`Sức mạnh ${buffSource(team)||'hang quái'}: cả quân +${Math.round(buff.damage*100)}% sát thương, +${Math.round(buff.speed*100)}% tốc độ`);}}
  const spearmanCounter=$('spearmanCount');if(spearmanCounter)spearmanCounter.textContent=ours.filter(u=>u.type==='spearman').length;
  setText($('sideName'),TEAM_COLORS[team].name);$('crest').classList.toggle('red',team===1);
  if(document.documentElement.dataset.faction!==String(team))setFactionTheme(team);

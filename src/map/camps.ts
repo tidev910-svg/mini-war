@@ -4,11 +4,12 @@
 // the easier camps; the tomb stands about halfway between.
 import { MAP_TILES, MIN_LAND_PATCH_TILES, TILE_SIZE } from '../config/map';
 import { CAMP_LAYOUT, CAMP_PAIR_TOLERANCE, CAMP_SPACING, CAMP_TYPES } from '../config/creeps';
-import { landPatchSizes, terrainType, walkDistances } from './terrain';
+import { landPatchSizes, terrainType, tileRealm, walkDistances } from './terrain';
+import { REALMS } from '../config/maps';
 
 const shuffle = list => { for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; } return list; };
 
-export function placeCamps(blueBase, redBase, regions, mines) {
+export function placeCamps(blueBase, redBase, regions, mines, mapId = 'classic') {
   const T = TILE_SIZE, N = MAP_TILES, bases = [blueBase, redBase], walk = bases.map(walkDistances), patch = landPatchSizes();
   const tileAt = (x, y) => Math.max(0, Math.min(N - 1, Math.floor(y / T))) * N + Math.max(0, Math.min(N - 1, Math.floor(x / T)));
   // Walking distance between the fortresses: the nearest reachable tile around the red fortress (it stands on its own tiles).
@@ -26,9 +27,10 @@ export function placeCamps(blueBase, redBase, regions, mines) {
     const p = { x: (gx + .5) * T, y: (gy + .5) * T }, i = gy * N + gx;
     if (!far(p, bases, CAMP_SPACING.base) || !far(p, flags, CAMP_SPACING.flag) || !far(p, mines, CAMP_SPACING.mine)) continue;
     const d = [walk[0][i], walk[1][i]];
-    if (d.every(Number.isFinite)) spots.push({ ...p, d });
+    if (d.every(Number.isFinite)) spots.push({ ...p, d, gx, gy, realm: tileRealm[i] });
   }
   const tol = CAMP_PAIR_TOLERANCE * between, share = s => Math.min(s.d[0], s.d[1]) / between;
+  if (mapId === 'realms') { placeRealmCamps(spots, camps, add, far, T); for (const c of camps) if (CAMP_TYPES[c.kind].opensAt) c.state = 'closed'; return camps; }
   // Two points mirror each other when each is as far from one fortress as the other is from the other fortress.
   const mirrored = (a, b) => Math.abs(a.d[0] - b.d[1]) <= tol && Math.abs(a.d[1] - b.d[0]) <= tol;
   for (const { kind, pairs, band } of CAMP_LAYOUT) {
@@ -52,4 +54,26 @@ export function placeCamps(blueBase, redBase, regions, mines) {
   }
   for (const c of camps) if (CAMP_TYPES[c.kind].opensAt) c.state = 'closed';
   return camps;
+}
+
+// "Ngũ Vực" (docs/features/realms-map.md): each realm's own camp kind (REALMS[k].camp) inside that realm, REALMS[k].camps
+// per side as exact mirror images (the ground and the fortresses are mirrored, so the spot grid is too); a centerCamp
+// realm gets one camp of its kind on the spot nearest the mirror line. A realm without a mirrored pair keeps fewer camps.
+function placeRealmCamps(spots, camps, add, far, T) {
+  const N = MAP_TILES, byTile = new Map(spots.map(s => [s.gy * N + s.gx, s]));
+  const free = s => far(s, camps, CAMP_SPACING.camp);
+  REALMS.forEach((realm, k) => {
+    const inRealm = spots.filter(s => s.realm === k);
+    if (realm.centerCamp) {
+      const mid = inRealm.filter(free).sort((a, b) => Math.abs(a.gx - (N - 1) / 2) - Math.abs(b.gx - (N - 1) / 2) || Math.abs(a.d[0] - a.d[1]) - Math.abs(b.d[0] - b.d[1]))[0];
+      if (mid) add(realm.camp, mid);
+      return;
+    }
+    const left = shuffle(inRealm.filter(s => s.gx < (N - 1) / 2 - CAMP_SPACING.camp / 2));
+    for (let n = 0; n < (realm.camps || 0); n++) {
+      const a = left.find(s => free(s) && byTile.get(s.gy * N + (N - 1 - s.gx)) && free(byTile.get(s.gy * N + (N - 1 - s.gx))));
+      if (!a) break;
+      add(realm.camp, a); add(realm.camp, byTile.get(a.gy * N + (N - 1 - a.gx)));
+    }
+  });
 }

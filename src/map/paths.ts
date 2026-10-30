@@ -2,7 +2,7 @@
 // Obstacles and pathfinding (docs/features/pathfinding.md): water and rock block movement, wooden bridges cross the river,
 // A* on the 256×256 tile grid (8 directions, no corner cutting), line-of-sight smoothing and shared flow fields for groups.
 import { MAP_TILES, TILE_SIZE, BRIDGE_ROWS, BRIDGE_WIDTH_TILES } from '../config/map';
-import { terrainType } from './terrain';
+import { terrainMapId, terrainType } from './terrain';
 
 const N = MAP_TILES, SIZE = N * N, SQRT2 = Math.SQRT2;
 // 1 = units can stand here: terrainWalkable (built once from the terrain, which never changes, plus the bridge tiles)
@@ -31,7 +31,8 @@ export function buildWalkable() {
     for (let k = 0; k < BRIDGE_MAX_RAMP_TILES && b < N - 2 && !walkable[y * N + b + 1]; k++) b++;
     return walkable[y * N + a - 1] && walkable[y * N + b + 1] ? [a, b] : null;
   };
-  for (const f of BRIDGE_ROWS) {
+  // Only the classic map has the river; the "Ngũ Vực" map (map/realms.ts) is crossed on land through passes.
+  for (const f of terrainMapId === 'realms' ? [] : BRIDGE_ROWS) {
     let chosen = null;
     for (let d = 0; d <= BRIDGE_ROW_SEARCH_TILES && !chosen; d++) for (const yc of d ? [Math.floor(f * N) + d, Math.floor(f * N) - d] : [Math.floor(f * N)]) {
       const fy = (yc + 0.5) / N, rx = Math.floor((0.34 + 0.31 * fy + 0.055 * Math.sin(fy * 10)) * N);

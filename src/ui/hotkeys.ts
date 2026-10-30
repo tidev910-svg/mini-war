@@ -58,7 +58,9 @@ let lastGroupTap = { digit: -1, at: 0 }, idleCursor = 0;
 const ownAlive = () => state.units.filter(u => u.team === localTeam() && u.hp > 0);
 const chosen = () => ownAlive().filter(u => u.selected);
 function centerOn(units) { if (!units.length) return; let x = 0, y = 0; for (const u of units) { x += u.x; y += u.y; } centerCameraAt(x / units.length, y / units.length); }
-const typing = () => ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+// Only text fields swallow keys: a focused slider, checkbox or button (e.g. the volume slider in Settings) must not.
+const TEXT_INPUTS = ['text', 'search', 'email', 'number', 'password', 'url', 'tel'];
+const typing = () => { const el = document.activeElement; return el?.tagName === 'TEXTAREA' || el?.isContentEditable || (el?.tagName === 'INPUT' && TEXT_INPUTS.includes(el.type)); };
 const modeScreenOpen = () => !$('modeScreen').classList.contains('hidden');
 
 function saveGroup(digit) {
@@ -132,7 +134,8 @@ document.addEventListener('keydown', e => {
   const digit = Number(/^(?:Digit|Numpad)([0-9])$/.exec(e.code)?.[1] ?? NaN);
   if (digit >= 1 && digit <= 9 && (e.ctrlKey || e.metaKey) && !e.altKey) { e.preventDefault(); saveGroup(digit); return; }
   if (SELECT_KEYS[digit] && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) { e.preventDefault(); filterSelectionByType(SELECT_KEYS[digit]); return; }
-  if ((e.ctrlKey || e.metaKey) && key === 'a') { e.preventDefault(); const all = ownAlive(); selectUnits(all); updateSelectionBar(); addLog(`Đã chọn toàn bộ ${all.length} quân.`); return; }
+  // Ctrl + A by physical key (e.code), so it works with any keyboard layout or a Vietnamese input method on.
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === 'KeyA' || key === 'a')) { e.preventDefault(); const all = ownAlive(); selectUnits(all); updateSelectionBar(); addLog(`Đã chọn toàn bộ ${all.length} quân.`); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (ended) return;
   // Contextual keys first: training with the fortress selected or the train drawer open, building with the build drawer open.

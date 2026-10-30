@@ -1,12 +1,12 @@
 # Cài đặt & hiệu ứng mở menu
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-19
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Hộp **Cài đặt** cho người chơi chỉnh đồ hoạ, hiển thị và điều khiển. Mở từ menu ☰ trong trận ("Cài đặt") hoặc từ sảnh chính (nút "Cài đặt"). Có 4 tab: Đồ hoạ, Hiển thị, Âm thanh, Điều khiển.
 - Mỗi thay đổi áp dụng ngay và **tự lưu trên trình duyệt** (`localStorage`). Dòng "Đã lưu" sáng lên mỗi lần đổi.
 - Nút "Khôi phục mặc định" trả mọi giá trị về như ban đầu.
-- Cài đặt chỉ là tuỳ chọn hiển thị/điều khiển, không đổi luật trận; riêng "Độ khó AI" đổi nhịp độ của đối thủ máy (chỉ chế độ Chơi với AI, không ảnh hưởng PvP).
+- Cài đặt chỉ là tuỳ chọn hiển thị/điều khiển, không đổi luật trận; riêng "Độ khó AI" đổi nhịp độ của đối thủ máy (chỉ chế độ Chơi với AI, không ảnh hưởng PvP), và "Bản đồ" chọn bản đồ cho trận kế tiếp máy này mở.
 
 Kèm theo là bộ **hiệu ứng mở/đóng** cho menu và hộp thoại, theo phong cách huy hiệu:
 - **Menu ☰:** bung ra từ góc nút như dải cờ thả xuống, một vệt vàng chạy dọc mép trên, các mục trượt vào lần lượt, biểu tượng ☰ xoay 90°. Khi đóng thì cuộn ngược lên.
@@ -30,6 +30,7 @@ Kèm theo là bộ **hiệu ứng mở/đóng** cho menu và hộp thoại, theo
 | `scrollSpeed` — Tốc độ cuộn bản đồ | Chậm 0,6 / **Vừa 1** / Nhanh 1,6 | Nhân bước cuộn của phím mũi tên trong `ui/hotkeys.ts` |
 | `noticeSeconds` — Thông báo tự ẩn sau | 3 / **5** / 10 giây | Thời gian dải thông báo mờ đi (`showNotice()`, `ui/panels.ts`) |
 | `aiDifficulty` — Độ khó AI | Dễ / **Thường** / Khó | Nhịp ra quân và các đợt tấn công của AI (`AI_DIFFICULTY`, [ai-opponent.md](ai-opponent.md)); cũng chọn được ở sảnh (`#aiDifficulty`). Chỉ ảnh hưởng chế độ Chơi với AI |
+| `mapKind` — Bản đồ | **Đại Lục** (`classic`) / Ngũ Vực (`realms`) | Bản đồ của trận kế tiếp máy này mở (chơi với AI hoặc phòng mình làm chủ); chỉ chọn ở sảnh chính (`#mapKind`), không có trong hộp Cài đặt. Khách PvP chơi bản đồ của chủ phòng ([realms-map.md](realms-map.md)) |
 | `muted` — Tắt tiếng | **tắt** / bật | Tắt mọi âm thanh; phím M ([audio.md](audio.md)) |
 | `musicVolume`, `ambienceVolume` — Nhạc nền / Tiếng môi trường | 0–100%, **50 / 50%** | Thanh trượt bước 5%, không có tiếng thử ([audio.md](audio.md)) |
 | `masterVolume`, `sfxVolume`, `uiVolume` — Âm lượng tổng / trận đánh / giao diện & sự kiện | 0–100%, **80 / 80 / 70%** | Thanh trượt bước 5%; thả tay phát thử một tiếng của nhóm đó |

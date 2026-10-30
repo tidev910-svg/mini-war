@@ -1,6 +1,6 @@
 # Thư mục ảnh & quy ước đặt tên
 
-> Cập nhật lần cuối: 2026-10-15
+> Cập nhật lần cuối: 2026-10-30
 
 ## Hai nơi chứa ảnh
 | Thư mục | Chứa gì | Có trong bản build? |
@@ -61,6 +61,9 @@ art/units/<quân>/
 - Mỗi spritesheet chia lưới đều, 4 khung mỗi hàng; số hàng tuỳ quân. Bố cục hàng phải khớp phần vẽ quân đó trong `drawUnit()` (xem [features/rendering.md](features/rendering.md)).
 - Nền trong suốt; chân nhân vật đặt cùng một đường chân trong mọi khung.
 - Phe đỏ có thể được dựng tự động bằng cách đổi màu từ phe xanh (xem `to_red()` trong [tools/build_spearman_sheet.py](../tools/build_spearman_sheet.py)).
+
+## Ảnh còn thiếu
+Quái, hang quái, công trình, mỏ, cảnh vật và địa hình hiện vẽ bằng code. Prompt tạo ảnh cho từng thứ, kèm kích thước, số biến thể và chỗ lưu file (`art/<nhóm>/…`, `public/assets/<nhóm>/…` với nhóm `creeps`, `buildings`, `scenery`, `terrain`): [art-prompts.md](art-prompts.md).
 
 ## Quy trình thêm hoặc làm lại ảnh một quân
 1. Bỏ ảnh tham chiếu vào `art/units/<quân>/reference/`, ảnh AI tạo vào `art/units/<quân>/source/` theo đúng tên ở trên.

@@ -66,7 +66,7 @@ export function drawFlag(r){
   // Two short lines: owner and region, then the capture status; both shortened when zoomed far out (FLAG_SHORT_LABEL_ZOOM).
   const short=zoom<FLAG_SHORT_LABEL_ZOOM,owner=r.owner===0?'XANH':r.owner===1?'ĐỎ':'TRUNG LẬP',pct=Math.round(r.cap*100)+'%';
   const status=r.contested?'TRANH CHẤP':r.cap<=0?'':short?pct:(stage===1?'GĐ 1/2 · HẠ CỜ '+pct:stage===2?'GĐ 2/2 · CHIẾM '+pct:'ĐANG CHIẾM '+pct)+(r.idle>=FLAG_DECAY_DELAY_SECONDS?' · ĐANG GIẢM':'');
-  const name=(short?'':'CỜ '+owner+' · ')+regionLabel(r).toUpperCase();
+  const name=(short?'':'CỜ '+owner+' · ')+regionLabel(r,false).toUpperCase();
   // Text keeps at least FLAG_LABEL_MIN_PX on screen; colours from the design tokens.
   const fs=Math.max(13,FLAG_LABEL_MIN_PX/(s*zoom));
   ctx.font=`900 ${fs}px ${THEME['font-ui']}`;ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.lineWidth=fs*.3;ctx.strokeStyle=THEME['text-on-map-stroke'];ctx.fillStyle=r.owner>=0?TEAM_COLORS[r.owner].light:THEME['text-main'];

@@ -12,6 +12,16 @@ export const CREEP_TYPES={
  bandit:      {name:'Cướp',       hp:110, damage:12,range:22, speed:42,cooldown:.9, r:10,counterAs:'infantry'},
  banditArcher:{name:'Cướp cung',  hp:60,  damage:11,range:110,speed:36,cooldown:1.2,r:9, counterAs:'archer',ranged:true},
  troll:       {name:'Quỷ đá',     hp:800, damage:34,range:34, speed:30,cooldown:1.6,r:20,counterAs:'spearman',splash:40},
+ golem:       {name:'Golem vàng', hp:900, damage:22,range:34, speed:28,cooldown:1.5,r:21,counterAs:'spearman',splash:30},
+ // "Ngũ Vực" realm monsters (2026-10-30, PROVISIONAL): each realm needs a different counter. Boars charge like cavalry
+ // (spearmen ×2.2); the spider queen spits venom like an archer (cavalry ×1.5) behind fast spiderlings; rock bears hit
+ // like spearmen (archers ×1.3, infantry ×1.2; they maul cavalry ×2.2) and swipe around them; the golden dragon breathes
+ // fire over a wide area.
+ boar:        {name:'Heo rừng',   hp:130, damage:14,range:20, speed:60,cooldown:.9, r:10,counterAs:'cavalry'},
+ spiderQueen: {name:'Nhện chúa',  hp:380, damage:16,range:100,speed:34,cooldown:1.3,r:16,counterAs:'archer',ranged:true},
+ spiderling:  {name:'Nhện con',   hp:60,  damage:9, range:18, speed:66,cooldown:.8, r:8, counterAs:'infantry'},
+ rockBear:    {name:'Gấu đá',     hp:520, damage:30,range:28, speed:40,cooldown:1.4,r:17,counterAs:'spearman',splash:30},
+ dragon:      {name:'Rồng Vàng',  hp:2100,damage:45,range:70, speed:34,cooldown:1.6,r:30,splash:60},
  skeleton:    {name:'Lính xương', hp:120, damage:13,range:22, speed:40,cooldown:1,  r:10,counterAs:'infantry'},
  boss:        {name:'Vua Xương',  hp:1500,damage:40,range:40, speed:32,cooldown:1.5,r:24,splash:50},
 };
@@ -25,7 +35,15 @@ export const CAMP_TYPES={
  wolves: {name:'Ổ sói',          creeps:{wolf:5},                     reward:{food:120},          respawn:240,aggro:130,leash:330},
  bandits:{name:'Trại cướp',      creeps:{bandit:3,banditArcher:2},    reward:{wood:100,gold:60},  respawn:240,aggro:150,leash:360},
  troll:  {name:'Hang quỷ đá',    creeps:{troll:1},                    reward:{stone:120,gold:60}, respawn:300,aggro:130,leash:300},
- tomb:   {name:'Lăng cổ',        creeps:{boss:1,skeleton:4},          reward:{gold:150},          respawn:300,aggro:180,leash:420,opensAt:480,buff:{seconds:90,damage:.15,speed:.10}},
+ // Only on the "Ngũ Vực" map (config/maps.ts): guards the gold hills, between the troll and the tomb.
+ golem:  {name:'Hầm golem vàng', creeps:{golem:2},                    reward:{gold:140},          respawn:300,aggro:140,leash:320},
+ // Realm camps of the "Ngũ Vực" map (REALMS in config/maps.ts), one kind per realm, stronger the richer the realm.
+ boars:  {name:'Bãi heo rừng',   creeps:{boar:4},                     reward:{food:130},          respawn:240,aggro:130,leash:330},
+ spiders:{name:'Tổ nhện',        creeps:{spiderQueen:1,spiderling:4}, reward:{wood:120,gold:40},  respawn:240,aggro:150,leash:360},
+ bears:  {name:'Hang gấu đá',    creeps:{rockBear:2},                 reward:{stone:140,gold:40}, respawn:300,aggro:130,leash:320},
+ // Like the tomb: sealed until opensAt (announced to both sides); slaying bossName gives the whole side `buff`.
+ dragon: {name:'Hang Rồng Vàng', creeps:{dragon:1},                   reward:{gold:200},          respawn:300,aggro:190,leash:440,opensAt:480,bossName:'Rồng Vàng',buff:{seconds:90,damage:.15,speed:.10}},
+ tomb:   {name:'Lăng cổ',        creeps:{boss:1,skeleton:4},          reward:{gold:150},          respawn:300,aggro:180,leash:420,opensAt:480,bossName:'Vua Xương',buff:{seconds:90,damage:.15,speed:.10}},
 };
 // Monsters walk home and heal CREEP_REGEN of their max hp per second once nobody is within the camp's leash.
 export const CREEP_REGEN=.12;
@@ -35,7 +53,7 @@ export const CREEP_SPLASH_SHARE=.35,CREEP_ENGAGE_MARGIN=40;
 // An awake camp chases units within aggro + CREEP_CHASE_PAD of its centre (archers: anywhere within the leash).
 export const CREEP_CHASE_PAD=60;
 // AI (ai/camps.ts): fighters it sends at least to each camp kind; which kinds each difficulty clears is AI_DIFFICULTY.camps.
-export const AI_CAMP_SQUAD={wolves:5,bandits:6,troll:8,tomb:12};
+export const AI_CAMP_SQUAD={wolves:5,bandits:6,troll:8,golem:10,tomb:12,boars:5,spiders:6,bears:7,dragon:14};
 // Map layout (map/camps.ts): pairs of camps, one nearer each fortress at mirrored walking distances, so both sides have the
 // same camps equally far away. band: walking distance from the nearer fortress as a share of the distance between the
 // fortresses. the tomb is a single camp about halfway.

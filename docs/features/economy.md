@@ -1,6 +1,6 @@
 # Kinh tế & tài nguyên
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Bốn tài nguyên: **lúa, gỗ, đá, vàng**. Ba nguồn thu cộng dồn:
@@ -36,6 +36,7 @@ Quân tiêu lúa liên tục (**lúa duy trì**); hết lúa thì quân bị **t
 | `wood` | 45 gỗ/phút | MỎ GỖ +45/PHÚT |
 | `stone` | 35 đá/phút | MỎ ĐÁ +35/PHÚT |
 | `gold` | 35 vàng/phút | MỎ VÀNG +35/PHÚT |
+| `gold`, mỏ giàu (`mine.rich`, chỉ ở miền Vực Vàng của bản đồ Ngũ Vực) | 35 × `RICH_GOLD_MULTIPLIER` (2) = 70 vàng/phút (số tạm, [realms-map.md](realms-map.md)) | MỎ VÀNG GIÀU +70/PHÚT |
 
 **Mỏ**: mỗi vùng có cờ có **đúng 1 mỏ** (vùng nhà không có), cùng loại tài nguyên với vùng (lúa, gỗ, đá hoặc vàng). **Mọi vùng cùng loại sinh đúng một mức cố định**, ở đâu cũng vậy: mỏ giàu (× 1,5 ở giữa bản đồ) đã bỏ ngày 2026-10-18 theo tài liệu "Cơ chế sinh tài nguyên lãnh thổ". Gần mỗi nhà luôn có đủ 4 loại vùng. Cách sinh vùng và mỏ: [territory.md](territory.md).
 

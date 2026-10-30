@@ -4,7 +4,7 @@ import { knownRegionOwner } from './intel';
 import { ctx, zoom } from '../core/view';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
 import { localTeam, state } from '../core/game';
-import { TERRITORY_BORDER_PX, TERRITORY_COLORS, TERRITORY_GLOW, TERRITORY_GLOW_PX } from '../config/visuals';
+import { NEUTRAL_BORDER, TERRITORY_BORDER_PX, TERRITORY_COLORS, TERRITORY_GLOW, TERRITORY_GLOW_PX } from '../config/visuals';
 import { MAP_UI, TEAM_COLORS, THEME, hexA, hexRgb } from '../config/theme';
 import { regionEdges, regionMap, regionTintKey, setRegionTintKey } from '../map/regions';
 import { showTerritory } from '../ui/hud';
@@ -33,16 +33,21 @@ export function drawTerritory(viewLeft,viewTop,viewRight,viewBottom,layer='under
  // Widths are in screen pixels (divided by zoom) so borders stay equally thick at every zoom level.
  // Every boundary of an owned region is drawn once: a solid line in the colour of the side that owns either region (the
  // local side's colour between a blue and a red region), over a faint glow and a thin dark edge for light ground.
- const buckets={0:[],1:[]},me=localTeam();
+ const buckets={0:[],1:[],neutral:[]},me=localTeam();
  for(const e of regionEdges){
   if(e[2]<x1||e[0]>x2||e[3]<y1||e[1]>y2)continue;if(!fog[e[6]]&&!fog[e[7]])continue;if((fogMask[e[6]]||fogMask[e[7]]||!fogVisible[e[6]]||!fogVisible[e[7]]?1:0)!==(over?1:0))continue;
-  // Rivers and lakes already separate regions: skip borders on or along water. Between two neutral regions nothing is drawn.
+  // Rivers and lakes already separate regions: skip borders on or along water. Between two neutral regions: a thin dashed
+  // line (NEUTRAL_BORDER), like the borders of a painted campaign map.
   if(terrainType[e[6]]===2||terrainType[e[7]]===2)continue;
   const a=knownRegionOwner(state.regions[e[4]]),b=knownRegionOwner(state.regions[e[5]]);
-  if(a<0&&b<0)continue;
+  if(a<0&&b<0){buckets.neutral.push(e);continue;}
   buckets[a>=0&&b>=0&&a!==b?me:a>=0?a:b].push(e);
  }
  ctx.lineCap='round';ctx.lineJoin='round';
+ if(buckets.neutral.length){
+  ctx.beginPath();for(const line of borderLines(buckets.neutral))traceSmooth(line,T);
+  ctx.setLineDash(NEUTRAL_BORDER.dash.map(d=>d/zoom));ctx.strokeStyle=NEUTRAL_BORDER.color;ctx.lineWidth=NEUTRAL_BORDER.px/zoom;ctx.stroke();ctx.setLineDash([]);
+ }
  for(const key of [0,1]){
   const edges=buckets[key];if(!edges.length)continue;
   const px=TERRITORY_BORDER_PX.owned;

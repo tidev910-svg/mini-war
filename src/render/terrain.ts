@@ -3,8 +3,15 @@
 import { ctx, drawUprightAt, renderView } from '../core/view';
 import { settings } from '../core/settings';
 import { H, MAP_TILES, TILE_SIZE, W } from '../config/map';
-import { terrainType } from '../map/terrain';
-import { state } from '../core/game';
+import { terrainMapId, terrainType, terrainVersion } from '../map/terrain';
+import { REALMS } from '../config/maps';
+import { REALM_LABEL } from '../config/visuals';
+import { mapText } from './units';
+import { FLAT_REALM_DECOR, placeRealmDecor, realmDecorSprite } from './realm-decor';
+import { FLAT_SETTLEMENT, buildSettlements, settlementSprite } from './settlements';
+import { obstacleDecorSprite, placePeaks } from './obstacles';
+import { localTeam, state } from '../core/game';
+import { isTeamAreaExplored } from '../sim/fog';
 import { musterYard } from '../map/bases';
 import { bridgeTiles, buildWalkable } from '../map/paths';
 
@@ -58,7 +65,8 @@ export function drawRockClusterSprite(){
  return sprite;
 }
 export const rockClusterSprite=drawRockClusterSprite();
-export const treeDecor=[],rockDecor=[],shoreDecor=[],waterDecor=[];
+// groundDecor: flat props of the "Ngũ Vực" realms (flowers, rune circles), drawn under every upright object like lily pads.
+export const treeDecor=[],rockDecor=[],shoreDecor=[],waterDecor=[],groundDecor=[];
 // Broadleaf (round-crowned) trees: a trunk under overlapping leaf blobs lit from the top left. Variant 2 is autumn-yellow.
 export function makeBroadleafSprite(variant){
  const sprite=document.createElement('canvas');sprite.width=128;sprite.height=144;const c=sprite.getContext('2d');
@@ -129,7 +137,7 @@ export const DECOR_PASSES={
  reed:{step:1,chance:.2,gap:30},lily:{step:2,chance:.09,gap:34},
 };
 export function buildWorldDecor(){
- treeDecor.length=0;rockDecor.length=0;shoreDecor.length=0;waterDecor.length=0;
+ treeDecor.length=0;rockDecor.length=0;shoreDecor.length=0;waterDecor.length=0;groundDecor.length=0;
  buildWalkable();
  const yards=state.bases.map(musterYard);
  const keepClear=(x,y)=>state.bases.some(b=>Math.hypot(x-b.x,y-b.y)<Math.max(b.w||0,b.h||0)*.50+150)
@@ -137,11 +145,6 @@ export function buildWorldDecor(){
   ||state.mines.some(m=>Math.hypot(x-m.x,y-m.y)<95)
   ||state.regions.some(r=>r.cp&&Math.hypot(x-r.cp.x,y-r.cp.y)<120)
   ||(state.camps||[]).some(c=>Math.hypot(x-c.x,y-c.y)<150); // neutral camps (neutral-camps.md)
- const roadBuffer=(x,y)=>{
-  const mainRoadY=H*0.55;
-  const roadCenterX=W*0.5,roadHalfWidth=W*0.38;
-  return Math.abs(y-mainRoadY)<32 && Math.abs(x-roadCenterX)<roadHalfWidth;
- };
  // Spatial hash of everything placed so far, for the minimum gaps.
  const CELL=128,hash=new Map(),key=(cx,cy)=>cx*4096+cy;
  const free=(x,y,gap)=>{const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL),r=Math.ceil(gap/CELL);for(let ox=-r;ox<=r;ox++)for(let oy=-r;oy<=r;oy++){const list=hash.get(key(cx+ox,cy+oy));if(list)for(const p of list)if(Math.hypot(p.x-x,p.y-y)<gap)return false;}return true;};
@@ -151,18 +154,22 @@ export function buildWorldDecor(){
  // Share of the 5×5 neighbourhood that is forest: deep forest grows denser.
  const forestDepth=(gx,gy)=>{let n=0;for(let oy=-2;oy<=2;oy++)for(let ox=-2;ox<=2;ox++)if(typeAt(gx+ox,gy+oy)===1)n++;return n/25;};
  // Walks the grid for one pass; `pick(gx, gy, x, y, roll, seed)` places an item or not.
- const walk=(pass,salt,pick)=>{const {step}=DECOR_PASSES[pass];for(let gy=1;gy<MAP_TILES-1;gy+=step)for(let gx=1;gx<MAP_TILES-1;gx+=step){
+ const walkStep=(step,salt,pick)=>{for(let gy=1;gy<MAP_TILES-1;gy+=step)for(let gx=1;gx<MAP_TILES-1;gx+=step){
   const seed=salt+gy*MAP_TILES+gx,tx=Math.min(MAP_TILES-2,gx+Math.floor(decorRandom(seed)*step)),ty=Math.min(MAP_TILES-2,gy+Math.floor(decorRandom(seed+7)*step));
   const x=(tx+decorRandom(seed+11))*TILE_SIZE,y=(ty+decorRandom(seed+13))*TILE_SIZE;
   pick(tx,ty,x,y,decorRandom(seed+17),seed);
  }};
- const ok=(x,y,gap)=>!keepClear(x,y)&&!roadBuffer(x,y)&&free(x,y,gap);
+ const walk=(pass,salt,pick)=>walkStep(DECOR_PASSES[pass].step,salt,pick);
+ const ok=(x,y,gap)=>!keepClear(x,y)&&free(x,y,gap);
+ // A hamlet by every mine, a watchtower by every flag, pagodas on the rock (render/settlements.ts) come first, so
+ // trees and stones grow around them. Props stand on open ground only (not water or rock).
+ const openGround=(x,y)=>{const t=typeAt(Math.floor(x/TILE_SIZE),Math.floor(y/TILE_SIZE));return t!==2&&t!==3&&t!==-1;};
+ buildSettlements({place:(x,y,gap)=>openGround(x,y)&&ok(x,y,gap),add,trees:treeDecor,ground:groundDecor,rand:decorRandom});
  // Two trees framing each fortress.
  for(let team=0;team<state.bases.length;team++){
   const base=state.bases[team];
   for(let i=0;i<2;i++){
    const seed=91000+team*100+i*13,angle=(i-1)*.62-Math.PI/2,radius=108+decorRandom(seed)*10,x=base.x+Math.cos(angle)*radius,y=base.y+Math.sin(angle)*radius;
-   if(roadBuffer(x,y))continue;
    add(treeDecor,{x,y,scale:.8+decorRandom(seed+1)*.18,variant:(i+team*2)%5,kind:'pine'});
   }
  }
@@ -183,7 +190,9 @@ export function buildWorldDecor(){
   if(typeAt(gx,gy)!==0||roll>P.bush.chance||!ok(x,y,P.bush.gap))return;
   add(treeDecor,{x,y,scale:.75+decorRandom(seed+29)*.5,variant:Math.floor(decorRandom(seed+31)*2),kind:'bush'});
  });
- // Rock fields: big clusters first, then loose stones; a few stones on open grass.
+ // Rock fields: mountain peaks on the widest massifs (render/obstacles.ts), then big clusters, then loose stones; a few
+ // stones on open grass.
+ placePeaks({add,list:treeDecor,rand:decorRandom,free:(x,y,gap)=>!keepClear(x,y)&&free(x,y,gap)});
  walk('rockCluster',500000,(gx,gy,x,y,roll,seed)=>{
   if(typeAt(gx,gy)!==3||roll>P.rockCluster.chance||!ok(x,y,P.rockCluster.gap))return;
   add(rockDecor,{x,y,scale:.56+decorRandom(seed+29)*.55,variant:0,kind:'cluster'});
@@ -205,11 +214,14 @@ export function buildWorldDecor(){
   if(typeAt(gx,gy)!==2||bridgeTiles[gy*MAP_TILES+gx]||[[1,0],[-1,0],[0,1],[0,-1]].some(([ox,oy])=>typeAt(gx+ox,gy+oy)!==2)||roll>P.lily.chance||!free(x,y,P.lily.gap))return;
   add(waterDecor,{x,y,scale:.8+decorRandom(seed+29)*.5,variant:decorRandom(seed+31)<.3?1:0,kind:'lily'});
  });
+ // "Ngũ Vực": each realm's own props and the pass waymarkers (render/realm-decor.ts).
+ if(terrainMapId==='realms')placeRealmDecor({walk:walkStep,ok,free,add,typeAt,trees:treeDecor,ground:groundDecor,random:decorRandom});
  decorVersion++;
 }
 // Sprite and rectangle (world units) for one scenery item; shared by the per-item draw and the zoomed-out layer.
 // kind: pine (5 variants), broadleaf (3), bush (2), cluster, stone (3), reed (2), lily (2).
 export function decorSprite(item){
+ const realm=realmDecorSprite(item)||settlementSprite(item)||obstacleDecorSprite(item);if(realm)return realm; // realm props ("Ngũ Vực"), hamlets, towers
  const s=item.scale||1,v=item.variant||0,x=item.x,y=item.y;
  switch(item.kind){
   case 'broadleaf':return {img:broadleafSprites[v%broadleafSprites.length],x:x-42*s,y:y-94*s,w:84*s,h:94*s};
@@ -221,7 +233,7 @@ export function decorSprite(item){
   default:return {img:pineSprites[((v%5)+5)%5],x:x-37*s,y:y-105*s,w:74*s,h:105*s};
  }
 }
-export function drawDecor(item){const r=decorSprite(item);if(item.kind==='lily'){ctx.drawImage(r.img,r.x,r.y,r.w,r.h);return;}drawUprightAt(item.x,item.y,()=>ctx.drawImage(r.img,r.x,r.y,r.w,r.h));}
+export function drawDecor(item){const r=decorSprite(item);if(item.kind==='lily'||FLAT_REALM_DECOR.has(item.kind)||FLAT_SETTLEMENT.has(item.kind)){ctx.drawImage(r.img,r.x,r.y,r.w,r.h);return;}drawUprightAt(item.x,item.y,()=>ctx.drawImage(r.img,r.x,r.y,r.w,r.h));}
 // Zoomed far out, every tree and rock is painted once into one map-sized layer (DECOR_LAYER_SCALE px per world unit),
 // rebuilt only when buildWorldDecor() runs, so draw() blits one image instead of ~2,000 sprites.
 export const DECOR_LAYER_SCALE=.2;
@@ -230,7 +242,7 @@ export function decorLayerCanvas(){
  if(decorLayerVersion===decorVersion&&decorLayer)return decorLayer;
  decorLayer??=document.createElement('canvas');decorLayer.width=Math.round(W*DECOR_LAYER_SCALE);decorLayer.height=Math.round(H*DECOR_LAYER_SCALE);
  const c=decorLayer.getContext('2d');c.clearRect(0,0,decorLayer.width,decorLayer.height);c.save();c.scale(DECOR_LAYER_SCALE,DECOR_LAYER_SCALE);
- for(const item of [...waterDecor,...[...treeDecor,...rockDecor].sort((a,b)=>a.y-b.y)]){const r=decorSprite(item);c.drawImage(r.img,r.x,r.y,r.w,r.h);}
+ for(const item of [...waterDecor,...groundDecor,...[...treeDecor,...rockDecor].sort((a,b)=>a.y-b.y)]){const r=decorSprite(item);c.drawImage(r.img,r.x,r.y,r.w,r.h);}
  c.restore();decorLayerVersion=decorVersion;return decorLayer;
 }
 export function drawGrassPatch(x,y,rx,ry,color){
@@ -241,8 +253,9 @@ export function drawGrassPatch(x,y,rx,ry,color){
 // rows and columns inside the camera are drawn, one path per colour (a fill per colour instead of one per ellipse).
 // Zoomed out below DETAIL_LAYER_SCALE the speckles are a pixel or two wide, so a pre-rendered layer is blitted instead.
 export const DETAIL_LAYER_SCALE=.3,DETAIL_LAYER_RES=.25;
-let detailRows=null,detailLayer=null;
+let detailRows=null,detailLayer=null,detailVersion=-1;
 function buildTerrainDetail(){
+ detailVersion=terrainVersion;detailLayer=null;
  const cols=MAP_TILES,rows=MAP_TILES;detailRows=Array.from({length:rows},()=>[]);
  for(let i=0;i<8200;i++){
   const seed=i*97.3+19.7;
@@ -289,8 +302,16 @@ function terrainDetailLayer(){
 }
 export function drawTerrainDetail(viewLeft=0,viewTop=0,viewRight=W,viewBottom=H){
  if(settings.quality==='low')return; // low quality: no ground speckles
- if(!detailRows)buildTerrainDetail();
+ if(!detailRows||detailVersion!==terrainVersion)buildTerrainDetail(); // rebuilt when the map changes
  if((renderView.scale||1)<DETAIL_LAYER_SCALE){ctx.drawImage(terrainDetailLayer(),0,0,W,H);return;}
  const pad=12,ty0=Math.max(0,Math.floor((viewTop-pad)/TILE_SIZE)),ty1=Math.min(MAP_TILES-1,Math.floor((viewBottom+pad)/TILE_SIZE));
  paintTerrainDetail(ctx,ty0,ty1,viewLeft-pad,viewRight+pad);
+}
+// "Ngũ Vực" (realms-map.md): each realm's name in large faint letters, only when zoomed out far enough that the flag
+// labels no longer tell the realms apart, and only where this side has explored (a name over unexplored fog would give
+// the map away).
+export function drawRealmLabels(){
+ if(terrainMapId!=='realms'||(renderView.scale||1)>=REALM_LABEL.maxScale)return;
+ const team=localTeam();
+ for(const realm of REALMS)for(const [fx,fy] of realm.labels||[])if(isTeamAreaExplored(team,fx*W,fy*H))mapText(realm.name.toUpperCase(),fx*W,fy*H,REALM_LABEL.worldPx,900,REALM_LABEL.color);
 }

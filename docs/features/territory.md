@@ -1,6 +1,6 @@
 # Vùng lãnh thổ & cột cờ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-22
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
 
 ## Mô tả
 Bản đồ (256 × 256 ô) được chia thành **đúng 20 vùng lãnh thổ** có cờ, cộng 2 vùng nhà chứa pháo đài. Ranh giới vùng là ranh giới tự nhiên, bám theo sông và vùng đá. Mỗi vùng có **đúng một loại tài nguyên** (lúa, gỗ, đá hoặc vàng), **một mỏ** loại đó, và **một cột cờ có sẵn** ở gần tâm vùng.
@@ -23,6 +23,8 @@ Nguồn thiết kế:
 - "Chốt thiết kế 20 lãnh thổ" (17/10/2026): đúng 20 vùng, nhà ở vị trí ngẫu nhiên, viền phát sáng, tầm nhìn trực tiếp toàn vùng khi giữ cờ.
 
 ## Luật & thông số
+Phần dưới đây là bản đồ **Đại Lục** (mặc định). Bản đồ **Ngũ Vực** dùng chung cách chia ô, đặt cờ và mỏ, nhưng hạt giống, loại tài nguyên và vị trí nhà theo 5 miền đất: xem [realms-map.md](realms-map.md).
+
 **Sinh bản đồ** (`fresh()` → `generateRegions()`)
 | Bước | Chi tiết |
 |---|---|
@@ -82,7 +84,7 @@ Kết quả chạy thử 2026-10-17 trước đó (bản 16–20 vùng) với 40
   - Màu phe tô mờ trên vùng sở hữu (`regionTintCanvas`).
   - Ranh giới là **đường liền phát sáng nhẹ**, độ dày tính theo **pixel màn hình** nên không mỏng đi khi thu nhỏ: 3,5 px màu sáng của phe (`TERRITORY_BORDER_PX.owned`, `TERRITORY_COLORS` = `TEAM_COLORS[team].light` trong `config/theme.ts`); quầng sáng mờ cùng màu rộng thêm 3 px mỗi bên (`TERRITORY_GLOW`, `TERRITORY_GLOW_PX`), cộng một nét tối mảnh để nổi trên nền sáng. Lớp tô màu vùng cũng dùng màu sáng của phe.
   - **Đường mềm, không bậc thang** (từ 2026-10-18): các cạnh ô được nối thành đường liền (`borderLines()`, dừng ở chỗ 3 vùng gặp nhau nên các đường vẫn khớp nhau). Sau đó chỉ giữ 1 điểm mỗi `MAP_UI.borderSmoothTiles` = 2 ô và bo góc bằng đường cong bậc hai qua trung điểm (`traceSmooth()`).
-  - **Chỉ vẽ ranh giới của vùng có chủ** (từ 2026-10-18): giữa hai vùng trung lập không vẽ gì; đoạn nằm trên hoặc sát nước (sông, hồ) cũng bỏ vì sông/hồ đã là ranh giới. Mỗi ranh giới vẽ **một** đường: màu của phe sở hữu một trong hai vùng kề; giữa vùng xanh và vùng đỏ thì lấy màu phe của người đang xem. Đổi màu ngay khi vùng đổi chủ. Vùng trung lập vẫn nhận biết qua cột cờ và vòng kiểm soát.
+  - **Ranh giới vùng có chủ** (từ 2026-10-18) vẽ đậm; **giữa hai vùng trung lập** vẽ nét đứt mảnh màu kem (`NEUTRAL_BORDER`, từ 2026-10-30; trước đó không vẽ gì); đoạn nằm trên hoặc sát nước (sông, hồ) cũng bỏ vì sông/hồ đã là ranh giới. Mỗi ranh giới vẽ **một** đường: màu của phe sở hữu một trong hai vùng kề; giữa vùng xanh và vùng đỏ thì lấy màu phe của người đang xem. Đổi màu ngay khi vùng đổi chủ. Vùng trung lập vẫn nhận biết qua cột cờ và vòng kiểm soát.
   - Chỉ vẽ cạnh mà một trong hai ô kề đã được khám phá. `drawTerritory(…, 'under')` vẽ các đoạn ở chỗ đang nhìn thấy, trước quân và công trình nên không che chúng; các đoạn chạm mép sương mù (`fogMask`) hoặc nằm ở chỗ không đang nhìn thấy (`fogVisible`) được vẽ ở lượt `'over'` sau `drawFog()`, để không bị lớp sương che hoặc làm tối (ở đó không có quân đang hiện nên không che gì).
 - **HUD "🚩 Lãnh thổ":** số vùng đang giữ và tổng thu từ mỏ mỗi phút (có cả lúa).
 

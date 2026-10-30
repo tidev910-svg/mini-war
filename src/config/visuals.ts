@@ -48,11 +48,49 @@ export const FX_COLORS={spark:'#ffe9a8',sparkHot:'#ffb347',slash:'#f4f1ea',dust:
 export const FX_MAX_PARTICLES=450;
 // Neutral camps and monsters (render/creeps.ts, neutral-camps.md): drawn in code. Neutral amber for their health bars and
 // labels so they never read as either side; the tomb's curse and the buff glow are violet.
+// Open-ground colours of each realm on the "Ngũ Vực" map, in REALMS order (config/maps.ts): plains, forest, mountain,
+// gold hills, abyss. Map terrain, not UI, so they live here rather than in theme.ts.
+export const REALM_GROUND=[
+ ['#7bbd63','#82c66d','#70ad61','#8ec96c'],
+ ['#5f9a52','#669f57','#57904c','#6aa55b'],
+ ['#8b9a78','#93a07f','#828f70','#9aa685'],
+ ['#a8b862','#b3bf6a','#9fb05b','#bcc472'],
+ ['#b9a35a','#c2ab61','#ad9852','#c8b36a'],
+];
+// Impassable ground (render/obstacles.ts), world units unless noted: rock patches as smoothed outlines (smoothPasses of
+// corner cutting, edgeNoise tiles of wobble) filled with the stone texture (stoneScale), a cliff face cliffHeight deep on
+// south sides, a light rim and a dark foot outline. Water: filled crisply inside its shore (water + ripple, rippleScale),
+// a sandy bank (half of bankWidth shows outside the shore) and a foam line; shores get waterSmoothPasses of rounding.
+// Farmland (field tiles outside the Ngũ Vực gold realms): rice paddies — plots of uneven sizes, mostly fieldPlots greens,
+// fieldGoldShare ripe (fieldGold) and fieldWaterShare flooded (fieldWater), fieldBankPx px banks between them, the pattern
+// turned fieldAngle degrees off the grid, the whole field ringed by a fieldBankWidth earth bank and a grass rim. Zoomed out below layerScale (view scale)
+// one image at layerRes px per world unit is drawn instead. Peaks: on rock where peakDepth of the 9×9 tiles around are rock,
+// peakGap apart, drawn peakWorld world units × peakScale (sprite: render/obstacles.ts, 4 painted variants).
+export const OBSTACLE_LOOK={
+ smoothPasses:2,edgeNoise:.18,stoneScale:1.6,cliffHeight:16,rimWidth:2.2,outlineWidth:2.4,foamWidth:5,layerScale:.3,layerRes:.2,
+ rockOutline:'#3a342c',cliffFace:'#5f584b',cliffLight:'#7d7464',rockRim:'#d8cfb6',rockTop:['#928a79','#9c9482','#8a8372','#a59d89'],strata:'#7a7363',crack:'#5a5348',
+ fieldBank:'#8f7a4e',fieldRim:'#6f9a48',fieldBankWidth:10,fieldBankPx:3,fieldScale:1.25,fieldAngle:-9,fieldWater:'#86b8ad',fieldWaterShare:.1,fieldGold:'#c9c873',fieldGoldShare:.07,fieldPlots:['#8cbf55','#9fca5e','#7fb04c','#a9cf6a'],
+ foam:'#e6f6f2b0',water:'#3f88a0',ripple:'#6eb0c4',rippleScale:1.5,bank:'#d3c793',bankWidth:46,waterSmoothPasses:3,
+ peakScale:1.3,peakWorld:[230,180],peakDepth:.8,peakGap:420,
+};
+// Painted-map scenery (render/settlements.ts), world units unless noted. Hamlets: huts on a ring hamletRadius around each
+// mine, plus hamletProps resource props. Towers: towerRadius from each flag. Clouds: fade in below cloudFadeScale (view scale) over cloudFadeRange.
+export const SETTLEMENT_LOOK={
+ hamletRadius:[150,235],hamletProps:2,hutGap:105,propGap:90,paddyGap:140,towerRadius:235,towerGap:80,pagodas:4,pagodaSpacing:1800,
+ cloudFadeScale:.42,cloudFadeRange:.2,cloudAlpha:.92,
+};
+// Thin dashed line between two neutral regions (screen px), like the borders of a painted campaign map.
+export const NEUTRAL_BORDER={px:1.6,dash:[7,6],color:'#fff4d6b0'};
+// Peaks along the short mountain ranges of the "Ngũ Vực" map (render/realm-decor.ts): one every `spacing` world units of
+// a range, scale[0] at its ends up to scale[0] + scale[1] at its middle (× OBSTACLE_LOOK.peakScale).
+export const REALM_PEAKS={spacing:210,scale:[.5,.35]};
+// Realm names written on the "Ngũ Vực" map below REALM_LABEL_MAX_SCALE (zoomed out), in world px.
+export const REALM_LABEL={maxScale:.32,worldPx:150,color:'#fff4d6cc'};
 export const CREEP_COLORS={outline:'#2b2118',shadow:'#1e2a1c55',groundShadow:'#29472d33',dirt:'#b49a6c',stoneFloor:'#a7a397',dark:'#1d1712',
  rock:'#7f8580',stone:'#9d978a',stoneLight:'#c9c2b0',moss:'#6f8f4e',bone:'#e9e1cc',boneDark:'#a69c86',wood:'#7a5532',ash:'#5a524a',
  flame:'#ffb347',ember:'#ff6a2a',tentA:'#9b6b43',tentB:'#7d5a3a',banner:'#5b1f24',wolf:'#8d8a86',wolfDark:'#5f5b57',eyeGlow:'#ffd34d',
  skin:'#d9a77e',leather:'#5a4030',banditCloth:'#6c4a3a',banditCloth2:'#57603f',banditHood:'#3b2d26',steel:'#cfd5dc',rust:'#9a5b35',
- troll:'#7d8a78',trollDark:'#59645a',robe:'#3a2550',robeTrim:'#6a3f8f',crown:'#e8c45a',curse:'#b07cff',curseGlow:'#e6d2ff',curseShadow:'#2a183f66',rune:'#b07cff',
+ troll:'#7d8a78',trollDark:'#59645a',golem:'#a88a4a',golemDark:'#6e5a32',boar:'#6b4a33',boarDark:'#45301f',tusk:'#f2ead6',spider:'#2d2833',spiderDark:'#17141b',spiderMark:'#9bd14b',venom:'#a6e05a',web:'#eef2f2',bear:'#7b6a58',bearDark:'#4f4338',bearStone:'#9a978c',dragon:'#d9a23a',dragonDark:'#8f5a1e',dragonBelly:'#f3d58a',dragonWing:'#b0462c',fire:'#ff8a2a',mud:'#7a5a3a',goldCrystal:'#ffd75e',goldCrystalDark:'#c9962c',robe:'#3a2550',robeTrim:'#6a3f8f',crown:'#e8c45a',curse:'#b07cff',curseGlow:'#e6d2ff',curseShadow:'#2a183f66',rune:'#b07cff',
  bar:'#ffb347',barBack:'#1a1410',label:'#ffe2b0',labelDim:'#c9bca6',reward:'#ffd75e',buff:'#c99bff',minimap:'#ffb347',minimapDim:'#8b8172'};
 // Presentation-only timing; wolf damage and cooldown remain owned by CREEP_TYPES.
 export const WOLF_ATTACK_ANIM={windupSeconds:.14,biteSeconds:.09,recoverySeconds:.14};
