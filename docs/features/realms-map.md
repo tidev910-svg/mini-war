@@ -1,11 +1,11 @@
 # Bản đồ Ngũ Vực (5 miền đất)
 
-> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-30
+> Trạng thái: Cần kiểm thử · Cập nhật lần cuối: 2026-10-31
 
 ## Mô tả
-Bản đồ thứ hai, chọn ở sảnh chính (ô **Bản đồ**: Đại Lục / Ngũ Vực). Bản đồ chia thành **5 miền đất**. Mỗi miền có một khoáng sản riêng và một loài quái canh giữ; miền càng quý thì quái càng mạnh:
+Bản đồ thứ hai, chọn ở sảnh chính (ô **Bản đồ**: Đại Lục / Ngũ Vực). Bản đồ chia thành **5 miền đất**, mỗi miền có một loài quái canh giữ; miền càng quý thì quái càng mạnh. Mỏ **rải ngẫu nhiên** qua các miền (từ 2026-10-31; trước đó mỗi miền chỉ có một loại mỏ, nên từng loại tài nguyên tập trung một chỗ): tổng vẫn 6 lúa, 4 gỗ, 4 đá, 6 vàng; hai vùng đối xứng luôn cùng loại; 4 cờ gần mỗi nhà có đủ 4 loại. Riêng Vực Vàng luôn là vàng giàu. Cột "Mỏ góp" dưới đây là số mỏ mỗi miền góp vào tổng đó, không phải loại mỏ nằm trong miền.
 
-| Miền | Vị trí | Khoáng sản | Quái canh giữ |
+| Miền | Vị trí | Mỏ góp | Quái canh giữ |
 |---|---|---|---|
 | **Đồng Lúa** | Hai dải đất dọc mép trái và phải; mỗi phe có pháo đài trong dải của mình | Lúa | Bãi heo rừng |
 | **Rừng Già** | Nửa trên, giữa hai dải Đồng Lúa | Gỗ | Tổ nhện |
@@ -83,7 +83,7 @@ AI (`AI_CAMP_SQUAD`): heo rừng 5, nhện 6, gấu đá 7, golem 10, rồng 14 
 **Sinh bản đồ** (`fresh()` khi `settings.mapKind === 'realms'`):
 1. `useMap('realms')` dựng địa hình (`fillRealmsTerrain()`): chỉ tính nửa trái rồi chép gương sang nửa phải; nền mỗi miền theo nhiễu mịn (Đồng Lúa: cỏ + ruộng + vài lùm cây + 2 ao; Rừng Già: rừng dày; Núi Đá: khối đá giữa thung cỏ; Đồi Vàng: ruộng vàng + đá rải rác; Vực Vàng: đất vàng), rồi thêm dãy đá, hào nước. Tất định (không dùng `Math.random`), nên khách PvP dựng lại được từ mã bản đồ.
 2. Đặt hai pháo đài đối xứng (`REALM_BASE`).
-3. `generateRegions(…, 'realms')`: với mỗi miền, lấy ngẫu nhiên `seeds` hạt giống trong miền ở nửa trái (Đồng Lúa: mỗi hạt giống một dải ngang, để cờ trải trên – giữa – dưới), rồi lấy ảnh gương sang nửa phải. Loại tài nguyên của vùng = tài nguyên của miền chứa hạt giống (`region.realm`). Nếu một vùng không đặt được cờ hoặc mỏ, cả lần sinh bị loại và `fresh()` thử lại.
+3. `generateRegions(…, 'realms')`: với mỗi miền, lấy ngẫu nhiên `seeds` hạt giống trong miền ở nửa trái (Đồng Lúa: mỗi hạt giống một dải ngang, để cờ trải trên – giữa – dưới), rồi lấy ảnh gương sang nửa phải. `region.realm` là miền chứa hạt giống. Loại tài nguyên: cặp vùng Vực Vàng giữ vàng giàu; 9 cặp còn lại chia ngẫu nhiên phần `REALMS[].resource` × `seeds` của các miền, 4 cặp gần pháo đài nhất nhận mỗi cặp một loại. Nếu một vùng không đặt được cờ hoặc mỏ, cả lần sinh bị loại và `fresh()` thử lại.
 4. `placeCamps(…, 'realms')` → `placeRealmCamps()`: hang của mỗi miền đặt trong miền đó theo cặp gương; Hang Rồng Vàng (`centerCamp`) ở chỗ trống gần trục giữa nhất trong Vực Vàng.
 5. Kiểm tra đi bộ tới được mọi cờ, mỏ và độ công bằng như bản đồ Đại Lục.
 
@@ -125,6 +125,7 @@ AI (`AI_CAMP_SQUAD`): heo rừng 5, nhện 6, gấu đá 7, golem 10, rồng 14 
 - [ ] 8:00: "Hang Rồng Vàng đã mở! Hạ Rồng Vàng để…"; dọn được thì ô buff trên HUD ghi "Sức mạnh Hang Rồng Vàng".
 - [ ] Chọn lại Đại Lục → trận mới có sông và 4 cầu như cũ.
 - [ ] PvP: chủ phòng chọn Ngũ Vực, khách để Đại Lục → khách thấy đúng bản đồ Ngũ Vực, quân đi qua các khe núi giống chủ phòng.
+- Đã chạy 2026-10-31 sau khi rải mỏ ngẫu nhiên: `pnpm test` (122 test), `pnpm smoke maps ai pvp`, đều đạt.
 - Đã chạy 2026-10-30: `pnpm test` (5 test trong `tests/map.test.ts`: đối xứng, tài nguyên đúng miền, công bằng, vàng giàu, hang đúng miền, đổi lại Đại Lục); `pnpm smoke maps` (10 bản đồ Ngũ Vực trên Chrome); AI Khó tự chơi 8 phút không lỗi.
 
 ## Giới hạn / việc tồn đọng

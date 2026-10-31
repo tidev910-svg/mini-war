@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Territory regions: tile map, borders, generation of the 20 flag regions with their mines (docs/features/territory.md).
-import { H, HOME_TERRITORY_TILES, MAP_TILES, MIN_LAND_PATCH_TILES, REGION_COUNT, REGION_MIN_BASE_TILES, REGION_SEED_SPACING_TILES, REGION_TYPES, TILE_SIZE, W, forestRegions, goldRegions, rockRegions } from '../config/map';
+import { HOME_TERRITORY_TILES, MAP_TILES, MIN_LAND_PATCH_TILES, REGION_COUNT, REGION_GRID_CELLS, REGION_MIN_BASE_TILES, REGION_SEED_SPACING_TILES, REGION_TYPES, TILE_SIZE } from '../config/map';
 import { landPatchSizes, terrainType, tileRealm, walkDistances } from './terrain';
 import { state } from '../core/game';
 import { FLAG_ENEMY_BASE_MIN_TILES, MINE_TYPES, RESOURCE_NAMES, RICH_GOLD_MULTIPLIER } from '../config/balance';
@@ -41,9 +41,10 @@ export function generateRegions(blueBase,redBase,mapId='classic'){
  const tileOf=v=>Math.max(1,Math.min(MAP_TILES-2,Math.floor(v/T)));
  const add=(sgx,sgy,home=null)=>regions.push({id:regions.length,resource:home===null?null:'wood',sgx,sgy,home,owner:home===null?-1:home,cp:null,cap:0,capTeam:-1,contested:false,idle:0,stage2:-1});
  const walk=bases.map(walkDistances),patch=landPatchSizes(),reachable=i=>patch[i]>=MIN_LAND_PATCH_TILES;
- // Seed pool: the centres of the forest/rock/field biomes first (shuffled), then random land tiles, all away from the
- // fortresses and REGION_SEED_SPACING_TILES apart. Exactly REGION_COUNT seeds are used; seeds whose region gets no flag
- // or mine spot are swapped for the next ones in the pool and the map is split again.
+ // Seed pool: one random land tile per cell of a REGION_GRID_CELLS² grid (cells shuffled), so flags and mines land somewhere
+ // new every match yet cover the whole map; then random land tiles, all away from the fortresses and
+ // REGION_SEED_SPACING_TILES apart. Exactly REGION_COUNT seeds are used; seeds whose region gets no flag or mine spot are
+ // swapped for the next ones in the pool and the map is split again.
  const farFromBases=(x,y)=>bases.every(b=>Math.hypot(x*T-b.x,y*T-b.y)>T*REGION_MIN_BASE_TILES);
  const pool=[],spaced=(x,y)=>pool.every(c=>Math.hypot(c.sgx-x,c.sgy-y)>=REGION_SEED_SPACING_TILES);
  // "Ngũ Vực": REALMS[k].seeds random seeds inside each realm on the left half, each mirrored onto the right half, so the
@@ -63,8 +64,13 @@ export function generateRegions(blueBase,redBase,mapId='classic'){
   });
   if(pool.length!==REGION_COUNT)return {regions:[],mines:[],unfairness:Infinity};
  }
- else for(const [cx,cy] of [...forestRegions,...rockRegions,...goldRegions].sort(()=>Math.random()-.5)){const x=tileOf(cx*W),y=tileOf(cy*H);if(farFromBases(x,y)&&spaced(x,y))pool.push({sgx:x,sgy:y});}
- if(!realms)for(let tries=0;pool.length<REGION_COUNT*2&&tries<4000;tries++){const x=2+Math.floor(Math.random()*(MAP_TILES-4)),y=2+Math.floor(Math.random()*(MAP_TILES-4)),i=y*MAP_TILES+x;if(reachable(i)&&farFromBases(x,y)&&spaced(x,y))pool.push({sgx:x,sgy:y});}
+ else{
+  const seedIn=(x0,y0,size,tries)=>{for(let n=0;n<tries;n++){const x=x0+Math.floor(Math.random()*size),y=y0+Math.floor(Math.random()*size),i=y*MAP_TILES+x;if(reachable(i)&&farFromBases(x,y)&&spaced(x,y)){pool.push({sgx:x,sgy:y});return true;}}return false;};
+  const size=Math.floor((MAP_TILES-4)/REGION_GRID_CELLS),cells=[];
+  for(let cy=0;cy<REGION_GRID_CELLS;cy++)for(let cx=0;cx<REGION_GRID_CELLS;cx++)cells.push([2+cx*size,2+cy*size]);
+  for(const [x0,y0] of cells.sort(()=>Math.random()-.5))seedIn(x0,y0,size,30);
+  for(let tries=0;pool.length<REGION_COUNT*2&&tries<4000;tries++)seedIn(2,2,MAP_TILES-4,1);
+ }
  let tiles,spots;
  const at=i=>({x:(i%MAP_TILES+.5)*T,y:((i-i%MAP_TILES)/MAP_TILES+.5)*T});
  // A spot is usable when its 3×3 tiles are passable, inside the same region and on a large land patch (not an islet).
@@ -103,8 +109,18 @@ export function generateRegions(blueBase,redBase,mapId='classic'){
  // Resource types: the types missing among each fortress's REGION_TYPES.length nearest regions (walking cost to the flag)
  // go, in random order, to its nearest regions without a type, so both sides have every type close by.
  const neutral=regions.filter(r=>r.home===null&&spots.has(r.id)),flagWalk=(r,team)=>walk[team][tileOf(r.cp.y)*MAP_TILES+tileOf(r.cp.x)];
- // "Ngũ Vực": the realm of the seed decides the resource (and the rich gold of the abyss).
- if(realms)for(const r of regions){const k=tileRealm[r.sgy*MAP_TILES+r.sgx];r.realm=k;if(r.home===null){r.resource=REALMS[k].resource;if(REALMS[k].rich)r.rich=true;}}
+ // "Ngũ Vực": the abyss keeps its rich gold. The other mirrored pairs of regions (add2) share out the realms' resources at
+ // random, the same type on both sides: the 4 pairs nearest the fortresses get one of each type, the rest what is left.
+ if(realms){
+  for(const r of regions)r.realm=tileRealm[r.sgy*MAP_TILES+r.sgx];
+  const pairs=[];for(let k=bases.length;k<regions.length;k+=2)pairs.push([regions[k],regions[k+1]]);
+  const setType=(pair,type)=>{for(const r of pair)r.resource=type;},isRich=([r])=>REALMS[r.realm].rich;
+  for(const pair of pairs.filter(isRich))for(const r of pair){r.resource=REALMS[r.realm].resource;r.rich=true;}
+  const open=pairs.filter(p=>!isRich(p)),bag=open.map(([r])=>REALMS[r.realm].resource).sort(()=>Math.random()-.5);
+  const near=(p)=>Math.min(flagWalk(p[0],0),flagWalk(p[1],0)),sorted=open.slice().sort((a,b)=>near(a)-near(b));
+  [...REGION_TYPES].sort(()=>Math.random()-.5).forEach((type,k)=>{setType(sorted[k],type);bag.splice(bag.indexOf(type),1);});
+  sorted.slice(REGION_TYPES.length).forEach((pair,k)=>setType(pair,bag[k]));
+ }
  if(!realms)for(const team of [0,1].sort(()=>Math.random()-.5)){
   const sorted=neutral.slice().sort((a,b)=>flagWalk(a,team)-flagWalk(b,team)),need=new Set(REGION_TYPES);
   for(const r of sorted.slice(0,REGION_TYPES.length))if(r.resource)need.delete(r.resource);

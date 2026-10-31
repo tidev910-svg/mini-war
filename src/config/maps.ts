@@ -4,13 +4,14 @@
 // Maps the host (or the single player) picks in the lobby (settings.mapKind). The id goes to the guest in state.mapId.
 export const MAPS={
  classic:{name:'Đại Lục',hint:'Sông chia đôi, 4 cầu, vị trí nhà ngẫu nhiên'},
- realms: {name:'Ngũ Vực',hint:'5 miền đất, mỗi miền một khoáng sản và một loài quái canh giữ'},
+ realms: {name:'Ngũ Vực',hint:'5 miền đất, mỏ rải ngẫu nhiên, mỗi miền một loài quái canh giữ'},
 };
 export const DEFAULT_MAP='classic';
 
 // The five realms, from the least to the most valuable ground. Each realm holds `seeds` flag regions on each side of the
-// mirror line (so 2 × seeds in all; the sum over realms × 2 = REGION_COUNT), every one with a mine of `resource`
-// (`rich`: income × RICH_GOLD_MULTIPLIER, config/balance.ts), and `camps` camps of kind `camp` per side (config/creeps.ts);
+// mirror line (so 2 × seeds in all; the sum over realms × 2 = REGION_COUNT). `resource` × seeds is what the realm adds to
+// the map's total of mines; generateRegions() deals those out at random over all realms, except that a `rich` realm keeps
+// its own (income × RICH_GOLD_MULTIPLIER, config/balance.ts). `camps` camps of kind `camp` per side (config/creeps.ts);
 // `centerCamp`: one camp of that kind on the mirror line instead. The monster grows with the worth of the ground.
 // labels: where the realm's name is written on the map when zoomed out (render/terrain.ts, drawRealmLabels()).
 // Index in this list = the realm id stored in tileRealm (map/terrain.ts) and region.realm.

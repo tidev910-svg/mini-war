@@ -31,6 +31,24 @@ describe('generated maps', () => {
     }
   });
 
+  it('put the mines somewhere new every match, spread over the whole map', () => {
+    const ranMaps = [];
+    for (let k = 0; k < 8; k++) {
+      g.fresh();
+      const third = v => Math.min(2, Math.floor(v / g.W * 3));
+      const perBlock = new Array(9).fill(0);
+      for (const m of g.state.mines) perBlock[third(m.y) * 3 + third(m.x)]++;
+      expect(Math.max(...perBlock)).toBeLessThanOrEqual(6);
+      ranMaps.push(g.state.mines);
+    }
+    let same = 0, total = 0;
+    for (let k = 1; k < ranMaps.length; k++) for (const m of ranMaps[k]) {
+      total++;
+      if (ranMaps[k - 1].some(p => Math.hypot(p.x - m.x, p.y - m.y) < 6 * g.TILE_SIZE)) same++;
+    }
+    expect(same / total).toBeLessThan(.35);
+  });
+
   it('place the fortresses apart, on clear ground, facing each other', () => {
     for (let k = 0; k < 8; k++) {
       g.fresh();
@@ -43,7 +61,7 @@ describe('generated maps', () => {
   });
 });
 
-// "Ngũ Vực" (docs/features/realms-map.md): five realms, each with its own resource and its own monster camp.
+// "Ngũ Vực" (docs/features/realms-map.md): five realms, each with its own monster camp, resources dealt out at random.
 describe('Ngũ Vực map', () => {
   const tileAt = p => Math.floor(p.y / g.TILE_SIZE) * g.MAP_TILES + Math.floor(p.x / g.TILE_SIZE);
   const realmOf = p => g.tileRealm[tileAt(p)];
@@ -59,7 +77,28 @@ describe('Ngũ Vực map', () => {
     expect(new Set(g.tileRealm).size).toBe(5);
   });
 
-  it('gives every flag region the resource of its realm, with mirrored fortresses and fair walking distances', () => {
+  it('deals the resources out over the realms: same totals, same type on both sides, all four near each fortress', () => {
+    const seenIn = g.REALMS.map(() => new Set());
+    for (let k = 0; k < 8; k++) {
+      play('realms');
+      const flags = g.state.regions.filter(r => r.cp), count = t => flags.filter(r => r.resource === t).length;
+      expect([count('food'), count('wood'), count('stone'), count('gold')]).toEqual([6, 4, 4, 6]);
+      for (const r of flags) {
+        seenIn[r.realm].add(r.resource);
+        const twin = flags.find(o => o.sgx === g.MAP_TILES - 1 - r.sgx && o.sgy === r.sgy);
+        expect(twin.resource).toBe(r.resource);
+      }
+      const walk = g.state.bases.map(g.walkDistances);
+      for (const team of [0, 1]) {
+        const nearest = flags.slice().sort((a, b) => walk[team][tileAt(a.cp)] - walk[team][tileAt(b.cp)]).slice(0, 4);
+        expect(new Set(nearest.map(r => r.resource)).size).toBe(4);
+      }
+    }
+    for (const id of ['plains', 'forest', 'mountain', 'hills']) expect(seenIn[realmIdx(id)].size).toBeGreaterThan(1);
+    expect([...seenIn[realmIdx('abyss')]]).toEqual(['gold']);
+  });
+
+  it('keeps every flag region in its realm, with mirrored fortresses and fair walking distances', () => {
     for (let k = 0; k < 6; k++) {
       play('realms');
       expect(g.state.mapId).toBe('realms');
@@ -68,10 +107,7 @@ describe('Ngũ Vực map', () => {
       expect(Math.abs(b0.x + b1.x - g.W)).toBeLessThan(1);
       expect(b0.y).toBe(b1.y);
       expect([b0, b1].every(b => realmOf(b) === realmIdx('plains'))).toBe(true);
-      for (const r of flags) {
-        expect(realmOf(r.cp)).toBe(r.realm);
-        expect(r.resource).toBe(g.REALMS[r.realm].resource);
-      }
+      for (const r of flags) expect(realmOf(r.cp)).toBe(r.realm);
       g.REALMS.forEach((realm, i) => expect(flags.filter(r => r.realm === i)).toHaveLength(realm.seeds * 2));
       // Both sides walk about as far to each resource (same check as the classic map).
       const walk = g.state.bases.map(g.walkDistances), cost = (r, t) => walk[t][tileAt(r.cp)];

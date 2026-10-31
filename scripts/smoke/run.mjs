@@ -228,9 +228,9 @@ if (solo.length) {
       // "Ngũ Vực" (realms-map.md): 10 maps in the real browser, every flag and every camp kind placed, fortresses mirrored.
       const rv = await c.game(`setSetting('mapKind','realms');const out=[],t0=performance.now();
         for(let k=0;k<10;k++){fresh();out.push({flags:state.regions.filter(r=>r.cp).length,kinds:new Set(state.camps.map(c=>c.kind)).size,
-          mirror:Math.abs(state.bases[0].x+state.bases[1].x-W)<1&&state.bases[0].y===state.bases[1].y,realm:state.regions.filter(r=>r.cp).every(r=>REALMS[r.realm].resource===r.resource)});}
+          mirror:Math.abs(state.bases[0].x+state.bases[1].x-W)<1&&state.bases[0].y===state.bases[1].y,deal:['food','wood','stone','gold'].map(t=>state.regions.filter(r=>r.cp&&r.resource===t).length).join()==='6,4,4,6'&&state.regions.filter(r=>r.rich).every(r=>REALMS[r.realm].rich)});}
         const ms=(performance.now()-t0)/10;setSetting('mapKind','classic');fresh();return {ms,out}`);
-      t.ok(rv.out.every(x => x.flags === 20 && x.kinds === 5 && x.mirror && x.realm), 'Ngũ Vực: 20 cờ đúng tài nguyên của miền, đủ 5 loại hang, hai nhà đối xứng', rv.out);
+      t.ok(rv.out.every(x => x.flags === 20 && x.kinds === 5 && x.mirror && x.deal), 'Ngũ Vực: 20 cờ, đủ tổng mỏ từng loại, vàng giàu ở Vực Vàng, đủ 5 loại hang, hai nhà đối xứng', rv.out);
       results.push(t.report({ 'ms/bản đồ': Math.round(r.ms), 'ms/bản đồ Ngũ Vực': Math.round(rv.ms) }));
     }
 

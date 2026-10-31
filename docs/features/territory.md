@@ -1,6 +1,6 @@
 # Vùng lãnh thổ & cột cờ
 
-> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-30
+> Trạng thái: Đang có · Cập nhật lần cuối: 2026-10-31
 
 ## Mô tả
 Bản đồ (256 × 256 ô) được chia thành **đúng 20 vùng lãnh thổ** có cờ, cộng 2 vùng nhà chứa pháo đài. Ranh giới vùng là ranh giới tự nhiên, bám theo sông và vùng đá. Mỗi vùng có **đúng một loại tài nguyên** (lúa, gỗ, đá hoặc vàng), **một mỏ** loại đó, và **một cột cờ có sẵn** ở gần tâm vùng.
@@ -29,7 +29,7 @@ Phần dưới đây là bản đồ **Đại Lục** (mặc định). Bản đ�
 | Bước | Chi tiết |
 |---|---|
 | Vị trí pháo đài | Ngẫu nhiên ở bất kỳ đâu (cách mép ≥ 420), hai nhà cách nhau ≥ 55% bề ngang bản đồ (`BASE_MIN_SEPARATION`); `base.dir` hướng về nhà địch. Bỏ vị trí mà pháo đài hoặc sân tập kết có dưới 85% ô đi được (`baseSiteClear()`, `BASE_SITE_MIN_CLEAR`) |
-| Hạt giống | 2 vùng nhà đặt tại ô của pháo đài. Kho hạt giống: tâm các biome rừng/đá/ruộng (`forestRegions`, `rockRegions`, `goldRegions`, xáo ngẫu nhiên) rồi thêm ô đất ngẫu nhiên trên khối đất lớn cho đủ 40; mọi hạt giống cách pháo đài ≥ 22 ô (`REGION_MIN_BASE_TILES`) và cách nhau ≥ 20 ô (`REGION_SEED_SPACING_TILES`). Lấy đúng `REGION_COUNT` = 20 hạt giống đầu kho |
+| Hạt giống | 2 vùng nhà đặt tại ô của pháo đài. Kho hạt giống: chia bản đồ thành lưới 5×5 (`REGION_GRID_CELLS`), xáo thứ tự các ô lưới rồi lấy mỗi ô lưới một ô đất ngẫu nhiên trên khối đất lớn, sau đó thêm ô đất ngẫu nhiên cho đủ 40 (từ 2026-10-31; trước đó lấy tâm các biome cố định nên cờ và mỏ gần như nằm cùng chỗ mọi trận); mọi hạt giống cách pháo đài ≥ 22 ô (`REGION_MIN_BASE_TILES`) và cách nhau ≥ 20 ô (`REGION_SEED_SPACING_TILES`). Lấy đúng `REGION_COUNT` = 20 hạt giống đầu kho |
 | Chia ô | **Giữ nguyên**: Dijkstra nhiều nguồn trên lưới 256×256 (4 hướng). Chi phí vào ô: đất 1, đá 3, nước 6, nên ranh giới chạy theo sông, hồ và đá (`buildRegionMap()`). Từ 2026-10-18 bản đồ có thêm 7 hồ (`lakeRegions`, [rendering.md](rendering.md)); cờ, mỏ và nhà vẫn tránh nước như trước |
 | Cột cờ (`r.cp`) | Ô gần **tâm khối** của vùng nhất thoả các điều kiện: 3×3 ô đi được, cùng vùng, nằm trên khối đất liền ≥ 400 ô (không phải đảo nhỏ: `landPatchSizes()`, `MIN_LAND_PATCH_TILES`), và cách cả hai pháo đài > 21 ô (`FLAG_ENEMY_BASE_MIN_TILES`) |
 | Chỗ đặt mỏ | Chỉ vùng có cờ: ô gần cờ nhất mà cách cờ ≥ 6 ô (để nhãn không đè nhau). Mọi mỏ cách nhau ≥ 260 và ở trên khối đất lớn. Vùng nhà không có mỏ (bỏ ngày 2026-10-17) |
@@ -111,7 +111,7 @@ Chưa chốt, đang làm tạm:
 - Chiếm cờ: `updateCaptures()`, `captureSeconds()`, `flagCapturers()`, `captureStage()`, `regionOutpost()`. Thưởng vùng lúa: `farmFoodPerMinute()`.
 - Vẽ: `drawFlag()`, `flagScale()`, `flagHit()` (vùng nhấp chọn cờ).
 - Hằng số:
-  - Sinh bản đồ: `REGION_TYPES`, `REGION_COUNT`, `REGION_SEED_SPACING_TILES`, `REGION_MIN_BASE_TILES`, `MAP_FAIRNESS_TOLERANCE`, `MAP_GENERATION_TRIES`, `MIN_LAND_PATCH_TILES`, `BASE_SITE_MIN_CLEAR`, `BASE_MIN_SEPARATION`.
+  - Sinh bản đồ: `REGION_TYPES`, `REGION_COUNT`, `REGION_GRID_CELLS`, `REGION_SEED_SPACING_TILES`, `REGION_MIN_BASE_TILES`, `MAP_FAIRNESS_TOLERANCE`, `MAP_GENERATION_TRIES`, `MIN_LAND_PATCH_TILES`, `BASE_SITE_MIN_CLEAR`, `BASE_MIN_SEPARATION`.
   - Chiếm cờ: `FLAG_ENEMY_BASE_MIN_TILES`, `FLAG_CAPTURE_RADIUS_TILES`, `FLAG_CAPTURE_BASE_SECONDS`, `FLAG_CAPTURE_EXPONENT`, `FLAG_CAPTURE_MAX_UNITS`, `FLAG_SCOUTS_CAPTURE`, `FLAG_DECAY_DELAY_SECONDS`, `FLAG_DECAY_SECONDS`; `FOOD_REGION_FARM_BONUS`.
   - Hiển thị: `FLAG_COLORS`, `FLAG_MIN_SCREEN_ZOOM`, `FLAG_LABEL_MIN_PX`, `FLAG_SHORT_LABEL_ZOOM`, `FLAG_RING_PX`, `RESOURCE_ICONS`, `TERRITORY_COLORS`, `TERRITORY_BORDER_PX`, `TERRITORY_GLOW`, `TERRITORY_GLOW_PX`.
   - Khác: `HOME_TERRITORY_TILES`.
